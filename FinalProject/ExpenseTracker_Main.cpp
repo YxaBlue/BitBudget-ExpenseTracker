@@ -67,6 +67,8 @@ const string InboxFILE = "Inbox.bin";
 /*-------------------------------- FUNCTIONS LIST: --------------------------------*/
 /*_________________________________________________________________________________*/
 
+/* DISPLAY FUNCTIONS */
+//
 void border(char, int);
 void displayCenteredLine_NoColor(const string, int);
 void displayCenteredLine_Colored(const string, const string, int);
@@ -74,9 +76,14 @@ void displayCenteredLine_NoNewLine(const string, const string, int);
 void clearScreen();
 
 
+/* MAIN MENU FUNCTIONS */
+// 
 void print_BitBudgetMM(bool&, bool&);
 void print_QuitMenu();
 
+
+/* INBOX FUNCTIONS */
+// 
 void inbox_Options(int);
 void inbox_Title();
 void run_INBOX();
@@ -84,6 +91,9 @@ void run_INBOX();
 void clearFile(string);
 bool strIsNumeric(string);
 
+
+/* DATE-RELATED FUNCTIONS */
+// 
 bool validateDateFormat(const string &);
 bool validateDate(const string &);
 bool validateSecondDate(const string &, const string &);
