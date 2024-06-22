@@ -256,6 +256,111 @@ void print_QuitMenu() {
 /*________________________________________________________________________________________________________________________________________________________________*/
 /*________________________________________________________________________________________________________________________________________________________________*/
 
+class Inbox {
+private:
+    vector<string> NotificationList;
+
+
+public:
+    void loadNotifications();
+    void saveNotifications();
+
+    void displayNotifications(int, int);
+};
+
+
+// READ Notifications from file
+void Inbox :: loadNotifications()
+{
+    size_t size;
+    string notif;
+
+    ifstream inFILE(InboxFILE, ios::binary);
+    if (inFILE.is_open())
+    {
+        while (inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
+        {
+            notif.resize(size);
+            inFILE.read(&notif[0], sizeof(notif));
+            NotificationList.push_back(notif);
+        }
+
+        inFILE.close();
+    }
+    else {
+        displayCenteredLine_Colored(">> ERROR: Unable to read Inbox File", YELLOW);
+        // displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue... ", YELLOW);
+        // getchar();
+    }
+}
+
+
+// WRITE Notifications to file
+void Inbox :: saveNotifications()
+{
+    size_t size;
+    
+    ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
+    if (outFILE.is_open())
+    {
+        for (const auto& notifs : NotificationList)
+        {
+            size = notifs.size();
+            outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
+            outFILE.write(notifs.c_str(), sizeof(notifs));
+        }
+
+        outFILE.close();
+    }
+    else {
+        displayCenteredLine_Colored(">> ERROR: Unable to read Inbox File", YELLOW);
+        // displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue... ", YELLOW);
+        // getchar();
+    }
+}
+
+
+void Inbox :: displayNotifications(int page, int msgPerPage)
+{
+    if (NotificationList.size() > 0)
+    {
+        int total_Notifs = NotificationList.size();
+        int total_Pages = NotificationList.size() / msgPerPage;
+
+        if ((NotificationList.size() % msgPerPage) != 0) total_Pages++;
+        if (page < 1) page = 1;
+
+        int msgIndex = (page - 1) * msgPerPage;
+        int msg_LastIndex = min(msgIndex + msgPerPage, total_Notifs);
+
+        for (int i = msgIndex; i < msg_LastIndex; i++)
+        {
+            cout << BOLDWHITE << "[" << (i + 1) << "]: " << RESET << NotificationList[i] << endl;
+        }
+
+        cout << "\n\n";
+        displayCenteredLine_Colored(to_string(page) + " out of " + to_string(total_Pages) + " pages ", GRAY);
+        border(196);
+        return;
+    }
+    else {
+        // Notify User that INBOX is empty
+        displayCenteredLine_Colored("Your inbox do be looking desolate here...", YELLOW);
+        cout << "\n";
+        displayCenteredLine_Colored("Chile, anyways.", YELLOW);
+        displayCenteredLine_Colored("Be on your merry way and UPDATE your tracker XD", YELLOW);
+        
+        cout << "\n\n\n\n\n";
+        border(196);
+        return;
+    }
+}
+
+
+
+
+
+
 /*___________________________________________________________________________________*/
 /* ---------------- NOTIFICATIONS: CLASS DEFINITION AND FUNCTIONS ------------------ */
 /*___________________________________________________________________________________*/
@@ -271,6 +376,13 @@ private:
 
 
 public:
+    // Notification GETTERS
+    string getReminder();
+    string getWarning();
+    string getProgressReport_Pos();
+    string getProgressReport_Neg();
+    string getLoginNotif();
+
     /* List of Notification Class Functions */
     //
     bool createNotification(int);
@@ -278,6 +390,8 @@ public:
     void displayNotifs(int, int);
     int getTotalNotifs();
 };
+
+string Notification :: getReminder() { return reminder; }
 
 
 // Notification MF: Create NEW NOTIFICATION and write in file: 1 - Reminder, 2 - Warning, 3 - Progress report: Positive, 4 - Progress report, 5 - Log in notification
@@ -503,6 +617,8 @@ void Notification:: deleteNotifs(int index) {
         getchar();
     }
 }
+
+
 
 
 
