@@ -266,16 +266,23 @@ void print_QuitMenu() {
 /*________________________________________________________________________________________________________________________________________________________________*/
 /*________________________________________________________________________________________________________________________________________________________________*/
 
+
+/* ---------------- NOTIFICATIONS: CLASS DEFINITION AND FUNCTIONS ------------------ */
+/*-----------------------------------------------------------------------------------*/
+
 class Inbox {
 private:
     vector<string> NotificationList;
 
-
-public:
     void loadNotifications();
     void saveNotifications();
 
     void displayNotifications(int, int);
+    void deleteNotif(int);
+    void clearInbox();
+
+public:
+    void run_Inbox();
 };
 
 
@@ -304,12 +311,12 @@ void Inbox :: loadNotifications()
     }
 }
 
-
 // WRITE Notifications to file
 void Inbox :: saveNotifications()
 {
+    if (NotificationList.size() == 0) return;
+
     size_t size;
-    
     ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
     if (outFILE.is_open())
     {
@@ -330,14 +337,18 @@ void Inbox :: saveNotifications()
 }
 
 
-void Inbox :: displayNotifications(int page, int msgPerPage)
+
+
+
+// DISPLAY notifications by page
+void Inbox :: displayNotifications(int page = 1, int msgPerPage = 4)
 {
     if (NotificationList.size() > 0)
     {
         int total_Notifs = NotificationList.size();
         int total_Pages = NotificationList.size() / msgPerPage;
 
-        if ((NotificationList.size() % msgPerPage) != 0) total_Pages++;
+        if ((total_Notifs % msgPerPage) != 0) total_Pages++;
         if (page < 1) page = 1;
 
         int msgIndex = (page - 1) * msgPerPage;
@@ -360,9 +371,163 @@ void Inbox :: displayNotifications(int page, int msgPerPage)
         displayCenteredLine_Colored("Chile, anyways.", YELLOW);
         displayCenteredLine_Colored("Be on your merry way and UPDATE your tracker XD", YELLOW);
         
-        cout << "\n\n\n\n\n";
+        cout << "\n\n\n\n\n\n";
         border(196);
         return;
+    }
+}
+
+// DELETE notification by index
+void Inbox :: deleteNotif(int index)
+{
+    NotificationList.erase(NotificationList.begin() + index - 1);
+}
+
+// CLEAR inbox file and Notification list
+void Inbox :: clearInbox()
+{
+    clearFile(InboxFILE);
+    NotificationList.clear();
+}
+
+
+// RUN INBOX FEATURE
+void Inbox :: run_Inbox()
+{
+    string choice_Str;
+    int choice_Int;
+    string index_Str;
+    int index_Int;
+
+    int page = 1;
+    int maxPages = NotificationList.size()/4;
+    if ((NotificationList.size() % 4) != 0) maxPages++;
+
+    loadNotifications();
+
+
+    while (true) {        
+        // Display: INBOX MENU
+        do {
+            clearScreen();
+
+            // Display: INBOX TITLE
+            border(205);
+            displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+            border(205);
+
+            // Display: Notifications
+            displayNotifications(page);
+
+            // Display: Options
+            displayCenteredLine_Colored("OPTIONS\n", BOLDWHITE);
+            displayCenteredLine_NoColor("[ 1 ]  Previous Page       [ 3 ]  DELETE");
+            displayCenteredLine_NoColor("[ 2 ]  Next Page           [ 4 ]  CLEAR ");
+            displayCenteredLine_NoColor("             [ R ]  Return              ");
+            cout << "\n";
+            displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
+
+            // Ask for input
+            getline(cin, choice_Str);
+
+            if ((choice_Str == "R") || (choice_Str == "r")) {
+                saveNotifications();
+                return;
+            }
+        } while ((choice_Str != "1") && (choice_Str != "2") && (choice_Str != "3") && (choice_Str != "4"));
+        
+        choice_Int = stoi(choice_Str);
+
+        switch (choice_Int) {
+            case 1:
+                // Display: Previous page
+                if (page > 1) page--;
+                break;
+
+            case 2:
+                // Display: Next Page
+                if (page < maxPages) page++;
+                break;
+            
+            case 3:
+                // Run DELETE FEATURE
+                while (true) {
+                    clearScreen();
+
+                    // Display: INBOX TITLE
+                    border(205);
+                    displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                    border(205);
+
+                    // Display: Notifications
+                    displayNotifications(page);
+
+                    // Display: Options
+                    displayCenteredLine_Colored("OPTIONS: DELETE\n", BOLDWHITE);
+                    displayCenteredLine_NoColor(">> Enter a number of the message you want to delete.");
+                    displayCenteredLine_NoColor(">> Enter 'R' to go back.                            ");
+                    cout << "\n";
+                    displayCenteredLine_NoNewLine(">> Enter valid input: ", CYAN);
+
+                    // Get input from user
+                    getline(cin, index_Str);
+
+                    // Return to INBOX Menu
+                    if ((index_Str == "R") || (index_Str == "r")) break;
+
+                    // Perform DELETE
+                    else if (strIsNumeric(index_Str))
+                    {
+                        index_Int = stoi(index_Str);
+
+                        if ((index_Int > 0) && (index_Int < NotificationList.size()))
+                        {
+                            // Perform: DELETE Notification
+                            deleteNotif(index_Int);
+                            clearScreen();
+
+                            // Display: INBOX TITLE
+                            border(205);
+                            displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                            border(205);
+
+                            // Display: Notifications
+                            displayNotifications(page);
+
+                            // Notify user, Notification successfully deleted
+                            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                            displayCenteredLine_Colored(">> Message deleted SUCCESSFULLY!", YELLOW);
+                            displayCenteredLine_Colored(">> Press 'ENTER' to continue... ", YELLOW);
+                            getchar();
+                        }
+
+                        else {
+                            clearScreen();
+
+                            // Display: INBOX TITLE
+                            border(205);
+                            displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                            border(205);
+
+                            // Display: Notifications
+                            displayNotifications(page);
+
+                            // Notify user, Notification successfully deleted
+                            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                            displayCenteredLine_Colored(">> Message not found...         ", YELLOW);
+                            displayCenteredLine_Colored(">> Press 'ENTER' to continue... ", YELLOW);
+                        }
+                    }
+                }
+                break;
+
+            case 4:
+                break;
+
+            default:
+                break;
+
+        }
     }
 }
 
@@ -371,42 +536,32 @@ void Inbox :: displayNotifications(int page, int msgPerPage)
 
 
 
-/*___________________________________________________________________________________*/
+
+
+
+
+/*-----------------------------------------------------------------------------------*/
 /* ---------------- NOTIFICATIONS: CLASS DEFINITION AND FUNCTIONS ------------------ */
-/*___________________________________________________________________________________*/
+/*-----------------------------------------------------------------------------------*/
 
 /* CLASS definition for NOTIFICATIONS */
 class Notification {
 private:
-    string reminder = "   (OvO)/  Spent anything today? Update your tracker now! \n   Go to UPDATE and record today's transaction\n";
-    string warning = "   (O-O)!  Uh oh... You have exceeded your expense limit!\n   Better tone down the spending when possible!\n";
-    string progressReport_Pos = "   (>u<)/  Your progress is looking great!\n   Take a look at DATA & HISTORY and see how you did.\n";
-    string progressReport_Neg  = "   (O-O)!  Oh no... Your progress is not looking great... \n   Take a look at DATA & HISTORY and see why. \n   Try to limit your expenses whenever possible (;-;)\n";
-    string loginNotif = "   (OwO)/ Hello! Welcome to BitBudget: Expense Tracker!\n   Get started by UPDATEing XD\n";
+    string reminder =               "   (OvO)/  Spent anything today? Update your tracker now! \n    Go to UPDATE and record today's transaction\n";
+    string warning =                "   (O-O)!  Uh oh... You have exceeded your expense limit!\n    Better tone down the spending when possible!\n";
+    string progressReport_Pos =     "   (>u<)/  Your progress is looking great!\n    Take a look at DATA & HISTORY and see how you did.\n";
+    string progressReport_Neg  =    "   (O-O)!  Oh no... Your progress is not looking great... \n    Take a look at DATA & HISTORY and see why. \n   Try to limit your expenses whenever possible (;-;)\n";
+    string loginNotif =             "   (OwO)/ Hello! Welcome to BitBudget: Expense Tracker!\n    Get started by UPDATEing XD\n";
 
 
 public:
-    // Notification GETTERS
-    string getReminder();
-    string getWarning();
-    string getProgressReport_Pos();
-    string getProgressReport_Neg();
-    string getLoginNotif();
-
-    /* List of Notification Class Functions */
-    //
     bool createNotification(int);
-    void deleteNotifs(int);
-    void displayNotifs(int, int);
-    int getTotalNotifs();
 };
-
-string Notification :: getReminder() { return reminder; }
 
 
 // Notification MF: Create NEW NOTIFICATION and write in file: 1 - Reminder, 2 - Warning, 3 - Progress report: Positive, 4 - Progress report, 5 - Log in notification
-bool Notification:: createNotification(int mode) {
-    // Initialize strings for when 
+bool Notification:: createNotification(int mode)
+{
     string current_Time = __TIME__;
 
     // Create new notification based on mode
@@ -446,7 +601,7 @@ bool Notification:: createNotification(int mode) {
             displayCenteredLine_Colored("ERROR [1]", BOLDRED);
             cout << "\n";
 
-            displayCenteredLine_Colored("Unable to open file.", YELLOW);
+            displayCenteredLine_Colored(">> Unable to open file.", YELLOW);
             displayCenteredLine_NoNewLine("Press 'ENTER' to continue...   ", YELLOW);
             getchar();
         return false;
@@ -456,177 +611,6 @@ bool Notification:: createNotification(int mode) {
     return false;
 }
 
-
-
-// Notification MF: Gets the total number of notifications from inbox
-int Notification:: getTotalNotifs()
-{
-    vector<string> notifications;
-    string notif;
-    size_t size;
-
-
-    // Read all notifications from file
-    ifstream inFILE(InboxFILE, ios::binary);
-
-    if (inFILE.is_open()) {
-        while (inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
-        {
-            notif.resize(size);
-            inFILE.read(&notif[0], size);
-            notifications.push_back(notif);
-        }
-
-        inFILE.close();
-        return notifications.size();
-    }
-    else {
-        // File is empty
-        return 0;
-    }
-}
-
-
-
-// Notification CF: Display notifications by page (4 per page)
-void Notification:: displayNotifs(int page = 1, int msg_PerPage = 4)
-{
-    vector<string> notifications;
-    string notif;
-    size_t size;
-
-    // Read all notifications from file
-    ifstream inFILE(InboxFILE, ios::binary);
-    if (inFILE.is_open()) {
-        while (inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
-        {
-            notif.resize(size);
-            inFILE.read(&notif[0], size);
-            notifications.push_back(notif);
-        }
-
-        inFILE.close();
-    }
-    else {
-        // Notify User that file failed to be opened
-        displayCenteredLine_Colored("Your inbox do be looking desolate here...", YELLOW);
-        cout << "\n";
-        displayCenteredLine_Colored("Chile, anyways.", YELLOW);
-        displayCenteredLine_Colored("Be on your merry way and UPDATE your tracker XD", YELLOW);
-
-        cout << "\n\n\n\n\n\n\n";
-        border(196);
-        return;
-    }
-
-    // Display all messages of INBOX by page
-    notifications.shrink_to_fit();
-
-    if (notifications.size() > 0) {
-        int total_Notifs = notifications.size();
-        int total_Pages = notifications.size() / msg_PerPage;
-
-        if ((notifications.size()%msg_PerPage) != 0) total_Pages++;
-        if (page < 1) page = 1;
-
-        int msgIndex = (page - 1) * msg_PerPage;
-        int msg_LastIndex = min(msgIndex + msg_PerPage, total_Notifs);
-
-        for (int i = msgIndex; i < msg_LastIndex; i++)
-        {
-            cout << BOLDWHITE << "[" << (i + 1) << "]: " << RESET << notifications[i] << endl;
-        }
-
-        cout << "\n\n";
-        displayCenteredLine_Colored(to_string(page) + " out of " + to_string(total_Pages) + " pages ", GRAY);
-        border(196);
-        return;
-    }
-    else {
-        // Notify User that INBOX is empty
-        displayCenteredLine_Colored("Your inbox do be looking desolate here...", YELLOW);
-        cout << "\n";
-        displayCenteredLine_Colored("Chile, anyways.", YELLOW);
-        displayCenteredLine_Colored("Be on your merry way and UPDATE your tracker XD", YELLOW);
-        
-        cout << "\n\n\n\n\n";
-        border(196);
-        return;
-    }
-}
-
-
-
-// Notification CF: Delete a single notification from inbox
-void Notification:: deleteNotifs(int index) {
-    // Initializing vector and variables
-    vector<string> notifications;
-    string notif;
-    size_t size;
-
-    // Open file for READING, mode: binary
-    ifstream inFILE(InboxFILE, ios::binary);
-
-    // Get all notifs, store in a vector temporarily
-    while (inFILE.read(reinterpret_cast<char*>(&size), sizeof(size))){
-        notif.resize(size);
-        inFILE.read(&notif[0], size);
-        notifications.push_back(notif);
-    }
-
-    // Close file
-    inFILE.close();
-
-    // Delete notification at said index
-    if ((index > 0) && (index <= notifications.size()))
-    {
-        // Erase notification at said index
-        notifications.erase(notifications.begin() + index - 1);
-
-        // Open file for WRITING, mode: binary, trunc(clear file contents and rewrite)
-        ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
-
-        // Write all messages from vector to file
-        if (outFILE.is_open()) {
-            // Write all messages back into file
-            for (const string& notif : notifications) {
-                size = notif.size();
-                outFILE.write(reinterpret_cast<char*>(&size), sizeof(size));
-                outFILE.write(notif.c_str(), size);
-            }
-
-            // Close file
-            outFILE.close();
-
-            // Notify User that message was successfully deleted
-            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-            cout << "\n";
-
-            displayCenteredLine_Colored("Message successfully deleted.", YELLOW);
-            displayCenteredLine_NoNewLine("Press 'ENTER' to continue...   ", YELLOW);
-            getchar();
-
-        }
-        else {
-            // ERROR [2]: Notify User that file failed to be opened
-            displayCenteredLine_Colored("ERROR [2]", BOLDRED);
-            cout << "\n";
-
-            displayCenteredLine_Colored("Unable to open file.", YELLOW);
-            displayCenteredLine_NoNewLine("Press 'ENTER' to continue...   ", YELLOW);
-            getchar();
-        }
-    }
-    else {
-        // Notify User that Message DNE at said index
-        displayCenteredLine_Colored("WARNING", BOLDRED);
-        cout << "\n";
-
-        displayCenteredLine_Colored("No such message number exists.", YELLOW);
-        displayCenteredLine_NoNewLine("Press 'ENTER' and enter a valid input...   ", YELLOW);
-        getchar();
-    }
-}
 
 
 
@@ -642,50 +626,17 @@ void Notification:: deleteNotifs(int index) {
 /*--------------------------- DISPLAY FUNCTIONS FOR INBOX ---------------------------*/
 /*___________________________________________________________________________________*/
 
-// DISPLAY options for INBOX, 1 - INBOX feature 3, 2 - INBOX feature 4, 3 - INBOX menu options
-void inbox_Options(int choice) {
-    switch (choice) {
-        case 1:
-            /* INBOX feature #3 */
-            displayCenteredLine_Colored("OPTIONS: DELETE\n", BOLDWHITE);
-            displayCenteredLine_NoColor(">> Enter a number of the message you want to delete.");
-            displayCenteredLine_NoColor(">> Enter 'R' to go back.                          \n");
-            displayCenteredLine_NoNewLine(">> Enter valid input: ", CYAN);
-            break;
+//         case 2:
+//             /* INBOX feature #4 */
+//             displayCenteredLine_Colored(">> Do you want to CLEAR your inbox?\n", YELLOW);
+//             cout << "\n\n\n\n\n";
+//             border(196);
+//             displayCenteredLine_Colored("OPTIONS: DELETE\n", BOLDWHITE);
+//             displayCenteredLine_NoColor("[ Y ]  YES        ");
+//             displayCenteredLine_NoColor("[ N ]  NO, Return\n");
+//             displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
+//             break;
 
-        case 2:
-            /* INBOX feature #4 */
-            displayCenteredLine_Colored(">> Do you want to CLEAR your inbox?\n", YELLOW);
-            cout << "\n\n\n\n\n";
-            border(196);
-            displayCenteredLine_Colored("OPTIONS: DELETE\n", BOLDWHITE);
-            displayCenteredLine_NoColor("[ Y ]  YES        ");
-            displayCenteredLine_NoColor("[ N ]  NO, Return\n");
-            displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
-            break;
-
-        case 3:
-            /* INBOX menu options */
-            displayCenteredLine_Colored("OPTIONS\n", BOLDWHITE);
-            displayCenteredLine_NoColor("[ 1 ]  Previous Page       [ 3 ]  DELETE");
-            displayCenteredLine_NoColor("[ 2 ]  Next Page           [ 4 ]  CLEAR ");
-            displayCenteredLine_NoColor("             [ R ]  Return          \n");
-            displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
-            break;
-        
-        default:
-            break;
-    }
-}
-
-
-
-// DISPLAY inbox title
-void inbox_Title() {
-    border(205);
-    displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
-    border(205);
-}
 
 
 
@@ -702,150 +653,62 @@ void inbox_Title() {
 /*___________________________________________________________________________________*/
 /*---------------------------------- INBOX FEATURE ----------------------------------*/
 /*___________________________________________________________________________________*/
+//             case 4:
+//                 /* CLEAR INBOX */
+//                 while (true) {
+//                     // Display CLEAR INBOX menu
+//                     clearScreen();
+//                     inbox_Title();
+//                     inbox_Options(2);
 
-// RUN INBOX feature
-void run_INBOX() {
-    Notification notifs_Handler;
+//                     // Ask user for confirmation
+//                     getline(cin, input_Str);
 
-    string choice_Str;
-    int choice_Int;
+//                     // CLEAR file if confirmed Y/y
+//                     if ((input_Str == "Y") || (input_Str == "y")) {
+//                         clearFile(InboxFILE);
 
-    string input_Str;
-    int input_Int;
+//                         if (notifs_Handler.getTotalNotifs() == 0) {
+//                             // Notify user that action CLEAR INBOX was successful
+//                             clearScreen();
+//                             inbox_Title();
 
-    // For displaying pages
-    int page = 1;
-    int pageMax = notifs_Handler.getTotalNotifs() / 4;
-    if ((notifs_Handler.getTotalNotifs() % 4) != 0) pageMax++;
+//                             displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+//                             cout << "\n";
 
-    // Continue running INBOX until user enters R/r
-    while (true) {
-        // INBOX menu
-        do {
-            clearScreen();
-            inbox_Title();
-            notifs_Handler.displayNotifs(page);
-            inbox_Options(3);
+//                             displayCenteredLine_Colored("INBOX successfully cleared.", YELLOW);
+//                             displayCenteredLine_NoNewLine("Press 'ENTER' to return to INBOX menu...   ", YELLOW);
+//                             getchar();
+//                             break;
+//                         }
+//                         else {
+//                             // ERROR [2]: Notify User that file failed to opened
+//                             clearScreen();
+//                             inbox_Title();
 
-            // Ask user what feature to perform
-            getline(cin, choice_Str);
+//                             displayCenteredLine_Colored("ERROR [3]", BOLDRED);
+//                             cout << "\n";
 
-            // EXIT INBOX menu if input is R/r
-            if ((choice_Str == "R") || (choice_Str == "r")) {
-                return ;
-            }
-        } while ((choice_Str != "1") && (choice_Str != "2") && (choice_Str != "3") && (choice_Str != "4"));
-
-        choice_Int = stoi(choice_Str);
-
-        // Perform 
-        switch (choice_Int)
-        {
-            case 1:
-                /* ----- Display PREVIOUS PAGE ----- */
-                if (page > 1) page--;
-                break;
+//                             displayCenteredLine_Colored("Unable to open file & delete notifications.", YELLOW);
+//                             displayCenteredLine_NoNewLine("Press 'ENTER' to return to INBOX menu...   ", YELLOW);
+//                             getchar();
+//                             break;
+//                         }
+//                     }
+//                     // Return to INBOX menu if input is N/n
+//                     else if ((input_Str == "N") || (input_Str == "n")) {
+//                         break;
+//                     }
+//                 }
+//                 break;
             
 
-            case 2:
-                /* ----- Display NEXT PAGE ----- */
-                if (page < pageMax) page++;
-                break;
-            
-
-            case 3:
-                /* ----- DELETE a notif message ----- */
-                while (true)
-                {
-                    // Display DELETE menu
-                    clearScreen();
-                    inbox_Title();
-                    notifs_Handler.displayNotifs(page);
-                    inbox_Options(1);
-
-                    // Ask user for an int input
-                    getline(cin, input_Str);
-
-                    // Return to menu
-                    if ((input_Str == "R") || (input_Str == "r")) {
-                        break;
-                    }
-
-                    // Perform DELETE
-                    else if ((strIsNumeric(input_Str) && (input_Str.size() != 0))) {
-                        // Transform input to Int
-                        input_Int = stoi(input_Str);
-
-                        // Display DELETE Menu + Notify user about deleted message
-                        clearScreen();
-                        inbox_Title();
-                        notifs_Handler.displayNotifs(page);
-                        notifs_Handler.deleteNotifs(input_Int);
-
-                        // Update total pages of INBOX
-                        pageMax = notifs_Handler.getTotalNotifs() / 4;
-                        if ((notifs_Handler.getTotalNotifs() % 4) != 0) pageMax++;
-                    }
-                }
-                break;
-            
-
-            case 4:
-                /* CLEAR INBOX */
-                while (true) {
-                    // Display CLEAR INBOX menu
-                    clearScreen();
-                    inbox_Title();
-                    inbox_Options(2);
-
-                    // Ask user for confirmation
-                    getline(cin, input_Str);
-
-                    // CLEAR file if confirmed Y/y
-                    if ((input_Str == "Y") || (input_Str == "y")) {
-                        clearFile(InboxFILE);
-
-                        if (notifs_Handler.getTotalNotifs() == 0) {
-                            // Notify user that action CLEAR INBOX was successful
-                            clearScreen();
-                            inbox_Title();
-
-                            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-                            cout << "\n";
-
-                            displayCenteredLine_Colored("INBOX successfully cleared.", YELLOW);
-                            displayCenteredLine_NoNewLine("Press 'ENTER' to return to INBOX menu...   ", YELLOW);
-                            getchar();
-                            break;
-                        }
-                        else {
-                            // ERROR [2]: Notify User that file failed to opened
-                            clearScreen();
-                            inbox_Title();
-
-                            displayCenteredLine_Colored("ERROR [3]", BOLDRED);
-                            cout << "\n";
-
-                            displayCenteredLine_Colored("Unable to open file & delete notifications.", YELLOW);
-                            displayCenteredLine_NoNewLine("Press 'ENTER' to return to INBOX menu...   ", YELLOW);
-                            getchar();
-                            break;
-                        }
-                    }
-                    // Return to INBOX menu if input is N/n
-                    else if ((input_Str == "N") || (input_Str == "n")) {
-                        break;
-                    }
-                }
-                break;
-            
-
-            default:
-                /* Perform nothing */
-                break;
-        }
-    }
-}
+//             default:
+//                 /* Perform nothing */
+//                 break;
+//         }
+//     }
+// }
 
 
 
@@ -993,6 +856,7 @@ string getDate_Today()
 int main()
 {
     Notification MM_NotifsHandler;
+    Inbox inboxHandler;
 
     bool alert_NewNotif = true;
     bool alert_NewLogIn = MM_NotifsHandler.createNotification(5);
@@ -1045,7 +909,7 @@ int main()
             
             case 2:
                 /* INBOX FEATURE */
-                run_INBOX();
+                inboxHandler.run_Inbox();
                 break;
             
             case 3:
