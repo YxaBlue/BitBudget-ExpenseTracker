@@ -24,6 +24,19 @@ const string AllowancesFILE = "ALLOWANCEHistory.bin";
 #define WHITE "\033[37m"
 #define BOLDWHITE "\033[1m\033[37m"
 
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+#define GRAY    "\033[2m\033[37m"           /* Gray */
+
+#define BOLDGREEN   "\033[1m\033[32m"       /* Bold Green */
+#define BOLDYELLOW  "\033[1m\033[33m"       /* Bold Yellow */
+#define BOLDRED     "\033[1m\033[31m"       /* Bold Red */
+
+#define BOLDDARKGREEN   "\033[1m\033[2m\033[32m"       /* Bold Dark Green */
 
 
 
@@ -31,23 +44,84 @@ const string AllowancesFILE = "ALLOWANCEHistory.bin";
 
 
 
-void displayUpdateMenu(); 
+
+/*_________________________________________________________________________________*/
+/*------------ FILENAMES: UPDATE, INBOX, and DATA & HISTORY FEATURE ---------------*/
+/*_________________________________________________________________________________*/
+const string UserStatusFILE = "UserSTATUS.bin";
+const string LimitSavingsFILE = "LimitAndSavings.bin";
+
+const string CategoryListFILE = "CATEGORYList.bin";
+const string InboxFILE = "Inbox.bin";
+
+
+
+
+
+/*_________________________________________________________________________________*/
+/*-------------------------------- FUNCTIONS LIST: --------------------------------*/
+/*_________________________________________________________________________________*/
+
 void border(char, int);
-void displayCenteredLine(const string &, int);
-void displayCenteredLine(const string &, const string &, int);
+void displayCenteredLine_NoColor(const string, int);
+void displayCenteredLine_Colored(const string, const string, int);
+void displayCenteredLine_NoNewLine(const string, const string, int);
 void clearScreen();
 
+void clearFile(string);
+bool strIsNumeric(string);
+
+bool validateDate(const string &);
+bool validateDateFormat(const string &);
 
 
 
 
 
 
-void border(char c, int length = 60) {
+
+/*_________________________________________________________________________________*/
+/*------------------------ DISPLAY TEXT-STYLE UI FUNCTIONS ------------------------*/
+/*_________________________________________________________________________________*/
+// Function to print a border with a given character
+void border(char c, int length = 150) {
     for (int i = 0; i < length; i++) cout << c;
-    cout << "\n";
+    cout << endl;
 }
 
+// Function to display centered lines
+void displayCenteredLine_NoColor(const string &line, int width = 150) {
+    int padLen = (width - line.size()) / 2;
+    cout << string(padLen, ' ') << line << endl;
+}
+
+// Function to display centered lines with a color
+void displayCenteredLine_Colored(const string &line, const string &color, int width = 150) {
+    int padLen = (width - line.size()) / 2;
+    cout << color << string(padLen, ' ') << line << RESET << endl;
+}
+
+// Function to display centered lines with color (no '\n')
+void displayCenteredLine_NoNewLine(const string &line, const string &color, int width = 150) {
+    int padLen = (width - line.size()) / 2;
+    cout << color << string(padLen, ' ') << line << RESET;
+}
+
+// Function to clear the console screen
+void clearScreen() {
+    #if defined(_WIN32) || defined(_WIN64)
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 void displayCenteredLine(const string &line, int width = 60) {
     int padLen = (width - line.size()) / 2;
     cout << string(padLen, ' ') << line << string(width - padLen - line.size(), ' ') << endl;
@@ -56,14 +130,6 @@ void displayCenteredLine(const string &line, int width = 60) {
 void displayCenteredLine(const string &line, const string &color, int width = 60) {
     int padLen = (width - line.size()) / 2;
     cout << color << string(padLen, ' ') << line << string(width - padLen - line.size(), ' ') << RESET << endl;
-}
-
-void clearScreen() {
-    #if defined(_WIN32) || defined(_WIN64)
-    system("cls");
-    #else
-    system("clear");
-    #endif
 }
 
 bool validateDateFormat(const string &date) {
@@ -117,6 +183,7 @@ bool validateSecondDate(const string &firstDate, const string &secondDate) {
     return false;
 }
 
+void displayUpdateMenu(); 
 
 class Expense {
 private:
@@ -162,9 +229,6 @@ istream& operator>>(istream& is, Expense& expense) {
     if (!is.good()) throw runtime_error("Error reading amount from file");
     return is;
 }
-
-
-
 
 class Allowance {
 private:
@@ -228,15 +292,19 @@ istream& operator>>(istream& is, Allowance& allowance) {
 class Budget {
 private:
     double totalBudget;
-    vector<Expense> expenses;
     double expenseLimit;
+
     double savingsGoal;
     double currentSavings;
+
     string expenseStartDate;
     string expenseDueDate;
+
     string savingsStartDate;
     string savingsDueDate;
+
     vector<Allowance> allowances;
+    vector<Expense> expenses;
 
     void calculateCurrentSavings() {
         currentSavings = 0.0;
@@ -521,22 +589,24 @@ public:
 
             cout << string(menuWidth, '-') << endl;
             displayCenteredLine("Options", BOLDWHITE, menuWidth);
-            displayCenteredLine("[1] Previous Page", BOLDWHITE, menuWidth);
-            displayCenteredLine("[2] Next Page", BOLDWHITE, menuWidth);
-            displayCenteredLine("[3] Edit (ADD ALLOWANCE)", BOLDWHITE, menuWidth);
-            displayCenteredLine("[4] Edit (DELETE ALLOWANCE)", BOLDWHITE, menuWidth);
-            displayCenteredLine("[R] Return", BOLDWHITE, menuWidth);
+            displayCenteredLine("[ 1 ] Previous Page          [ 3 ] Edit (ADD ALLOWANCE)   ", BOLDWHITE, menuWidth);
+            displayCenteredLine("[ 2 ] Next Page              [ 4 ] Edit (DELETE ALLOWANCE)", BOLDWHITE, menuWidth);
+            displayCenteredLine("[ R ] Return", BOLDWHITE, menuWidth);
             displayCenteredLine("", menuWidth);
-            displayCenteredLine(">> Enter number: ", CYAN, menuWidth);
+            displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
             string input;
             cin >> input;
 
             if (input == "1") {
                 if (page > 0) page--;
-            } else if (input == "2") {
+            }
+            
+            else if (input == "2") {
                 if ((page + 1) * itemsPerPage < allowances.size()) page++;
-            } else if (input == "3") {
+            }
+            
+            else if (input == "3") {
                 string date, account, description;
                 double amount;
                 cout << "Enter date (MM/DD/YYYY): ";
@@ -545,18 +615,22 @@ public:
                     cout << "Invalid date format. Please try again." << endl;
                     continue;
                 }
-                cout << "Enter amount: ";
+                cout << "Enter amount:            ";
                 cin >> amount;
-                cout << "Enter account: ";
+                cout << "Enter account:           ";
                 cin >> account;
-                cout << "Enter description: ";
+                cout << "Enter description:       ";
                 cin.ignore();
                 getline(cin, description);
 
                 Allowance newAllowance(date, amount, account, description);
                 addAllowance(newAllowance);
+
                 cout << "New allowance added." << endl;
-            } else if (input == "4") {
+                getchar();
+            }
+            
+            else if (input == "4") {
                 int index;
                 cout << "Enter index to delete (1-" << allowances.size() << "): ";
                 cin >> index;
@@ -564,14 +638,21 @@ public:
                 if (index >= 0 && index < allowances.size()) {
                     removeAllowance(index);
                     cout << "Allowance deleted." << endl;
+                    getchar();
+
                 } else {
                     cout << "Invalid index. Please try again." << endl;
                 }
-            } else if (input == "R" || input == "r") {
+            }
+            
+            else if (input == "R" || input == "r") {
                 saveState();
                 return;
-            } else {
+            }
+            
+            else {
                 cout << "Invalid option, please try again." << endl;
+                getchar();
             }
         }
     }
@@ -597,6 +678,118 @@ public:
     }
 };
 
+
+/*---------------------------------------------------------------------*/
+class Transaction
+{
+private:
+    vector<Allowance> Allowance_History;
+    vector<Expense> Expense_History;
+    vector<Budget> UserStatus;
+
+
+
+public:
+    friend ostream& operator<<(ostream& os, const Allowance& allowance);
+    friend istream& operator>>(istream& is, const Allowance& allowance);
+
+    
+    
+};
+
+void displayTitle_Transaction();
+void displayMainMenu_Transaction();
+void displayOptions_Transaction(int);
+void run_TRANSACTION();
+
+
+void displayTitle_Transaction() {
+    border(205);
+    displayCenteredLine_Colored("UPDATE: TRANSACTION", BLUE);
+    border(205);
+}
+
+// TRANSACTION: Display OPTIONS. (1-Transaction Menu,, 2-OptionDelete)
+void displayOptions_Transaction(int option) {
+    switch (option) {
+        case 1:
+            /* TRANSACTION MENU Options */
+            displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+            displayCenteredLine_NoColor("[ 1 ]  ADD   ");
+            displayCenteredLine_NoColor("[ 2 ]  DELETE");
+            displayCenteredLine_NoColor("[ R ]  RETURN");
+            cout << "\n\n";
+            border(196);
+            displayCenteredLine_NoNewLine(">> Enter choice:  ", CYAN);
+            break;
+
+        case 2:
+            /* DELETE TRANSACTION Options */
+            displayCenteredLine_Colored("OPTIONS: DELETE", BOLDWHITE);
+            displayCenteredLine_NoColor(">> Enter a TRANSACTION NUMBER to DELETE      ");
+            displayCenteredLine_NoColor(">> Enter [ R ] to RETURN to Transaction Menu.");
+            cout << "\n\n";
+            displayCenteredLine_NoNewLine(">> Enter number/choice: ", CYAN);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void run_TRANSACTION() {
+    string choice_Str;
+    int choice_Int;
+
+    while (true) {
+        do {
+            /* ------------- TRANSACTION: MAIN MENU ------------- */
+            clearScreen();
+            displayTitle_Transaction();
+
+            // display STATUS: Current allowance, List of transactions of today
+            
+            cout << "\n\n";
+            border(196);
+            displayOptions_Transaction(1);
+            getline(cin, choice_Str);
+
+            if ((choice_Str == "R") || (choice_Str == "r")) {
+                // End TRANSACTION feature, return to MAIN MENU
+                return;
+            }
+        } while ((choice_Str != "1") && (choice_Str != "2") && (choice_Str != "3"));
+        
+        choice_Int = stoi(choice_Str);
+
+        switch (choice_Int) {
+            case 1:
+                /* ---------- ADD Transaction Feature ---------- */
+                break;
+
+            case 2:
+                /* ---------- DELETE Transaction Feature ---------- */
+                break;
+            
+            case 3:
+                /* ---------- EDIT Transaction Feature ---------- */
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
 int main() {
     Budget budget;
     budget.loadExpenses();
@@ -613,12 +806,13 @@ int main() {
         try {
             if (input == "1") {
                 budget.displaySetLimitExpensesMenu();
+
             } else if (input == "2") {
                 budget.displaySetSavingsMenu();
             } else if (input == "3") {
                 budget.displayUpdateAllowanceMenu();
             } else if (input == "4") {
-                // Handle option 4
+                run_TRANSACTION();
             } else {
                 cout << "Invalid option, please try again.\n";
             }
