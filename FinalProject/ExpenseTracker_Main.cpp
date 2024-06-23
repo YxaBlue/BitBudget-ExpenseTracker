@@ -260,6 +260,11 @@ void print_QuitMenu() {
 
 
 
+
+
+
+
+
 /*________________________________________________________________________________________________________________________________________________________________*/
 /*________________________________________________________________________________________________________________________________________________________________*/
 /*------------------------------------------------------------- BITBUDGET: INBOX FUNCTIONS -----------------------------------------------------------------------*/
@@ -333,9 +338,6 @@ void Inbox :: saveNotifications()
 }
 
 
-
-
-
 // DISPLAY notifications by page
 void Inbox :: displayNotifications(int page = 1, int msgPerPage = 4)
 {
@@ -378,6 +380,7 @@ void Inbox :: displayNotifications(int page = 1, int msgPerPage = 4)
     }
 }
 
+
 // DELETE notification by index
 void Inbox :: deleteNotif(int index)
 {
@@ -385,12 +388,19 @@ void Inbox :: deleteNotif(int index)
     NotificationList.erase(NotificationList.begin() + index - 1);
 }
 
+
 // CLEAR inbox file and Notification list
 void Inbox :: clearInbox()
 {
     clearFile(InboxFILE);
     NotificationList.clear();
 }
+
+
+
+
+
+
 
 
 // RUN INBOX FEATURE
@@ -455,6 +465,8 @@ void Inbox :: run_Inbox()
                 break;
             
             case 3:
+                if (NotificationList.size() == 0) break;
+
                 // Run DELETE FEATURE
                 while (true) {
                     clearScreen();
@@ -532,6 +544,7 @@ void Inbox :: run_Inbox()
                 break;
 
             case 4:
+                if (NotificationList.size() == 0) break;
                 while (true)
                 {
                     clearScreen();
@@ -545,8 +558,6 @@ void Inbox :: run_Inbox()
                     displayNotifications(page);
 
                     // Display: Options
-                    cout << "\n\n\n\n\n";
-                    border(196);
                     displayCenteredLine_Colored("OPTIONS: CLEAR", BOLDWHITE);
                     cout << "\n";
                     displayCenteredLine_Colored(">> Do you want to CLEAR your inbox?", YELLOW);
@@ -603,7 +614,7 @@ void Inbox :: run_Inbox()
 
 
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ---------------- NOTIFICATIONS: CLASS DEFINITION AND FUNCTIONS ------------------ */
 /*-----------------------------------------------------------------------------------*/
 
@@ -660,123 +671,16 @@ bool Notification:: createNotification(int mode)
     }
     else {
         // Notify User if file failed to open
-        // ERROR [1]: Notify User that file failed to be opened
-            displayCenteredLine_Colored("ERROR [1]", BOLDRED);
+            displayCenteredLine_Colored("ERROR", BOLDRED);
             cout << "\n";
-
-            displayCenteredLine_Colored(">> Unable to open file.", YELLOW);
+            displayCenteredLine_Colored(">> Unable to open file.        ", YELLOW);
             displayCenteredLine_NoNewLine("Press 'ENTER' to continue...   ", YELLOW);
             getchar();
         return false;
     }
 
-
     return false;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-/*___________________________________________________________________________________*/
-/*--------------------------- DISPLAY FUNCTIONS FOR INBOX ---------------------------*/
-/*___________________________________________________________________________________*/
-
-//         case 2:
-//             /* INBOX feature #4 */
-//             displayCenteredLine_Colored(">> Do you want to CLEAR your inbox?\n", YELLOW);
-//             cout << "\n\n\n\n\n";
-//             border(196);
-//             displayCenteredLine_Colored("OPTIONS: DELETE\n", BOLDWHITE);
-//             displayCenteredLine_NoColor("[ Y ]  YES        ");
-//             displayCenteredLine_NoColor("[ N ]  NO, Return\n");
-//             displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
-//             break;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*___________________________________________________________________________________*/
-/*---------------------------------- INBOX FEATURE ----------------------------------*/
-/*___________________________________________________________________________________*/
-//             case 4:
-//                 /* CLEAR INBOX */
-//                 while (true) {
-//                     // Display CLEAR INBOX menu
-//                     clearScreen();
-//                     inbox_Title();
-//                     inbox_Options(2);
-
-//                     // Ask user for confirmation
-//                     getline(cin, input_Str);
-
-//                     // CLEAR file if confirmed Y/y
-//                     if ((input_Str == "Y") || (input_Str == "y")) {
-//                         clearFile(InboxFILE);
-
-//                         if (notifs_Handler.getTotalNotifs() == 0) {
-//                             // Notify user that action CLEAR INBOX was successful
-//                             clearScreen();
-//                             inbox_Title();
-
-//                             displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-//                             cout << "\n";
-
-//                             displayCenteredLine_Colored("INBOX successfully cleared.", YELLOW);
-//                             displayCenteredLine_NoNewLine("Press 'ENTER' to return to INBOX menu...   ", YELLOW);
-//                             getchar();
-//                             break;
-//                         }
-//                         else {
-//                             // ERROR [2]: Notify User that file failed to opened
-//                             clearScreen();
-//                             inbox_Title();
-
-//                             displayCenteredLine_Colored("ERROR [3]", BOLDRED);
-//                             cout << "\n";
-
-//                             displayCenteredLine_Colored("Unable to open file & delete notifications.", YELLOW);
-//                             displayCenteredLine_NoNewLine("Press 'ENTER' to return to INBOX menu...   ", YELLOW);
-//                             getchar();
-//                             break;
-//                         }
-//                     }
-//                     // Return to INBOX menu if input is N/n
-//                     else if ((input_Str == "N") || (input_Str == "n")) {
-//                         break;
-//                     }
-//                 }
-//                 break;
-            
-
-//             default:
-//                 /* Perform nothing */
-//                 break;
-//         }
-//     }
-// }
-
-
-
-
-
 
 
 
