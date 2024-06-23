@@ -24,6 +24,25 @@ const string AllowancesFILE = "ALLOWANCEHistory.bin";
 #define WHITE "\033[37m"
 #define BOLDWHITE "\033[1m\033[37m"
 
+
+
+
+
+
+
+
+void displayUpdateMenu(); 
+void border(char, int);
+void displayCenteredLine(const string &, int);
+void displayCenteredLine(const string &, const string &, int);
+void clearScreen();
+
+
+
+
+
+
+
 void border(char c, int length = 60) {
     for (int i = 0; i < length; i++) cout << c;
     cout << "\n";
@@ -98,7 +117,6 @@ bool validateSecondDate(const string &firstDate, const string &secondDate) {
     return false;
 }
 
-void displayUpdateMenu(); 
 
 class Expense {
 private:
@@ -144,6 +162,9 @@ istream& operator>>(istream& is, Expense& expense) {
     if (!is.good()) throw runtime_error("Error reading amount from file");
     return is;
 }
+
+
+
 
 class Allowance {
 private:
