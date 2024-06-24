@@ -696,7 +696,7 @@ private:
     string expenseDueDate;
     string savingsStartDate;
     string savingsDueDate;
-    vector<Allowance> allowances;
+    vector<Allowance> allowancesList;
 
     void calculateCurrentSavings();
 
@@ -749,7 +749,7 @@ public:
 void Budget :: calculateCurrentSavings()
 {
     currentSavings = 0.0;
-    for (const auto& allowance : allowances) {
+    for (const auto& allowance : allowancesList) {
         currentSavings += allowance.getAmount();
     }
 }
@@ -803,7 +803,7 @@ void Budget :: loadAllowances()
         while (inFile.peek() != EOF) {
             Allowance allowance("", 0.0, "", "");
             inFile >> allowance;
-            allowances.push_back(allowance);
+            allowancesList.push_back(allowance);
         }
         inFile.close();
         calculateCurrentSavings();
@@ -815,7 +815,7 @@ void Budget :: saveAllowances() const
 {
     ofstream outFile(AllowancesFILE, ios::binary);
     if (outFile.is_open()) {
-        for (const auto& allowance : allowances) {
+        for (const auto& allowance : allowancesList) {
             outFile << allowance;
         }
         outFile.close();
@@ -844,7 +844,7 @@ void Budget :: addExpense(const Expense& expense)
 
 void Budget :: addAllowance(const Allowance& allowance)
 {
-    allowances.push_back(allowance);
+    allowancesList.push_back(allowance);
     saveAllowances();
     calculateCurrentSavings();
 }
@@ -852,8 +852,8 @@ void Budget :: addAllowance(const Allowance& allowance)
 
 void Budget :: removeAllowance(int index)
 {
-    if (index >= 0 && index < allowances.size()) {
-        allowances.erase(allowances.begin() + index);
+    if (index >= 0 && index < allowancesList.size()) {
+        allowancesList.erase(allowancesList.begin() + index);
         saveAllowances();
         calculateCurrentSavings();
     } else {
@@ -1055,14 +1055,14 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
         displayCenteredLine_NoColor("", menuWidth);
 
         int start = page * itemsPerPage;
-        int end = min(start + itemsPerPage, static_cast<int>(allowances.size()));
+        int end = min(start + itemsPerPage, static_cast<int>(allowancesList.size()));
 
         // Display headers
         cout << setw(15) << left << "Date" << setw(15) << "Amount" << setw(20) << "Account" << setw(50) << "Description" << endl;
         cout << string(menuWidth, '-') << endl;
 
         for (int i = start; i < end; ++i) {
-            const Allowance &allowance = allowances[i];
+            const Allowance &allowance = allowancesList[i];
             cout << setw(15) << left << allowance.getDate() << setw(15) << allowance.getAmount()
                     << setw(20) << allowance.getAccount() << setw(50) << allowance.getDescription() << endl;
         }
@@ -1083,7 +1083,7 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
         if (input == "1") {
             if (page > 0) page--;
         } else if (input == "2") {
-            if ((page + 1) * itemsPerPage < allowances.size()) page++;
+            if ((page + 1) * itemsPerPage < allowancesList.size()) page++;
         } else if (input == "3") {
             string date, account, description;
             double amount;
@@ -1106,10 +1106,10 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
             cout << "New allowance added." << endl;
         } else if (input == "4") {
             int index;
-            cout << "Enter index to delete (1-" << allowances.size() << "): ";
+            cout << "Enter index to delete (1-" << allowancesList.size() << "): ";
             cin >> index;
             index--;
-            if (index >= 0 && index < allowances.size()) {
+            if (index >= 0 && index < allowancesList.size()) {
                 removeAllowance(index);
                 cout << "Allowance deleted." << endl;
             } else {
@@ -1258,9 +1258,9 @@ void DataAndHistory :: filterExpenseData_ByDate(const string Date)
 
     // Display TITLE of each column
     cout << line;
-    displayTxtByColumn_CENTERED("AMOUNT", BOLDGREEN, COLUMN_WIDTH);
-    displayTxtByColumn_CENTERED("CATEGORY", BOLDGREEN, COLUMN_WIDTH);
-    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDGREEN, COLUMN_WIDTH);
+    displayTxtByColumn_CENTERED("AMOUNT", BOLDGREEN, COLUMN_AMT);
+    displayTxtByColumn_CENTERED("CATEGORY", BOLDGREEN, COLUMN_AMT);
+    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDGREEN, COLUMN_AMT);
     cout << "\n";
 
     // Display expenses with said date
@@ -1269,8 +1269,8 @@ void DataAndHistory :: filterExpenseData_ByDate(const string Date)
         if (Date == expense.getDate()) {
             totalAmount += expense.getAmount();
             cout << line;
-            displayTxtByColumn(to_string(expense.getAmount()), WHITE, COLUMN_WIDTH);
-            displayTxtByColumn(expense.getCategory(), WHITE, COLUMN_WIDTH);
+            displayTxtByColumn(to_string(expense.getAmount()), WHITE, COLUMN_AMT);
+            displayTxtByColumn(expense.getCategory(), WHITE, COLUMN_AMT);
             displayTxtByColumn_NB(expense.getDescription(), WHITE, 3);
             cout << "\n";
         }
@@ -1279,8 +1279,8 @@ void DataAndHistory :: filterExpenseData_ByDate(const string Date)
     // If there is no such date, print empty slots as dummy
     if (totalAmount == 0) {
         for (int i = 0; i < 5; i++) {
-            displayTxtByColumn("0.00", WHITE, COLUMN_WIDTH);
-            displayTxtByColumn("-----", WHITE, COLUMN_WIDTH);
+            displayTxtByColumn("0.00", WHITE, COLUMN_AMT);
+            displayTxtByColumn("-----", WHITE, COLUMN_AMT);
             displayTxtByColumn_NB("-----", WHITE, 3);
         }
     }
@@ -1288,8 +1288,8 @@ void DataAndHistory :: filterExpenseData_ByDate(const string Date)
 
     // Display total amount
     cout << line;
-    displayTxtByColumn_CENTERED("Total:", BOLDWHITE, COLUMN_WIDTH);
-    displayTxtByColumn_CENTERED_NB(to_string(totalAmount), BOLDWHITE, COLUMN_WIDTH);
+    displayTxtByColumn_CENTERED("Total:", BOLDWHITE, COLUMN_AMT);
+    displayTxtByColumn_CENTERED_NB(to_string(totalAmount), BOLDWHITE, COLUMN_AMT);
 }
 
 
@@ -1302,9 +1302,9 @@ void DataAndHistory :: filterExpenseData_ByCategory(const string Category)
 
     // Display TITLE of each column
     cout << line;
-    displayTxtByColumn_CENTERED("AMOUNT", BOLDGREEN, COLUMN_WIDTH);
-    displayTxtByColumn_CENTERED("DATE", BOLDGREEN, COLUMN_WIDTH);
-    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDGREEN, COLUMN_WIDTH);
+    displayTxtByColumn_CENTERED("AMOUNT", BOLDGREEN, COLUMN_AMT);
+    displayTxtByColumn_CENTERED("DATE", BOLDGREEN, COLUMN_AMT);
+    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDGREEN, COLUMN_AMT);
     cout << "\n";
 
     // Display expenses with said category
@@ -1312,8 +1312,8 @@ void DataAndHistory :: filterExpenseData_ByCategory(const string Category)
     {
         if (Category == expense.getCategory()) {
             cout << line;
-            displayTxtByColumn(to_string(expense.getAmount()), WHITE, COLUMN_WIDTH);
-            displayTxtByColumn(expense.getDate(), WHITE, COLUMN_WIDTH);
+            displayTxtByColumn(to_string(expense.getAmount()), WHITE, COLUMN_AMT);
+            displayTxtByColumn(expense.getDate(), WHITE, COLUMN_AMT);
             displayTxtByColumn_NB(expense.getDescription(), WHITE, 3);
             cout << "\n";
         }
@@ -1322,8 +1322,8 @@ void DataAndHistory :: filterExpenseData_ByCategory(const string Category)
     // If there is no such category, print empty slots as dummy
     if (totalAmount == 0) {
         for (int i = 0; i < 5; i++) {
-            displayTxtByColumn("0.00", WHITE, COLUMN_WIDTH);
-            displayTxtByColumn("--/--/----", BOLDWHITE, COLUMN_WIDTH);
+            displayTxtByColumn("0.00", WHITE, COLUMN_AMT);
+            displayTxtByColumn("--/--/----", BOLDWHITE, COLUMN_AMT);
             displayTxtByColumn_NB("-----", WHITE, 3);
         }
     }
@@ -1332,8 +1332,8 @@ void DataAndHistory :: filterExpenseData_ByCategory(const string Category)
 
     // Display total amount
     cout << line;
-    displayTxtByColumn_CENTERED("Total:", BOLDWHITE, COLUMN_WIDTH);
-    displayTxtByColumn_CENTERED_NB(to_string(totalAmount), BOLDWHITE, COLUMN_WIDTH);
+    displayTxtByColumn_CENTERED("Total:", BOLDWHITE, COLUMN_AMT);
+    displayTxtByColumn_CENTERED_NB(to_string(totalAmount), BOLDWHITE, COLUMN_AMT);
 }
 
 

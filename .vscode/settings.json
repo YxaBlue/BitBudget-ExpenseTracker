@@ -4,6 +4,8 @@
         "deque": "cpp",
         "vector": "cpp",
         "iosfwd": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "iostream": "cpp",
+        "sstream": "cpp"
     }
 }

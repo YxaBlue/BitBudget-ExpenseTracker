@@ -361,11 +361,11 @@ private:
     string expenseDueDate;
     string savingsStartDate;
     string savingsDueDate;
-    vector<Allowance> allowances;
+    vector<Allowance> allowancesList;
 
     void calculateCurrentSavings() {
         currentSavings = 0.0;
-        for (const auto& allowance : allowances) {
+        for (const auto& allowance : allowancesList) {
             currentSavings += allowance.getAmount();
         }
     }
@@ -450,7 +450,7 @@ void Budget :: loadAllowances()
         while (inFile.peek() != EOF) {
             Allowance allowance("", 0.0, "", "");
             inFile >> allowance;
-            allowances.push_back(allowance);
+            allowancesList.push_back(allowance);
         }
         inFile.close();
         calculateCurrentSavings();
@@ -461,7 +461,7 @@ void Budget :: saveAllowances() const
 {
     ofstream outFile(AllowancesFILE, ios::binary);
     if (outFile.is_open()) {
-        for (const auto& allowance : allowances) {
+        for (const auto& allowance : allowancesList) {
             outFile << allowance;
         }
         outFile.close();
@@ -485,6 +485,7 @@ const string& Budget :: getSavingsDueDate() const       { return savingsDueDate;
 
 void Budget :: setExpenseLimit(double limit) { expenseLimit = limit; }
 void Budget :: setSavingsGoal(double goal) { savingsGoal = goal; }
+void Budget :: setTotalBudget(double budget) { totalBudget = budget; }
 
 void Budget :: addExpense(const Expense& expense) {
     expenses.push_back(expense);
@@ -492,18 +493,18 @@ void Budget :: addExpense(const Expense& expense) {
 }
 
 void Budget :: addAllowance(const Allowance& allowance) {
-    allowances.push_back(allowance);
+    allowancesList.push_back(allowance);
     saveAllowances();
     calculateCurrentSavings();
 }
 
-void Budget :: setTotalBudget(double budget) { totalBudget = budget; }
+
 
 
 
 void Budget :: removeAllowance(int index) {
-    if (index >= 0 && index < allowances.size()) {
-        allowances.erase(allowances.begin() + index);
+    if (index >= 0 && index < allowancesList.size()) {
+        allowancesList.erase(allowancesList.begin() + index);
         saveAllowances();
         calculateCurrentSavings();
     } else {
@@ -691,21 +692,23 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
         clearScreen();
         const int menuWidth = 150;
 
+        // Display: UPDATE ALLOWANCE title
         border(205, menuWidth);
-        displayCenteredLine("UPDATE: ALLOWANCE (EDIT)", BLUE, menuWidth);
+        displayCenteredLine("UPDATE: ALLOWANCE", BLUE, menuWidth);
         border(205, menuWidth);
+
         displayCenteredLine(">> DATA:", BOLDWHITE, menuWidth);
-        displayCenteredLine("", menuWidth);
+        cout << "\n";
 
         int start = page * itemsPerPage;
-        int end = min(start + itemsPerPage, static_cast<int>(allowances.size()));
+        int end = min(start + itemsPerPage, static_cast<int>(allowancesList.size()));
 
         // Display headers
         cout << setw(15) << left << "Date" << setw(15) << "Amount" << setw(20) << "Account" << setw(50) << "Description" << endl;
         cout << string(menuWidth, '-') << endl;
 
         for (int i = start; i < end; ++i) {
-            const Allowance &allowance = allowances[i];
+            const Allowance &allowance = allowancesList[i];
             cout << setw(15) << left << allowance.getDate() << setw(15) << allowance.getAmount()
                     << setw(20) << allowance.getAccount() << setw(50) << allowance.getDescription() << endl;
         }
@@ -726,7 +729,7 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
         if (input == "1") {
             if (page > 0) page--;
         } else if (input == "2") {
-            if ((page + 1) * itemsPerPage < allowances.size()) page++;
+            if ((page + 1) * itemsPerPage < allowancesList.size()) page++;
         } else if (input == "3") {
             string date, account, description;
             double amount;
@@ -749,10 +752,10 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
             cout << "New allowance added." << endl;
         } else if (input == "4") {
             int index;
-            cout << "Enter index to delete (1-" << allowances.size() << "): ";
+            cout << "Enter index to delete (1-" << allowancesList.size() << "): ";
             cin >> index;
             index--;
-            if (index >= 0 && index < allowances.size()) {
+            if (index >= 0 && index < allowancesList.size()) {
                 removeAllowance(index);
                 cout << "Allowance deleted." << endl;
             } else {

@@ -73,6 +73,12 @@ void border(char, int);
 void displayCenteredLine_NoColor(const string, int);
 void displayCenteredLine_Colored(const string, const string, int);
 void displayCenteredLine_NoNewLine(const string, const string, int);
+
+void displayTxtByColumn(const string &, const string &, int, int);
+void displayTxtByColumn_CENTERED(const string &, const string &, int, int);
+void displayTxtByColumn_NB(const string &, const string &, int, int);
+void displayTxtByColumn_CENTERED_NB(const string &, const string &, int, int);
+
 void clearScreen();
 
 
@@ -130,6 +136,56 @@ void displayCenteredLine_NoNewLine(const string &line, const string &color, int 
     int padLen = (width - line.size()) / 2;
     cout << color << string(padLen, ' ') << line << RESET;
 }
+
+
+
+// Function to display lines by column
+void displayTxtByColumn(const string &str, const string &color, int columns = 2, int width = 150)
+{
+    int columnWidth = width / columns;
+    int spaceLen = columnWidth - str.size() - 1;
+    char border = 179;
+    cout << color << " " << str << string(spaceLen, ' ') << RESET << border;
+}
+
+// Function to display centered lines, 
+void displayTxtByColumn_CENTERED(const string &txt, const string &color, int columns = 2, int width = 150)
+{
+    int columnWidth = width / columns;
+    int totalPadding = columnWidth - txt.size() - 1;
+    int spaceLen_Left = totalPadding / 2;
+    int spaceLen_Right = totalPadding - spaceLen_Left;
+    char border = 179;
+
+    if (spaceLen_Left < 0) spaceLen_Left = 0;
+    if (spaceLen_Right < 0) spaceLen_Right = 0;
+
+    cout << color << " " << string(spaceLen_Left, ' ') << txt << string(spaceLen_Right, ' ') << RESET << border;
+}
+
+// Function to display lines by column
+void displayTxtByColumn_NB(const string &str, const string &color, int columns = 2, int width = 150)
+{
+    int columnWidth = width / columns;
+    int spaceLen = columnWidth - str.size();
+    cout << color << " " << str << string(spaceLen, ' ') << RESET;
+}
+
+// Function to display centered lines, 
+void displayTxtByColumn_CENTERED_NB(const string &txt, const string &color, int columns = 2, int width = 150)
+{
+    int columnWidth = width / columns;
+    int totalPadding = columnWidth - txt.size();
+    int spaceLen_Left = totalPadding / 2;
+    int spaceLen_Right = totalPadding - spaceLen_Left;
+
+    if (spaceLen_Left < 0) spaceLen_Left = 0;
+    if (spaceLen_Right < 0) spaceLen_Right = 0;
+
+    cout << color << " " << string(spaceLen_Left, ' ') << txt << string(spaceLen_Right, ' ') << RESET;
+}
+
+
 
 // Function to clear the console screen
 void clearScreen() {
@@ -704,9 +760,9 @@ bool Notification:: createNotification(int mode)
 
 
 
-/*________________________________________________________________________________________________________________________________________________________________*/
-/*------------------------------------------------------------------ EXTRA FUNCTIONS -----------------------------------------------------------------------------*/
-/*________________________________________________________________________________________________________________________________________________________________*/
+/*_________________________________________________________________________________*/
+/*-------------------------------- EXTRA FUNCTIONS --------------------------------*/
+/*_________________________________________________________________________________*/
 // CLEAR all contents of file
 void clearFile(string FILENAME) {
     ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
@@ -736,12 +792,13 @@ bool strIsNumeric(string str) {
 }
 
 
+//
 bool validateDateFormat(const string &date) {
     regex datePattern(R"(^\d{2}/\d{2}/\d{4}$)");
     return regex_match(date, datePattern);
 }
 
-
+//
 bool validateDate(const string &date) {
     if (!validateDateFormat(date)) {
         return false;
@@ -767,7 +824,7 @@ bool validateDate(const string &date) {
     return false;
 }
 
-
+//
 bool validateSecondDate(const string &firstDate, const string &secondDate) {
     if (!validateDateFormat(secondDate)) {
         return false;
@@ -789,7 +846,7 @@ bool validateSecondDate(const string &firstDate, const string &secondDate) {
     return false;
 }
 
-
+//
 string getDate_Today()
 {
     time_t now = time(0);
