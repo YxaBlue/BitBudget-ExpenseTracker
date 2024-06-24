@@ -11,7 +11,8 @@
 
 using namespace std;
 
-
+#define COLUMN_WIDTH 10
+#define SCREENWIDTH 150
 
 
 
@@ -114,25 +115,25 @@ string getDate_Today();
 /*------------------------ DISPLAY TEXT-STYLE UI FUNCTIONS ------------------------*/
 /*_________________________________________________________________________________*/
 // Function to print a border with a given character
-void border(char c, int length = 150) {
+void border(char c, int length = SCREENWIDTH) {
     for (int i = 0; i < length; i++) cout << c;
     cout << endl;
 }
 
 // Function to display centered lines
-void displayCenteredLine_NoColor(const string &line, int width = 150) {
+void displayCenteredLine_NoColor(const string &line, int width = SCREENWIDTH) {
     int padLen = (width - line.size()) / 2;
     cout << string(padLen, ' ') << line << endl;
 }
 
 // Function to display centered lines with a color
-void displayCenteredLine_Colored(const string &line, const string &color, int width = 150) {
+void displayCenteredLine_Colored(const string &line, const string &color, int width = SCREENWIDTH) {
     int padLen = (width - line.size()) / 2;
     cout << color << string(padLen, ' ') << line << RESET << endl;
 }
 
 // Function to display centered lines with color (no '\n')
-void displayCenteredLine_NoNewLine(const string &line, const string &color, int width = 150) {
+void displayCenteredLine_NoNewLine(const string &line, const string &color, int width = SCREENWIDTH) {
     int padLen = (width - line.size()) / 2;
     cout << color << string(padLen, ' ') << line << RESET;
 }
@@ -140,7 +141,7 @@ void displayCenteredLine_NoNewLine(const string &line, const string &color, int 
 
 
 // Function to display lines by column
-void displayTxtByColumn(const string &str, const string &color, int columns = 2, int width = 150)
+void displayTxtByColumn(const string &str, const string &color, int columns = 2, int width = SCREENWIDTH)
 {
     int columnWidth = width / columns;
     int spaceLen = columnWidth - str.size() - 1;
