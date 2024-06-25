@@ -82,7 +82,7 @@ void inbox_Title();
 void run_INBOX();
 
 void clearFile(string);
-bool strIsNumeric(string);
+bool IsNumeric(string);
 
 bool validateDateFormat(const string &);
 bool validateDate(const string &);
@@ -646,7 +646,7 @@ void run_INBOX() {
                     }
 
                     // Perform DELETE
-                    else if ((strIsNumeric(input_Str) && (input_Str.size() != 0))) {
+                    else if ((IsNumeric(input_Str) && (input_Str.size() != 0))) {
                         // Transform input to Int
                         input_Int = stoi(input_Str);
 
@@ -769,7 +769,7 @@ void clearFile(string FILENAME) {
 }
 
 // check if string is NUMERIC
-bool strIsNumeric(string str) {
+bool IsNumeric(string str) {
     for (int i = 0; i < str.size(); i++) {
         if ((str[i] < '0') || (str[i] > '9')) {
             return false;

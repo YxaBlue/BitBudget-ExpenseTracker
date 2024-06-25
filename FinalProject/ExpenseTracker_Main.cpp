@@ -96,7 +96,7 @@ void inbox_Title();
 void run_INBOX();
 
 void clearFile(string);
-bool strIsNumeric(string);
+bool IsNumeric(string);
 
 
 /* DATE-RELATED FUNCTIONS */
@@ -551,7 +551,7 @@ void Inbox :: run_Inbox()
                     if ((input_Str == "R") || (input_Str == "r")) break;
 
                     // Perform DELETE
-                    else if (strIsNumeric(input_Str) && (input_Str.size() != 0))
+                    else if (IsNumeric(input_Str) && (input_Str.size() != 0))
                     {
                         input_Int = stoi(input_Str);
 
@@ -782,7 +782,7 @@ void clearFile(string FILENAME) {
 }
 
 // check if string is NUMERIC
-bool strIsNumeric(string str) {
+bool IsNumeric(string str) {
     for (int i = 0; i < str.size(); i++) {
         if ((str[i] < '0') || (str[i] > '9')) {
             return false;

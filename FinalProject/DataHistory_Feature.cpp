@@ -79,7 +79,7 @@ void displayTxtByColumn_NB(const string &, const string &, int, int);
 void displayTxtByColumn_CENTERED_NB(const string &, const string &, int, int);
 
 
-bool strIsNumeric(string);
+bool IsNumeric(string);
 
 
 bool validateDateFormat(const string &);
@@ -202,7 +202,7 @@ void clearScreen()
 /*_________________________________________________________________________________*/
 
 // check if string is NUMERIC
-bool strIsNumeric(string str) {
+bool IsNumeric(string str) {
     for (int i = 0; i < str.size(); i++) {
         if ((str[i] < '0') || (str[i] > '9')) {
             return false;
