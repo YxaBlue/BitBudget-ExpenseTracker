@@ -397,7 +397,7 @@ public:
     void updateSavingsDateRange(const string &, const string &);
 
     void displayUpdateMenu();
-    void displaySetLimitExpensesMenu();
+    void run_SetLimitExpenses();
     void displaySetSavingsMenu();
     void displayUpdateAllowanceMenu(int page = 0);
 
@@ -558,7 +558,7 @@ void Budget :: displayUpdateMenu() {
     displayCenteredLine(">> Enter number: ", CYAN, menuWidth);
 }
 
-void Budget :: displaySetLimitExpensesMenu() {
+void Budget :: run_SetLimitExpenses() {
     while (true) {
         clearScreen();
         const int menuWidth = 150;
@@ -802,7 +802,7 @@ int main() {
 
         try {
             if (input == "1") {
-                budget.displaySetLimitExpensesMenu();
+                budget.run_SetLimitExpenses();
             } else if (input == "2") {
                 budget.displaySetSavingsMenu();
             } else if (input == "3") {

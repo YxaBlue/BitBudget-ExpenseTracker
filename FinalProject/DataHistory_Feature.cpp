@@ -728,7 +728,7 @@ public:
 
     // Display Menu
     void displayUpdateMenu();
-    void displaySetLimitExpensesMenu();
+    void run_SetLimitExpenses();
     void displaySetSavingsMenu();
     void displayUpdateAllowanceMenu(int);
 
@@ -913,7 +913,7 @@ void Budget :: displayUpdateMenu()
 }
 
 
-void Budget :: displaySetLimitExpensesMenu() {
+void Budget :: run_SetLimitExpenses() {
     while (true) {
         clearScreen();
         const int menuWidth = 150;
