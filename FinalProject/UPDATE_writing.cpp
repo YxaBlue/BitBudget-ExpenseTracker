@@ -468,6 +468,8 @@ private:
     string startDate;
     string dueDate;
     double goal;
+    double currentAmt;
+    string description;
 
 public:
     SavingsAndExpenseLim(string, string, double);
@@ -475,10 +477,14 @@ public:
     string get_startDate() const;
     string get_dueDate() const;
     double get_goal() const;
+    double get_currentAmt() const;
+    string get_desc() const;
 
     void set_startDate(string);
     void set_dueDate(string);
-    double set_goal(double);
+    void set_goal(double);
+    void set_currentAmt(double);
+    void set_desc(string);
 
     friend ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol);
     friend istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol);
@@ -499,19 +505,23 @@ SavingsAndExpenseLim :: SavingsAndExpenseLim(string start, string due, double am
 /* SavingsAndExpenseLim Class (Public): GETTERS */
 /*----------------------------------------------*/
 
-string SavingsAndExpenseLim :: get_startDate() const   { return startDate; }
-string SavingsAndExpenseLim :: get_dueDate() const     { return dueDate; }
-double SavingsAndExpenseLim :: get_goal() const        { return goal; }
+string SavingsAndExpenseLim :: get_startDate() const        { return startDate; }
+string SavingsAndExpenseLim :: get_dueDate() const          { return dueDate; }
+double SavingsAndExpenseLim :: get_goal() const             { return goal; }
+double SavingsAndExpenseLim :: get_currentAmt() const   { return currentAmt; }
+string SavingsAndExpenseLim :: get_desc() const             { return description; }
 
 
 
 
-/* SavingsAndExpenseLim Class (Public): GETTERS */
+/* SavingsAndExpenseLim Class (Public): SETTERS */
 /*----------------------------------------------*/
 
-void SavingsAndExpenseLim :: set_startDate(string newDate)   { startDate = newDate; }
-void SavingsAndExpenseLim :: set_dueDate(string newDate)     { dueDate = newDate; }
-double SavingsAndExpenseLim :: set_goal(double newGoal)      { goal = newGoal; }
+void SavingsAndExpenseLim :: set_startDate(string newDate)              { startDate = newDate; }
+void SavingsAndExpenseLim :: set_dueDate(string newDate)                { dueDate = newDate; }
+void SavingsAndExpenseLim :: set_goal(double newGoal)                   { goal = newGoal; }
+void SavingsAndExpenseLim :: set_currentAmt(double newCurrSavings)  { currentAmt = newCurrSavings; }
+void SavingsAndExpenseLim :: set_desc(string newDesc)                   { description = newDesc; }
 
 
 
@@ -535,7 +545,14 @@ ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol)
     // WRITE goal
     os.write(reinterpret_cast<const char*>(&savingsHol.goal), sizeof(savingsHol.goal));
 
+    // WRITE currentAmt
+    os.write(reinterpret_cast<const char*>(&savingsHol.currentAmt), sizeof(savingsHol.currentAmt));
     return os;
+
+    // WRITE description
+    size = savingsHol.description.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(savingsHol.description.c_str(), size);
 }
 
 // READ SavingsAndExpenseLim data
@@ -560,6 +577,17 @@ istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol)
     // READ goal
     is.read(reinterpret_cast<char*>(&savingsHol.goal), sizeof(savingsHol.goal));
     if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'goal' from file");
+
+    // READ currentAmt
+    is.read(reinterpret_cast<char*>(&savingsHol.currentAmt), sizeof(savingsHol.currentAmt));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'current amount' from file");
+
+    //READ description
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'description size' from file");
+    savingsHol.description.resize(size);
+    is.read(&savingsHol.description[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'description' from file");
 
     return is;
 }
@@ -922,6 +950,8 @@ private:
 
     double totalExpenses;
     double totalAllowance;
+    double totalExpenses_Today;
+    double totalAllowance_Today;
 
     vector<Expense> expensesList;
     vector<Allowance> allowancesList;
@@ -933,9 +963,11 @@ private:
 
     vector<Category> CategoryList;
 
-    void calculateCurrentSavings();
+    void calculateCurrentSavings(); // DONE
     void calculateTotalExpenses(); // DONE
     void calculateTotalAllowance(); // DONE
+    void calculateTotalExpenses_Today(); // DONE
+    void calculateTotalAllowance_Today(); // DONE
     void calculateTotalBudget(); // DONE
 
 public:
@@ -954,6 +986,7 @@ public:
 
 
     void setTotalBudget(double); // DONE
+    void setAside_Savings(int, double); // DONE
 
     void addExpense(const Expense&);
     void addAllowance(const Allowance&);
@@ -962,25 +995,30 @@ public:
     void removeAllowance(int);
     void removeExpense(int); // Removers, ALL DONE
 
+    void notifyDue_Savings(); // working~
+    void notifyDue_ExpenseGoal(); // working~
+
     void changeAllowance(int, int, string, double); // DONE
     void changeExpenses(int, int, string, string, double); // DONE
+    void changeExpenseGoal(int, int, string, string, double); // DONE
 
     void updateExpenseDateRange(const string&, const string&, int);
     void updateSavingsDateRange(const string&, const string&, int); // Update date ranges, ALL DONE
 
 
-    void displayAllowancesList(int); // done, will add pages feature later
-    void displayExpensesList(int); // done, must rework the Current Expenses part
-    void displaySavingsList(int); // done, must rework the Current Savings part
-    void displayExpenseLimitList(int); // done, will add pages feature later
+    void displayAllowancesList(int); // DONE
+    void displayExpensesList(int); // DONE
+    void displaySavingsList(int); // done, must rework the Current Savings part. Set list to 4 max // working~
+    void displayExpenseLimitList(int); // done, must rework the Current Expenses part. Set list to 4 max // working~
     void displayCategoryList_parent(); // DONE, max 10 parent categories
     void displayCategoryList_bbys(int); // DONE, max 10 baby categories
 
     void displayUpdateMenu(); // DONE
-    void run_SetLimitExpenses();
-    void displaySetSavingsMenu();
-    void displayUpdateAllowanceMenu(int);
+    void run_SetLimitExpenses(); // working~
+    void run_SetSavings(); // working~
+    void run_UpdateAllowance(); // working~
 
+    void loadData();
     void saveState();
 
 };
@@ -991,33 +1029,47 @@ public:
 /*-----------------------------------*/
 void Budget :: calculateCurrentSavings() {
     currentSavings = 0.0;
-    for (const auto& allowance : allowancesList)
-        currentSavings += allowance.getAmount();
-
-    for (const auto& allowance : allowancesList_Today)
-        currentSavings += allowance.getAmount();
+    for (const auto& savings : savingsList)
+        currentSavings += savings.get_currentAmt();
 }
 
 void Budget :: calculateTotalAllowance() {
     totalAllowance = 0;
+    for (const auto& allowance : allowancesList)
+        totalAllowance += allowance.getAmount();
 
-    for (const auto& allowance : allowancesList) totalAllowance += allowance.getAmount();
-    for (const auto& allowance : allowancesList_Today) totalAllowance += allowance.getAmount();
+    calculateTotalAllowance_Today();
+        totalAllowance += totalAllowance_Today;
 }
 
 void Budget :: calculateTotalExpenses() {
     totalExpenses = 0;
-    for (const auto& allowance : allowancesList) totalAllowance += allowance.getAmount();
-    for (const auto& allowance : allowancesList_Today) totalAllowance += allowance.getAmount();
+    for (const auto& expense : expensesList)
+        totalExpenses += expense.getAmount();
 
+    calculateTotalExpenses_Today();
+    totalExpenses += totalExpenses_Today;
+}
+
+void Budget :: calculateTotalAllowance_Today() {
+    totalAllowance_Today = 0;
+    for (const auto& allowance : allowancesList_Today)
+        totalAllowance_Today += allowance.getAmount();
+}
+
+void Budget :: calculateTotalExpenses_Today() {
+    totalExpenses_Today = 0;
+    for (const auto& expense : expensesList_Today)
+        totalExpenses_Today += expense.getAmount();
 }
 
 void Budget :: calculateTotalBudget() {
     totalBudget = 0;
     calculateTotalAllowance();
     calculateTotalExpenses();
+    calculateCurrentSavings();
 
-    totalBudget = totalAllowance - totalExpenses;
+    totalBudget = totalAllowance - totalExpenses - currentSavings;
 }
 
 
@@ -1206,8 +1258,7 @@ void Budget :: saveCategoryList() const
 
 void Budget :: displayAllowancesList(int page = 1)
 {
-    int i = 1;
-    string dateToday = getDate_Today();
+    int i;
     char border = 179;
 
     // Display: Headers
@@ -1217,26 +1268,72 @@ void Budget :: displayAllowancesList(int page = 1)
     displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH);
     displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
 
-    // Display: Allowance Data
-    for(const auto& allowance : allowancesList_Today)
-    {
-        double amt_db = allowance.getAmount();
-        stringstream stream;
-        stream << fixed << setprecision(2) << amt_db;
-        string amt_str = stream.str();
+    int AllowanceSize = allowancesList_Today.size();
 
-        cout << "\n" << string(13, ' ') << border;
-        displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
-        displayTxtByColumn(allowance.getDate(), WHITE, COLUMNWIDTH);
-        displayTxtByColumn(amt_str, WHITE, COLUMNWIDTH + 2);
-        displayTxtByColumn(allowance.getAccount(), WHITE, COLUMNWIDTH);
-        displayTxtByColumn(allowance.getDescription(), WHITE, 60);
+    // Display: Allowances data per page
+    if (AllowanceSize > 0)
+    {
+        int dataPerPage = 5;
+        int maxPages = AllowanceSize / dataPerPage;
+        if ((AllowanceSize % dataPerPage) != 0) maxPages ++;
+
+        if (page > maxPages) page = maxPages;
+        if (page < 0) page = 1;
+
+        int start = (page - 1) * dataPerPage;
+        int end =  min(start + dataPerPage, AllowanceSize);
+
+        int items = end - start + 1;
+
+        for (; start < end; start++)
+        {
+            Allowance allowance = allowancesList_Today[start];
+
+            // Convert: Amount to string with 2 decimal places
+            double amt_db = allowance.getAmount();
+            stringstream stream;
+            stream << fixed << setprecision(2) << amt_db;
+            string amt_str = stream.str();
+
+            cout << "\n" << string(13, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, COLUMNWIDTH);
+            displayTxtByColumn(allowance.getDate(), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
+            displayTxtByColumn(allowance.getAccount(), WHITE, COLUMNWIDTH);
+            displayTxtByColumn(allowance.getDescription(), WHITE, 60);
+        }
+
+        // Display remaining empty slots
+        if (items < 5) {
+            int vacant = dataPerPage - items;
+
+            for (i = 0; i < vacant; i++) {
+                cout << "\n" << string(13, ' ') << border;
+                displayTxtByColumn_CENTERED(to_string(++start), WHITE, COLUMNWIDTH);
+                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
+                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
+                displayTxtByColumn("----- ----- -----", WHITE, 60);
+            }
+        }
+    }
+    else {
+        // Display: Dummy data
+        for (i = 0; i < 5; i++) {
+            cout << "\n" << string(13, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
+            displayTxtByColumn("----- ----- -----", WHITE, 60);
+        }
     }
 }
 
 void Budget :: displayExpensesList(int page = 1)
 {
-    int i = 1;
+    int i;
+    char border = 179;
 
     // Display: Headers
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, COLUMNWIDTH);
@@ -1246,20 +1343,65 @@ void Budget :: displayExpensesList(int page = 1)
     displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH);
     displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDWHITE, COLUMNWIDTH);
 
-    for(const auto& expenses : expensesList_Today)
-    {
-        double amt_db = expenses.getAmount();
-        stringstream stream;
-        stream << fixed << setprecision(2) << amt_db;
-        string amt_str = stream.str();
+    int ExpensesSize = expensesList_Today.size();
 
-        cout << "\n";
-        displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
-        displayTxtByColumn(expenses.getDate(), WHITE, COLUMNWIDTH);
-        displayTxtByColumn(amt_str, WHITE, COLUMNWIDTH + 2);
-        displayTxtByColumn(expenses.getCategory(), WHITE, COLUMNWIDTH);
-        displayTxtByColumn(expenses.getAccount(), WHITE, COLUMNWIDTH);
-        displayTxtByColumn_NB(expenses.getDescription(), WHITE, 60);
+    // Display: Expenses Data by page
+    if (ExpensesSize > 0)
+    {
+        int dataPerPage = 5;
+        int maxPages = ExpensesSize / dataPerPage;
+        if ((ExpensesSize % dataPerPage) != 0) maxPages ++;
+
+        if (page > maxPages) page = maxPages;
+        if (page < 0) page = 1;
+
+        int start = (page - 1) * dataPerPage;
+        int end =  min(start + dataPerPage, ExpensesSize);
+
+        int items = end - start + 1;
+
+        for (; start < end; start++)
+        {
+            Expense expense = expensesList_Today[start];
+
+            // Convert: Amount to string with 2 decimal places
+            double amt_db = expense.getAmount();
+            stringstream stream;
+            stream << fixed << setprecision(2) << amt_db;
+            string amt_str = stream.str();
+
+            cout << "\n" << string(13, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, COLUMNWIDTH);
+            displayTxtByColumn(expense.getDate(), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
+            displayTxtByColumn(expense.getAccount(), WHITE, COLUMNWIDTH);
+            displayTxtByColumn(expense.getDescription(), WHITE, 60);
+        }
+
+        // Display remaining empty slots
+        if (items < 5) {
+            int vacant = dataPerPage - items;
+
+            for (i = 0; i < vacant; i++) {
+                cout << "\n" << string(13, ' ') << border;
+                displayTxtByColumn_CENTERED(to_string(++start), WHITE, COLUMNWIDTH);
+                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
+                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
+                displayTxtByColumn("----- ----- -----", WHITE, 60);
+            }
+        }
+    }
+    else {
+        // Display: Dummy data
+        for (i = 0; i < 5; i++) {
+            cout << "\n" << string(13, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
+            displayTxtByColumn("----- ----- -----", WHITE, 60);
+        }
     }
 }
 
@@ -1284,7 +1426,7 @@ void Budget :: displaySavingsList(int page = 1)
         cout << string(5, ' ');
         displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
         displayTxtByColumn(savingsData.get_startDate() + " - " + savingsData.get_dueDate(), WHITE, 25);
-        displayTxtByColumn_NB( "P " + amt_str, WHITE, COLUMNWIDTH);
+        displayTxtByColumn( "P " + amt_str, WHITE, COLUMNWIDTH);
     }
 }
 
@@ -1365,16 +1507,29 @@ void Budget :: setTotalBudget(double budget) {
     totalBudget = budget;
 }
 
+void Budget :: setAside_Savings(int index, double saveAmt) {
+    if (totalBudget < saveAmt)
+        throw runtime_error(">> WARNING: The amount to set aside exceeds your budget.");
+
+    if ((index <= 0) || (index > savingsList.size()))
+        throw runtime_error(">> ERROR: There is no such Savings Goal set at said index.");
+
+    SavingsAndExpenseLim& savingsHol = savingsList[index - 1];
+    savingsHol.set_currentAmt(saveAmt);
+}
+
 void Budget :: addExpense(const Expense& expense) {
     expensesList_Today.push_back(expense);
 }
 
 void Budget :: addAllowance(const Allowance& allowance) {
     allowancesList_Today.push_back(allowance);
-    calculateCurrentSavings();
 }
 
 void Budget :: addCategory(const Category& categoryHol) {
+    if (CategoryList.size() == 10)
+        throw runtime_error(">> WARNING: There can only be 10 Categories at max.");
+
     CategoryList.push_back(categoryHol);
 }
 
@@ -1384,7 +1539,7 @@ void Budget :: addCategory(const Category& categoryHol) {
 void Budget :: removeAllowance(int index) {
     if (index >= 0 && index < allowancesList_Today.size()) {
         allowancesList_Today.erase(allowancesList_Today.begin() + index);
-        calculateCurrentSavings();
+        calculateTotalBudget();
     }
     else {
         throw runtime_error(">> WARNING: Invalid allowance index.");
@@ -1394,7 +1549,7 @@ void Budget :: removeAllowance(int index) {
 void Budget :: removeExpense(int index) {
     if (index >= 0 && index < expensesList_Today.size()) {
         expensesList_Today.erase(expensesList_Today.begin() + index);
-        calculateCurrentSavings();
+        calculateTotalBudget();
     }
     else {
         throw runtime_error(">> WARNING: Invalid expense index.");
@@ -1449,30 +1604,59 @@ void Budget :: changeExpenses(int index, int mode, string input_Str = "", string
 
     switch (mode) {
         case 1:
-            // Edit Date
+            // Change Date
             expenseHol.setDate(input_Str);
             break;
         
         case 2:
-            // Edit Amount
+            // Change Amount
             expenseHol.setAmount(input_Db);
             break;
 
         case 3:
-            // Edit Category Parent Baby
+            // Change Category Parent Baby
             expenseHol.setCategory(input_Str);
             expenseHol.setBabyCategory(input_Str2);
             break;
         
         case 4:
-            // Edit Account
+            // Change Account
             expenseHol.setAccount(input_Str);
             break;
         
         case 5:
-            // Edit Description
+            // Change Description
             expenseHol.setDescription(input_Str);
         
+        default:
+            break;
+    }
+}
+
+void Budget :: changeExpenseGoal(int index, int mode, string input1, string input2, double amt)
+{
+    if ((index <= 0) || (index > expensesList_Today.size())) return;
+        throw runtime_error(">> WARNING: Invalid expense goal index.");
+
+    SavingsAndExpenseLim& expenseGoal = expenseLimitsList[index - 1];
+
+    switch (mode) {
+        case 1:
+            // Change START and DUE date
+            expenseGoal.set_startDate(input1);
+            expenseGoal.set_dueDate(input2);
+            break;
+        
+        case 2:
+            // Change Expense Limit Goal
+            expenseGoal.set_goal(amt);
+            break;
+        
+        case 3:
+            // Change Description
+            expenseGoal.set_desc(input1);
+            break;
+            
         default:
             break;
     }
@@ -1545,11 +1729,11 @@ void Budget :: displayUpdateMenu() {
     displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 }
 
-
 void Budget :: run_SetLimitExpenses() {
     string input;
     while (true) {
         clearScreen();
+        /* ------------------- SET LIMIT EXPENSES MENU ------------------- */
 
         // Display: UPDATE(Limit Of Expenses) title
         border(205);
@@ -1557,7 +1741,7 @@ void Budget :: run_SetLimitExpenses() {
         border(205);
 
         // Display: Expenses Total and New Limit
-        cout << BOLDWHITE << "  >> TOTAL EXPENSES:    P " << "<display total>" << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Expense Limit: EXPENSES:" << RESET << endl;
         displayExpenseLimitList();
         cout << "\n";
@@ -1566,18 +1750,23 @@ void Budget :: run_SetLimitExpenses() {
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
-        displayCenteredLine_NoColor("[1] SET NEW GOAL");
-        displayCenteredLine_NoColor("[2] EDIT        ");
+        displayCenteredLine_NoColor("[1] SET NEW GOAL     ");
+        displayCenteredLine_NoColor("[2] EDIT GOAL        ");
+        displayCenteredLine_NoColor("[3] SET ASIDE SAVINGS");
         cout << "\n";
         displayCenteredLine_NoColor("[R] Return      ");
         cout << "\n";
-        displayCenteredLine_Colored(">> Enter number: ", CYAN);
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
+        // Ask user for input
         getline(cin, input);
 
-        if (input == "1")   // Perform: SET NEW GOAL
+
+        /* ------------------- SET LIMIT EXPENSES MENU ------------------- */
+
+        if (input == "1")   
         {
-            bool input1 = true, input2 = false, input3 = false;
+            int input = 0;
 
             double newGoal = 0;
             string date1 = "MM/DD/YYYY";
@@ -1592,8 +1781,6 @@ void Budget :: run_SetLimitExpenses() {
                 border(205);
 
                 // Display: Expenses Total and New Limit
-                cout << BOLDWHITE << "  >> TOTAL EXPENSES:    P " << "<display total>" << "\n" << RESET << endl;
-
                 cout << BOLDWHITE << "  >> NEW Expense Limit:" << RESET << endl;
                 cout << string(5, ' ');
                 cout << "* NEW GOAL:       " << GREEN << "P " << newGoal << RESET << endl;
@@ -1602,37 +1789,23 @@ void Budget :: run_SetLimitExpenses() {
                 cout << "\n";
                 border(196);
 
+
                 // Display: Notice if expense limit reached max slot
-                if (expenseLimitsList.size() == 5) {
+                if (expenseLimitsList.size() == 4) {
                     displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-                    displayCenteredLine_Colored(">> You can set Expense Limit Goals up to 5 times!", YELLOW);
+                    displayCenteredLine_Colored(">> You can set Expense Limit Goals up to 4 times!", YELLOW);
                     displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
                     getchar();
                     break;
                 }
 
-                // Display: Prompts for user to input NEW GOAL
-                if (input1) {
-                    if (true) {
-                        input1 = false;
-                        input2 = true;
+                else {
+                    switch (input) {
+
                     }
                 }
 
-                else if (input2) {
-                    if (validateDate(date1)) {
-                        input2 = false;
-                        input3 = true;
-                    }
-                }
-
-                else if (input3) {
-                    input3 = false;
-                    if (validateSecondDate(date1, date2)) {
-                        input2 = false;
-                        input3 = true;
-                    }
-                }
+                
 
             }
         }
@@ -1669,7 +1842,7 @@ void Budget :: run_SetLimitExpenses() {
 }
 
 // UPDATE: SET SAVINGS
-void Budget :: displaySetSavingsMenu() {
+void Budget :: run_SetSavings() {
     string input;
 
     while (true) {
@@ -1734,52 +1907,53 @@ void Budget :: displaySetSavingsMenu() {
 }
 
 // UPDATE: ALLOWANCE
-void Budget :: displayUpdateAllowanceMenu(int page = 0) {
-    const int itemsPerPage = 10;
+void Budget :: run_UpdateAllowance() {
     string input;
+    int page = 1;
+
+    int maxPages = allowancesList_Today.size() / 5;
+    if ((allowancesList_Today.size() % 5) != 0) maxPages++;
 
     while (true) {
         clearScreen();
-        int start = page * itemsPerPage;
-        int end = min(start + itemsPerPage, static_cast<int>(allowancesList.size()));
 
         // Display: UPDATE ALLOWANCE title
         border(205);
         displayCenteredLine_Colored("UPDATE: ALLOWANCE", BLUE);
         border(205);
 
+        // Display: Allowances today
         cout << BOLDWHITE << "  >> DATA:" << RESET << endl;
         cout << "\n";
+        displayAllowancesList(page);
 
-        // Display headers
-        cout << setw(15) << left << "Date" << setw(15) << "Amount" << setw(20) << "Account" << setw(50) << "Description" << endl;
-        cout << string(150, '-') << endl;
-
-        for (int i = start; i < end; ++i) {
-            const Allowance &allowance = allowancesList[i];
-            cout << setw(15) << left << allowance.getDate() << setw(15) << allowance.getAmount()
-                    << setw(20) << allowance.getAccount() << setw(50) << allowance.getDescription() << endl;
-        }
-
+        // Display: Options
         border(196);
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
-        displayCenteredLine_NoColor("[1] Previous Page      [3] Edit (ADD ALLOWANCE)   ");
-        displayCenteredLine_NoColor("[2] Next Page          [4] Edit (DELETE ALLOWANCE)");
-        displayCenteredLine_NoColor("                   [R] Return                     ");
+        displayCenteredLine_NoColor("[1] Previous Page           [4] DELETE Allowance");
+        displayCenteredLine_NoColor("[2] Next Page               [5] EDIT Allowance  ");
+        displayCenteredLine_NoColor("[3] ADD Allowance           [R] RETURN          ");
         cout << "\n";
         displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
+        // Get user input
         getline(cin, input);
 
         if (input == "1") {
-            if (page > 0) page--;
+            // Display: PREVIOUS PAGE
+            if (page > 1) page--;
         }
         else if (input == "2") {
-            if ((page + 1) * itemsPerPage < allowancesList.size()) page++;
+            // Display: NEXT PAGE
+            if (page < maxPages) page++;
         }
         else if (input == "3") {
+            // Perform: ADD Allowance
             string date, account, description;
             double amount;
+
+            
+
             cout << "Enter date (MM/DD/YYYY): ";
             cin >> date;
             if (!validateDateFormat(date)) {
@@ -1820,8 +1994,28 @@ void Budget :: displayUpdateAllowanceMenu(int page = 0) {
     }
 }
 
+
+
+
+void Budget :: loadData() {
+    loadAllowances();
+    loadExpenses();
+    loadExpenseLimits();
+    loadSavings();
+    loadCategoryList();
+
+    calculateTotalAllowance();
+    calculateTotalExpenses();
+    calculateTotalBudget();
+}
+
+
 void Budget :: saveState() {
-    // Save any necessary state to file
+    saveAllowances();
+    saveExpenses();
+    saveExpenseLimits();
+    saveSavings();
+    saveCategoryList();
 }
 
 
@@ -1844,9 +2038,9 @@ int main() {
             if (input == "1") {
                 budget.run_SetLimitExpenses();
             } else if (input == "2") {
-                budget.displaySetSavingsMenu();
+                budget.run_SetSavings();
             } else if (input == "3") {
-                budget.displayUpdateAllowanceMenu();
+                budget.run_UpdateAllowance();
             } else if (input == "4") {
                 // Handle option 4
             } else {

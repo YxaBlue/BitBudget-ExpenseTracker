@@ -398,8 +398,8 @@ public:
 
     void displayUpdateMenu();
     void run_SetLimitExpenses();
-    void displaySetSavingsMenu();
-    void displayUpdateAllowanceMenu(int page = 0);
+    void run_SetSavings();
+    void run_UpdateAllowance(int page = 0);
 
     void saveState();
 
@@ -622,7 +622,7 @@ void Budget :: run_SetLimitExpenses() {
     }
 }
 
-void Budget :: displaySetSavingsMenu() {
+void Budget :: run_SetSavings() {
     while (true) {
         clearScreen();
         const int menuWidth = 150;
@@ -686,7 +686,7 @@ void Budget :: displaySetSavingsMenu() {
     }
 }
 
-void Budget :: displayUpdateAllowanceMenu(int page = 0) {
+void Budget :: run_UpdateAllowance(int page = 0) {
     const int itemsPerPage = 10;
     while (true) {
         clearScreen();
@@ -804,9 +804,9 @@ int main() {
             if (input == "1") {
                 budget.run_SetLimitExpenses();
             } else if (input == "2") {
-                budget.displaySetSavingsMenu();
+                budget.run_SetSavings();
             } else if (input == "3") {
-                budget.displayUpdateAllowanceMenu();
+                budget.run_UpdateAllowance();
             } else if (input == "4") {
                 // Handle option 4
             } else {

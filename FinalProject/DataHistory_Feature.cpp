@@ -729,8 +729,8 @@ public:
     // Display Menu
     void displayUpdateMenu();
     void run_SetLimitExpenses();
-    void displaySetSavingsMenu();
-    void displayUpdateAllowanceMenu(int);
+    void run_SetSavings();
+    void run_UpdateAllowance(int);
 
     // Getters
     const string& getExpenseStartDate() const;
@@ -977,7 +977,7 @@ void Budget :: run_SetLimitExpenses() {
     }
 }
 
-void Budget :: displaySetSavingsMenu() {
+void Budget :: run_SetSavings() {
     while (true) {
         clearScreen();
         const int menuWidth = 150;
@@ -1042,7 +1042,7 @@ void Budget :: displaySetSavingsMenu() {
 }
 
 
-void Budget :: displayUpdateAllowanceMenu(int page = 0) {
+void Budget :: run_UpdateAllowance(int page = 0) {
     const int itemsPerPage = 10;
     while (true) {
         clearScreen();
