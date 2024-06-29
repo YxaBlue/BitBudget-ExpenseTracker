@@ -472,7 +472,7 @@ private:
     string description;
 
 public:
-    SavingsAndExpenseLim(string, string, double);
+    SavingsAndExpenseLim(string, string, double, double, string);
 
     string get_startDate() const;
     string get_dueDate() const;
@@ -495,10 +495,12 @@ public:
 /* SavingsAndExpenseLim Class (Public): CONSTRUCTORS */
 /*--------------------------------------*/
 
-SavingsAndExpenseLim :: SavingsAndExpenseLim(string start, string due, double amt) :
+SavingsAndExpenseLim :: SavingsAndExpenseLim(string start, string due, double amt, double currAmt, string desc) :
     startDate(start), 
     dueDate(due),
-    goal(amt) {}
+    goal(amt),
+    currentAmt(currAmt),
+    description(desc) {}
 
 
 
@@ -808,9 +810,10 @@ private:
     string account;
     string description;
 
+
 public:
-    Allowance(string DateCreated, string Date, double Amount, string Account, string Description)
-    : dateCreated(DateCreated), date(date), amount(amount), account(account), description(description) {}
+    Allowance(string Date, double Amount, string Account, string Description)
+    : dateCreated(getDate_Today()), date(date), amount(amount), account(account), description(description) {}
 
     string getDateCreated() const;
     string getDate() const;
@@ -822,6 +825,7 @@ public:
     void setAmount(double);
     void setAccount(string);
     void setDescription(string);
+    void setDateCreated();
 
     friend ostream& operator<<(ostream& os, const Allowance& allowance);
     friend istream& operator>>(istream& is, Allowance& allowance);
@@ -848,7 +852,7 @@ void Allowance :: setDate(string newDate)         { date = newDate; }
 void Allowance :: setAmount(double newAmt)        { amount = newAmt; }
 void Allowance :: setAccount(string newAcc)       { account = newAcc; }
 void Allowance :: setDescription(string newDesc)  { description = newDesc; }
-
+void Allowance :: setDateCreated()                { dateCreated = getDate_Today(); }
 
 
 
@@ -990,6 +994,8 @@ public:
 
     void addExpense(const Expense&);
     void addAllowance(const Allowance&);
+    void addSavings(const SavingsAndExpenseLim&);
+    void addExpenseLim(const SavingsAndExpenseLim&);
     void addCategory(const Category&); // Adders, ALL DONE
     
     void removeAllowance(int);
@@ -998,20 +1004,21 @@ public:
     void notifyDue_Savings(); // working~
     void notifyDue_ExpenseGoal(); // working~
 
-    void changeAllowance(int, int, string, double); // DONE
-    void changeExpenses(int, int, string, string, double); // DONE
-    void changeExpenseGoal(int, int, string, string, double); // DONE
+    void changeAllowance(int, int, string, double);
+    void changeExpenses(int, int, string, string, double);
+    void changeExpenseGoal(int, int, string, double);
+    void changeSavingsGoal(int, int, string, double); // Changers, ALL DONE
 
     void updateExpenseDateRange(const string&, const string&, int);
     void updateSavingsDateRange(const string&, const string&, int); // Update date ranges, ALL DONE
 
 
-    void displayAllowancesList(int); // DONE
-    void displayExpensesList(int); // DONE
-    void displaySavingsList(int); // done, must rework the Current Savings part. Set list to 4 max // working~
-    void displayExpenseLimitList(int); // done, must rework the Current Expenses part. Set list to 4 max // working~
-    void displayCategoryList_parent(); // DONE, max 10 parent categories
-    void displayCategoryList_bbys(int); // DONE, max 10 baby categories
+    void displayAllowancesList(int);
+    void displayExpensesList(int);
+    void displaySavingsList();
+    void displayExpenseLimitList();
+    void displayCategoryList_parent();
+    void displayCategoryList_bbys(int); // Display data functions, ALL DONE
 
     void displayUpdateMenu(); // DONE
     void run_SetLimitExpenses(); // working~
@@ -1129,7 +1136,7 @@ void Budget :: loadAllowances()
     ifstream inFile(AllowancesFILE, ios::binary);
     if (inFile.is_open()) {
         while (inFile.peek() != EOF) {
-            Allowance allowance("", "", 0.0, "", "");
+            Allowance allowance("", 0.0, "", "");
             inFile >> allowance;
 
             if (allowance.getDateCreated() == getDate_Today()) {
@@ -1167,7 +1174,7 @@ void Budget :: loadSavings()
     if(inFILE.is_open()) {
         while(inFILE.peek() != EOF)
         {
-            SavingsAndExpenseLim savingsData("", "", 0);
+            SavingsAndExpenseLim savingsData("", "", 0.0, 0.0, "");
             inFILE >> savingsData;
             savingsList.push_back(savingsData);
         }
@@ -1197,7 +1204,7 @@ void Budget :: loadExpenseLimits()
     if(inFILE.is_open()) {
         while(inFILE.peek() != EOF)
         {
-            SavingsAndExpenseLim expenseLimitsData("", "", 0);
+            SavingsAndExpenseLim expenseLimitsData("", "", 0.0, 0.0, "");
             inFILE >> expenseLimitsData;
             expenseLimitsList.push_back(expenseLimitsData);
         }
@@ -1405,53 +1412,90 @@ void Budget :: displayExpensesList(int page = 1)
     }
 }
 
-void Budget :: displaySavingsList(int page = 1)
+void Budget :: displaySavingsList()
 {
     int i = 1;
+    int items = savingsList.size();
 
     // Display: Headers
     cout << string(5, ' ');
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED("DATE(Start - Due)", BOLDWHITE, 25);
-    displayTxtByColumn_CENTERED("SAVINGS GOAL", BOLDWHITE, COLUMNWIDTH);
+    displayTxtByColumn_CENTERED("DATE (Start-Due)", BOLDWHITE, 25);
+    displayTxtByColumn_CENTERED("SAVINGS GOAL", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
+    displayTxtByColumn_CENTERED("CURRENT SAVINGS", BOLDWHITE, COLUMNWIDTH*2);
 
+    // Display: Savings data
     for(const auto& savingsData : savingsList)
     {
-        double amt_db = savingsData.get_goal();
-        stringstream stream;
-        stream << fixed << setprecision(2) << amt_db;
-        string amt_str = stream.str();
+        stringstream stream1, stream2;
+        stream1 << fixed << setprecision(2) << savingsData.get_goal();
+        stream2 << fixed << setprecision << savingsData.get_currentAmt();
 
-        cout << "\n";
-        cout << string(5, ' ');
+        string amt_str1 = stream1.str();
+        string amt_str2 = stream2.str();
+
+        cout << "\n" << string(5, ' ');
         displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
         displayTxtByColumn(savingsData.get_startDate() + " - " + savingsData.get_dueDate(), WHITE, 25);
-        displayTxtByColumn( "P " + amt_str, WHITE, COLUMNWIDTH);
+        displayTxtByColumn( "P " + amt_str1, WHITE, COLUMNWIDTH+2);
+        displayTxtByColumn(savingsData.get_desc(), WHITE, 60);
+        displayTxtByColumn( "P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
+    }
+
+    // Display: Dummy data
+    if (items < 4) {
+        cout << "\n" << string(5, ' ');
+        displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
+        displayTxtByColumn("--/--/---- - --/--/----", WHITE, 25);
+        displayTxtByColumn( "P 0.00", WHITE, COLUMNWIDTH+2);
+        displayTxtByColumn("----------", WHITE, 60);
+        displayTxtByColumn("P 0.00  /  P 0.00", MAGENTA, COLUMNWIDTH*2);
     }
 }
 
-void Budget :: displayExpenseLimitList(int page = 1)
+void Budget :: displayExpenseLimitList()
 {
     int i = 1;
     char border = 179;
+    int items = expenseLimitsList.size();
 
     // Display: Headers
     cout << string(5, ' ') << border;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED("DATE(Start - Due)", BOLDWHITE, 25);
-    displayTxtByColumn_CENTERED("SAVINGS GOAL", BOLDWHITE, COLUMNWIDTH + 2);
+    displayTxtByColumn_CENTERED("DATE (Start-Due)", BOLDWHITE, 25);
+    displayTxtByColumn_CENTERED("EXPENSE GOAL", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
+    displayTxtByColumn_CENTERED("CURRENT EXPENSES", BOLDWHITE, COLUMNWIDTH*2);
 
+    // Display: All expense limit data
     for(const auto& expenseLimData : expenseLimitsList)
     {
-        double amt_db = expenseLimData.get_goal();
-        stringstream stream;
-        stream << fixed << setprecision(2) << amt_db;
-        string amt_str = stream.str();
+        stringstream stream1, stream2;
+        stream1 << fixed << setprecision(2) << expenseLimData.get_goal();
+        stream2 << fixed << setprecision(2) << expenseLimData.get_currentAmt();
+
+        string amt_str1 = stream1.str();
+        string amt_str2 = stream2.str();
 
         cout << "\n" << string(5, ' ') << border;
         displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
         displayTxtByColumn(expenseLimData.get_startDate() + " - " + expenseLimData.get_dueDate(), WHITE, 25);
-        displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
+        displayTxtByColumn("P " + amt_str1, WHITE, COLUMNWIDTH+2);
+        displayTxtByColumn(expenseLimData.get_desc(), WHITE, 60);
+        displayTxtByColumn("P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
+    }
+
+    // Display: Dummy data
+    if (items < 4) {
+        for(int iter = items; iter < 4; iter++) {
+            cout << "\n" << string(5, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("--/--/---- - --/--/----", WHITE, 25);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("----------", WHITE, 60);
+            displayTxtByColumn("P 0.00  /  P 0.00", MAGENTA, COLUMNWIDTH*2);
+        }
     }
 }
 
@@ -1526,6 +1570,20 @@ void Budget :: addAllowance(const Allowance& allowance) {
     allowancesList_Today.push_back(allowance);
 }
 
+void Budget :: addExpenseLim(const SavingsAndExpenseLim& expenseLim) {
+    if (expenseLimitsList.size() == 4)
+        throw runtime_error(">> WARNING: There can only be 4 Expense Limits to set at max.");
+
+    expenseLimitsList.push_back(expenseLim);
+}
+
+void Budget :: addSavings(const SavingsAndExpenseLim& savings) {
+    if (savingsList.size() == 4)
+        throw runtime_error(">> WARNING: There can only be 4 Savings to set at max.");
+    
+    savingsList.push_back(savings);
+}
+
 void Budget :: addCategory(const Category& categoryHol) {
     if (CategoryList.size() == 10)
         throw runtime_error(">> WARNING: There can only be 10 Categories at max.");
@@ -1560,7 +1618,7 @@ void Budget :: removeExpense(int index) {
 
 
 
-// EDITS Allowance data created during present day
+// CHANGE: Allowance data created during present day [1-Date, 2-Amount, 3-Acc, 4-Desc]
 void Budget :: changeAllowance(int index, int mode, string input_Str = "", double input_Db = 0)
 {
     if ((index <= 0) || (index > allowancesList_Today.size())) 
@@ -1594,7 +1652,7 @@ void Budget :: changeAllowance(int index, int mode, string input_Str = "", doubl
     }
 }
 
-// EDITS Expenses data created during present day
+// CHANGE: Expenses data created during present day [1-Date, 2-Amount, 3-Category, 4-Acc, 5-Desc]
 void Budget :: changeExpenses(int index, int mode, string input_Str = "", string input_Str2 = "", double input_Db = 0)
 {
     if ((index <= 0) || (index > expensesList_Today.size())) return;
@@ -1633,28 +1691,47 @@ void Budget :: changeExpenses(int index, int mode, string input_Str = "", string
     }
 }
 
-void Budget :: changeExpenseGoal(int index, int mode, string input1, string input2, double amt)
+// CHANGE: Expense goal data [1-Goal, 2-Desc]
+void Budget :: changeExpenseGoal(int index, int mode, string input1, double amt)
 {
-    if ((index <= 0) || (index > expensesList_Today.size())) return;
+    if ((index <= 0) || (index > expenseLimitsList.size())) return;
         throw runtime_error(">> WARNING: Invalid expense goal index.");
 
     SavingsAndExpenseLim& expenseGoal = expenseLimitsList[index - 1];
 
     switch (mode) {
         case 1:
-            // Change START and DUE date
-            expenseGoal.set_startDate(input1);
-            expenseGoal.set_dueDate(input2);
-            break;
-        
-        case 2:
             // Change Expense Limit Goal
             expenseGoal.set_goal(amt);
             break;
         
-        case 3:
+        case 2:
             // Change Description
             expenseGoal.set_desc(input1);
+            break;
+            
+        default:
+            break;
+    }
+}
+
+// CHANGE: Savings goal data [1-Goal, 2-Desc]
+void Budget :: changeSavingsGoal(int index, int mode, string input1, double amt)
+{
+    if ((index <= 0) || (index > savingsList.size())) return;
+        throw runtime_error(">> WARNING: Invalid savings goal index.");
+
+    SavingsAndExpenseLim& savingsGoal = savingsList[index - 1];
+
+    switch (mode) {
+        case 1:
+            // Change Savings Goal
+            savingsGoal.set_goal(amt);
+            break;
+        
+        case 2:
+            // Change Description
+            savingsGoal.set_desc(input1);
             break;
             
         default:
@@ -1729,6 +1806,7 @@ void Budget :: displayUpdateMenu() {
     displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 }
 
+
 void Budget :: run_SetLimitExpenses() {
     string input;
     while (true) {
@@ -1762,9 +1840,8 @@ void Budget :: run_SetLimitExpenses() {
         getline(cin, input);
 
 
-        /* ------------------- SET LIMIT EXPENSES MENU ------------------- */
-
-        if (input == "1")   
+        /* ---------------------------------------------------------------- */
+        if (input == "1")   // Perform: SET NEW GOAL
         {
             int input = 0;
 
@@ -1801,7 +1878,7 @@ void Budget :: run_SetLimitExpenses() {
 
                 else {
                     switch (input) {
-
+                        
                     }
                 }
 
@@ -1949,10 +2026,33 @@ void Budget :: run_UpdateAllowance() {
         }
         else if (input == "3") {
             // Perform: ADD Allowance
-            string date, account, description;
-            double amount;
+            int inputFlow = 1;
+            string date = "--/--/----";
+            double amount = 0;
+            string account = "-----";
+            string desc = "-----";
 
-            
+            while (true) {
+                clearScreen();
+
+                // Display: UPDATE ALLOWANCE title
+                border(205);
+                displayCenteredLine_Colored("UPDATE: ALLOWANCE(ADD)", BLUE);
+                border(205);
+                
+                // Display: Inputted data
+                cout << BOLDWHITE << ">> NEW ALLOWANCE:\n" << RESET << endl;
+                cout << "\t" << "* DATE:      " << date << endl;
+                cout << "\t" << "* AMOUNT:    " << setprecision(2) << amount << endl;
+
+                // Ask user for input
+                switch (inputFlow) {
+                    case 1:
+                        displayCenteredLine_NoNewLine(">> Enter DATE(MM/DD/YYYY): ");
+                        inputFlow++;
+                        break;
+                }
+            }
 
             cout << "Enter date (MM/DD/YYYY): ";
             cin >> date;
