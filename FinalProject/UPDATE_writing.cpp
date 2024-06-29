@@ -999,10 +999,9 @@ public:
     void addCategory(const Category&); // Adders, ALL DONE
     
     void removeAllowance(int);
-    void removeExpense(int); // Removers, ALL DONE
-
-    void notifyDue_Savings(); // working~
-    void notifyDue_ExpenseGoal(); // working~
+    void removeExpense(int);
+    void removeSavings(int);
+    void removeExpenseLimit(int); // Removers, ALL DONE
 
     void changeAllowance(int, int, string, double);
     void changeExpenses(int, int, string, string, double);
@@ -1013,6 +1012,10 @@ public:
     void updateSavingsDateRange(const string&, const string&, int); // Update date ranges, ALL DONE
 
 
+    void notifyDue_Savings(); // working~
+    void notifyDue_ExpenseGoal(); // working~
+
+
     void displayAllowancesList(int);
     void displayExpensesList(int);
     void displaySavingsList();
@@ -1021,9 +1024,18 @@ public:
     void displayCategoryList_bbys(int); // Display data functions, ALL DONE
 
     void displayUpdateMenu(); // DONE
-    void run_SetLimitExpenses(); // working~
-    void run_SetSavings(); // working~
+
+
+    void run_LimitExpenses(); // working~
+    void run_Savings();
+    void run_SetNewGoal(string);
+    void run_EditGoal(string);
+    void run_DeleteGoal(string);
+    void run_SetAsideSavings();
+
+
     void run_UpdateAllowance(); // working~
+    void run_UpdateExpense();
 
     void loadData();
     void saveState();
@@ -1595,7 +1607,7 @@ void Budget :: addCategory(const Category& categoryHol) {
 
 
 void Budget :: removeAllowance(int index) {
-    if (index >= 0 && index < allowancesList_Today.size()) {
+    if ((index >= 0) && (index < allowancesList_Today.size())) {
         allowancesList_Today.erase(allowancesList_Today.begin() + index);
         calculateTotalBudget();
     }
@@ -1605,7 +1617,7 @@ void Budget :: removeAllowance(int index) {
 }
 
 void Budget :: removeExpense(int index) {
-    if (index >= 0 && index < expensesList_Today.size()) {
+    if ((index >= 0) && (index < expensesList_Today.size())) {
         expensesList_Today.erase(expensesList_Today.begin() + index);
         calculateTotalBudget();
     }
@@ -1613,6 +1625,28 @@ void Budget :: removeExpense(int index) {
         throw runtime_error(">> WARNING: Invalid expense index.");
     }
 }
+
+void Budget :: removeExpenseLimit(int index) {
+    if ((index >= 0) && (index < expenseLimitsList.size())) {
+        expenseLimitsList.erase(expenseLimitsList.begin() + index);
+        calculateTotalBudget();
+    }
+    else {
+        throw runtime_error(">> WARNING: Invalid expense limit goal index.");
+    }
+}
+
+void Budget :: removeSavings(int index) {
+    if ((index >= 0) && (index < savingsList.size())) {
+        savingsList.erase(savingsList.begin() + index);
+        calculateTotalBudget();
+    }
+    else {
+        throw runtime_error(">> WARNING: Invalid savings goal index.");
+    }
+}
+
+
 
 
 
@@ -1807,7 +1841,9 @@ void Budget :: displayUpdateMenu() {
 }
 
 
-void Budget :: run_SetLimitExpenses() {
+
+// UPDATE: LIMIT OF EXPENSES
+void Budget :: run_LimitExpenses() {
     string input;
     while (true) {
         clearScreen();
@@ -1828,11 +1864,11 @@ void Budget :: run_SetLimitExpenses() {
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
-        displayCenteredLine_NoColor("[1] SET NEW GOAL     ");
-        displayCenteredLine_NoColor("[2] EDIT GOAL        ");
-        displayCenteredLine_NoColor("[3] SET ASIDE SAVINGS");
+        displayCenteredLine_NoColor("[ 1 ] SET NEW GOAL");
+        displayCenteredLine_NoColor("[ 2 ] EDIT GOAL   ");
+        displayCenteredLine_NoColor("[ 3 ] DELETE GOAL ");
         cout << "\n";
-        displayCenteredLine_NoColor("[R] Return      ");
+        displayCenteredLine_NoColor("[ R ] Return      ");
         cout << "\n";
         displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
@@ -1843,83 +1879,161 @@ void Budget :: run_SetLimitExpenses() {
         /* ---------------------------------------------------------------- */
         if (input == "1")   // Perform: SET NEW GOAL
         {
-            int input = 0;
-
-            double newGoal = 0;
-            string date1 = "MM/DD/YYYY";
-            string date2 = "MM/DD/YYYY";
-
-            while (true)
-            {
-                clearScreen();
-                // Display: UPDATE(Limit Of Expenses) title
-                border(205);
-                displayCenteredLine_Colored("UPDATE: LIMIT OF EXPENSES", BLUE);
-                border(205);
-
-                // Display: Expenses Total and New Limit
-                cout << BOLDWHITE << "  >> NEW Expense Limit:" << RESET << endl;
-                cout << string(5, ' ');
-                cout << "* NEW GOAL:       " << GREEN << "P " << newGoal << RESET << endl;
-                cout << "* START DATE:     " << BLUE <<  date1 << RESET << endl;
-                cout << "* DUE DATE:       " << BLUE <<  date2 << RESET << endl;
-                cout << "\n";
-                border(196);
-
-
-                // Display: Notice if expense limit reached max slot
-                if (expenseLimitsList.size() == 4) {
-                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-                    displayCenteredLine_Colored(">> You can set Expense Limit Goals up to 4 times!", YELLOW);
-                    displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
-                    getchar();
-                    break;
-                }
-
-                else {
-                    switch (input) {
-                        
-                    }
-                }
-
-                
-
-            }
+            run_SetNewGoal("LIMIT OF EXPENSES (NEW GOAL)");
         }
 
         else if (input == "2") {
-            string startDate, dueDate;
-            int index;
-
-            cout << "Enter start date (MM/DD/YYYY): ";
-            cin >> startDate;
-            if (startDate == "R" || startDate == "r") {
-                continue; 
-            }
-
-            cout << "Enter due date (MM/DD/YYYY): ";
-            cin >> dueDate;
-            if (dueDate == "R" || dueDate == "r") {
-                continue; 
-            }
-
-            // Validate and update date range
-            try {
-                updateExpenseDateRange(startDate, dueDate, index);
-                cout << "Expense date range set from " << startDate << " to " << dueDate << endl;
-            } catch (const exception& e) {
-                cout << ">> ERROR: " << e.what() << endl;
-            }
+            run_EditGoal("LIMIT OF EXPENSES (EDIT GOAL)");
         }
         else if (input == "R" || input == "r") {
-            saveState();
             return; 
         }
     }
 }
 
+void Budget :: run_SetNewGoal(string TITLE) {
+    int inputflow = 1;
+    string input_SNG;
+    double input_db;
+
+    double newGoal = 0;
+    string date1 = "MM/DD/YYYY";
+    string date2 = "MM/DD/YYYY";
+    string description = "----------";
+
+    while (true)
+    {
+        clearScreen();
+        // Display: UPDATE(Limit Of Expenses: ) title
+        border(205);
+        displayCenteredLine_Colored("UPDATE: " + TITLE, BLUE);
+        border(205);
+
+        // Display: Expenses Total and New Limit
+        cout << BOLDWHITE << "  >> SETTING NEW GOAL:" << RESET << endl;
+        cout << string(5, ' ') << "* New Goal Amount:    " << GREEN << "P " << newGoal << RESET << endl;
+        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
+        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
+        cout << string(5, ' ') << "* Description:        " << BLUE <<  description << RESET << endl;
+        cout << "\n";
+        border(196);
+
+
+        // Display: Notice if expense limit reached max slot
+        if (expenseLimitsList.size() == 4) {
+            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+            displayCenteredLine_Colored(">> You can set up to 4 GOALS at most!", YELLOW);
+            displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+            getchar();
+            return; // Return to MENU
+        }
+
+        else {
+            switch (inputflow) {
+                case 1: /* ----- Input: NEW GOAL ----- */
+                    displayCenteredLine_NoNewLine(">> Enter AMOUNT: ", CYAN);
+                    getline(cin, input_SNG);
+
+                    if (isDouble(input_SNG))
+                    {
+                        input_db = stod(input_SNG);
+
+                        if (input_db > 0) {
+                            newGoal = input_db;
+                            inputflow++; // Proceed to input START DATE
+                        }
+                        else {
+                            // Display: WARNING for invalid input
+                            border(196);
+                            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                            displayCenteredLine_Colored(">> Please enter valid input.", YELLOW);
+                            displayCenteredLine_Colored(">> Press enter to continue...  ", YELLOW);
+                            getchar();
+                        }
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.", YELLOW);
+                        displayCenteredLine_Colored(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+
+
+                case 2: /* ----- Input: START DATE ----- */
+                    displayCenteredLine_NoNewLine(">> Enter START DATE: ", CYAN);
+                    getline(cin, input_SNG);
+
+                    if (validateDate(input_SNG)) {
+                        date1 = input_SNG;
+                        inputflow++; // Proceed to input DUE DATE
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.", YELLOW);
+                        displayCenteredLine_Colored(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+
+                case 3: /* ----- Input: DUE DATE ----- */
+                    displayCenteredLine_NoNewLine(">> Enter DUE DATE: ", CYAN);
+                    getline(cin, input_SNG);
+
+                    if (validateSecondDate(date1, input_SNG)) {
+                        date2 = input_SNG;
+                        inputflow++; // Proceed to input DESCRIPTION
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.", YELLOW);
+                        displayCenteredLine_Colored(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+                
+                case 4: /* ----- Input: DESCRIPTION ----- */
+                    cout << CYAN << "\t>> Enter DESCRIPTION(max 50 chars): " << RESET;
+                    getline(cin, input_SNG);
+
+                    if (input_SNG.size() <= 50) {
+                        description = input_SNG;
+                        inputflow++; // Proceed to notify user SET NEW GOAL SUCCESSFUL
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter description of 50 characters at most.", YELLOW);
+                        displayCenteredLine_Colored(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+                
+                default:
+                    break;
+            }
+        }
+
+        
+
+    }
+}
+
+
+
+
+
+
+
 // UPDATE: SET SAVINGS
-void Budget :: run_SetSavings() {
+void Budget :: run_Savings() {
     string input;
 
     while (true) {
@@ -1984,7 +2098,7 @@ void Budget :: run_SetSavings() {
 }
 
 // UPDATE: ALLOWANCE
-void Budget :: run_UpdateAllowance() {
+void Budget :: run_Allowance() {
     string input;
     int page = 1;
 
@@ -2138,9 +2252,9 @@ int main() {
             if (input == "1") {
                 budget.run_SetLimitExpenses();
             } else if (input == "2") {
-                budget.run_SetSavings();
+                budget.run_Savings();
             } else if (input == "3") {
-                budget.run_UpdateAllowance();
+                budget.run_Allowance();
             } else if (input == "4") {
                 // Handle option 4
             } else {
