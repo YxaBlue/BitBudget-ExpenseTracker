@@ -967,6 +967,10 @@ private:
 
     vector<Category> CategoryList;
 
+
+
+
+protected:
     void calculateCurrentSavings(); // DONE
     void calculateTotalExpenses(); // DONE
     void calculateTotalAllowance(); // DONE
@@ -974,42 +978,44 @@ private:
     void calculateTotalAllowance_Today(); // DONE
     void calculateTotalBudget(); // DONE
 
-public:
-    Budget(); // Done
-
     void loadExpenses();
-    void saveExpenses() const;
     void loadAllowances();
-    void saveAllowances() const;
     void loadSavings();
-    void saveSavings() const;
     void loadExpenseLimits();
-    void saveExpenseLimits() const;
     void loadCategoryList();
-    void saveCategoryList() const; // Load and Save, ALL DONE
+
+    void saveExpenses() const;
+    void saveAllowances() const;
+    void saveSavings() const;
+    void saveExpenseLimits() const;
+    void saveCategoryList() const;
 
 
-    void setTotalBudget(double); // DONE
-    void setAside_Savings(int, double); // DONE
+
+
+public:
+    Budget();
+
+    void setTotalBudget(double);
+    void setAside_Savings(int, double);
 
     void addExpense(const Expense&);
     void addAllowance(const Allowance&);
     void addSavings(const SavingsAndExpenseLim&);
     void addExpenseLim(const SavingsAndExpenseLim&);
-    void addCategory(const Category&); // Adders, ALL DONE
+    void addCategory(const Category&);
     
     void removeAllowance(int);
     void removeExpense(int);
     void removeSavings(int);
-    void removeExpenseLimit(int); // Removers, ALL DONE
+    void removeExpenseLimit(int);
 
     void changeAllowance(int, int, string, double);
     void changeExpenses(int, int, string, string, double);
     void changeExpenseGoal(int, int, string, double);
-    void changeSavingsGoal(int, int, string, double); // Changers, ALL DONE
-
+    void changeSavingsGoal(int, int, string, double);
     void updateExpenseDateRange(const string&, const string&, int);
-    void updateSavingsDateRange(const string&, const string&, int); // Update date ranges, ALL DONE
+    void updateSavingsDateRange(const string&, const string&, int);
 
 
     void notifyDue_Savings(); // working~
@@ -1021,21 +1027,30 @@ public:
     void displaySavingsList();
     void displayExpenseLimitList();
     void displayCategoryList_parent();
-    void displayCategoryList_bbys(int); // Display data functions, ALL DONE
+    void displayCategoryList_bbys(int);
 
     void displayUpdateMenu(); // DONE
 
+    void run_UpdateLimitExpenses(); // working~
+    void run_LE_SetNewGoal(); // DONE
+    void run_LE_EditGoal(); // 
+    void run_LE_DeleteGoal();
 
-    void run_LimitExpenses(); // working~
-    void run_Savings();
-    void run_SetNewGoal(string);
-    void run_EditGoal(string);
-    void run_DeleteGoal(string);
+    void run_UpdateSavings(); // working~
+    void run_S_SetNewGoal();
+    void run_S_EditGoal();
+    void run_S_DeleteGoal();
     void run_SetAsideSavings();
 
-
     void run_UpdateAllowance(); // working~
+    void run_AddAllowance();
+    void run_DeleteAllowance();
+    void run_EditAllowance();
+
     void run_UpdateExpense();
+    void run_AddExpenses();
+    void run_DeleteExpenses();
+    void run_EditExpenses();
 
     void loadData();
     void saveState();
@@ -1044,8 +1059,21 @@ public:
 
 
 
-/* BUDGET class(Private): Calculator */
-/*-----------------------------------*/
+
+
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------*/
+/*           BUDGET class(Private): Calculator            */
+/*--------------------------------------------------------*/
+
 void Budget :: calculateCurrentSavings() {
     currentSavings = 0.0;
     for (const auto& savings : savingsList)
@@ -1093,9 +1121,19 @@ void Budget :: calculateTotalBudget() {
 
 
 
-/* BUDGET class(Public): CONSTRUCTOR */
-/*-----------------------------------*/
 
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------*/
+/*           BUDGET class(Public): CONSTRUCTOR            */
+/*--------------------------------------------------------*/
 Budget :: Budget() :
             totalBudget(0.0),
             currentSavings(0.0) {}
@@ -1105,8 +1143,18 @@ Budget :: Budget() :
 
 
 
-/* BUDGET class MFs(Public): LOAD & SAVE Functions - Allowance and Expenses */
-/*--------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------------------------------------*/
+/*       BUDGET class MFs(Public): LOAD & SAVE Functions - Allowance and Expenses       */
+/*--------------------------------------------------------------------------------------*/
+
 // LOAD: Expenses list from file
 void Budget :: loadExpenses() {
     ifstream inFile(ExpensesFILE, ios::binary);
@@ -1139,8 +1187,6 @@ void Budget :: saveExpenses() const {
         outFile.close();
     }
 }
-
-
 
 // LOAD: Allowances list from file
 void Budget :: loadAllowances()
@@ -1177,8 +1223,6 @@ void Budget :: saveAllowances() const
     }
 }
 
-
-
 // LOAD: Savings list from file
 void Budget :: loadSavings()
 {
@@ -1207,8 +1251,6 @@ void Budget :: saveSavings() const
     }
 }
 
-
-
 // LOAD: Expense Limits list from file
 void Budget :: loadExpenseLimits()
 {
@@ -1236,8 +1278,6 @@ void Budget :: saveExpenseLimits() const
         outFILE.close();
     }
 }
-
-
 
 // LOAD: Category List from file
 void Budget :: loadCategoryList()
@@ -1272,8 +1312,15 @@ void Budget :: saveCategoryList() const
 
 
 
-/* BUDGET class MFs(Public): Display Lists */
-/*-----------------------------------------*/
+
+
+
+
+
+
+/*----------------------------------------------------------*/
+/*          BUDGET class MFs(Public): DISPLAY LISTS         */
+/*----------------------------------------------------------*/
 
 void Budget :: displayAllowancesList(int page = 1)
 {
@@ -1556,8 +1603,14 @@ void Budget :: displayCategoryList_bbys(int index_Parent) {
 
 
 
-/* BUDGET class MFs(Public): SETTERS, ADDERS, REMOVERS, EDITORS */
-/*-----------------------------------*/
+
+
+
+
+
+/*------------------------------------------------------------------------*/
+/*      BUDGET class MFs(Public): SETTERS, ADDERS, REMOVERS, EDITORS      */
+/*------------------------------------------------------------------------*/
 
 void Budget :: setTotalBudget(double budget) {
     totalBudget = budget;
@@ -1603,9 +1656,6 @@ void Budget :: addCategory(const Category& categoryHol) {
     CategoryList.push_back(categoryHol);
 }
 
-
-
-
 void Budget :: removeAllowance(int index) {
     if ((index >= 0) && (index < allowancesList_Today.size())) {
         allowancesList_Today.erase(allowancesList_Today.begin() + index);
@@ -1645,12 +1695,6 @@ void Budget :: removeSavings(int index) {
         throw runtime_error(">> WARNING: Invalid savings goal index.");
     }
 }
-
-
-
-
-
-
 
 // CHANGE: Allowance data created during present day [1-Date, 2-Amount, 3-Acc, 4-Desc]
 void Budget :: changeAllowance(int index, int mode, string input_Str = "", double input_Db = 0)
@@ -1773,9 +1817,6 @@ void Budget :: changeSavingsGoal(int index, int mode, string input1, double amt)
     }
 }
 
-
-
-
 void Budget :: updateExpenseDateRange(const string& startDate, const string& dueDate, int index)
 {
     // Check if index is out of bounds
@@ -1816,6 +1857,19 @@ void Budget :: updateSavingsDateRange(const string& startDate, const string& due
 
 
 
+
+
+
+
+
+
+
+
+
+
+/* ------------------------------------------------------ */ 
+/*               UPDATE: UPDATE MAIN MENU                 */ 
+/* ------------------------------------------------------ */ 
 void Budget :: displayUpdateMenu() {
     clearScreen();
 
@@ -1842,8 +1896,18 @@ void Budget :: displayUpdateMenu() {
 
 
 
-// UPDATE: LIMIT OF EXPENSES
-void Budget :: run_LimitExpenses() {
+
+
+
+
+
+
+
+
+/* ------------------------------------------------------ */ 
+/*               UPDATE: LIMIT OF EXPENSES                */ 
+/* ------------------------------------------------------ */ 
+void Budget :: run_UpdateLimitExpenses() {
     string input;
     while (true) {
         clearScreen();
@@ -1879,11 +1943,11 @@ void Budget :: run_LimitExpenses() {
         /* ---------------------------------------------------------------- */
         if (input == "1")   // Perform: SET NEW GOAL
         {
-            run_SetNewGoal("LIMIT OF EXPENSES (NEW GOAL)");
+            run_LE_SetNewGoal();
         }
 
         else if (input == "2") {
-            run_EditGoal("LIMIT OF EXPENSES (EDIT GOAL)");
+            run_LE_EditGoal();
         }
         else if (input == "R" || input == "r") {
             return; 
@@ -1891,11 +1955,13 @@ void Budget :: run_LimitExpenses() {
     }
 }
 
-void Budget :: run_SetNewGoal(string TITLE) {
+// ExpenseLimit/Savings: Set NEW GOAL [S, EL]
+void Budget :: run_LE_SetNewGoal() {
     int inputflow = 1;
     string input_SNG;
     double input_db;
 
+    // Input holders
     double newGoal = 0;
     string date1 = "MM/DD/YYYY";
     string date2 = "MM/DD/YYYY";
@@ -1904,9 +1970,9 @@ void Budget :: run_SetNewGoal(string TITLE) {
     while (true)
     {
         clearScreen();
-        // Display: UPDATE(Limit Of Expenses: ) title
+        // Display: UPDATE(TITLE)
         border(205);
-        displayCenteredLine_Colored("UPDATE: " + TITLE, BLUE);
+        displayCenteredLine_Colored("UPDATE: LIMIT OF EXPENSES(Set New Goal)", BLUE);
         border(205);
 
         // Display: Expenses Total and New Limit
@@ -1920,7 +1986,7 @@ void Budget :: run_SetNewGoal(string TITLE) {
 
 
         // Display: Notice if expense limit reached max slot
-        if (expenseLimitsList.size() == 4) {
+        if (expenseLimitsList.size() >= 4) {
             displayCenteredLine_Colored("WARNING", BOLDYELLOW);
             displayCenteredLine_Colored(">> You can set up to 4 GOALS at most!", YELLOW);
             displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
@@ -1951,6 +2017,10 @@ void Budget :: run_SetNewGoal(string TITLE) {
                             getchar();
                         }
                     }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return to menu
+                        return;
+                    }
                     else {
                         // Display: WARNING for invalid input
                         border(196);
@@ -1970,6 +2040,10 @@ void Budget :: run_SetNewGoal(string TITLE) {
                         date1 = input_SNG;
                         inputflow++; // Proceed to input DUE DATE
                     }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return to menu
+                        return;
+                    }
                     else {
                         // Display: WARNING for invalid input
                         border(196);
@@ -1980,6 +2054,7 @@ void Budget :: run_SetNewGoal(string TITLE) {
                     }
                     break;
 
+
                 case 3: /* ----- Input: DUE DATE ----- */
                     displayCenteredLine_NoNewLine(">> Enter DUE DATE: ", CYAN);
                     getline(cin, input_SNG);
@@ -1987,6 +2062,10 @@ void Budget :: run_SetNewGoal(string TITLE) {
                     if (validateSecondDate(date1, input_SNG)) {
                         date2 = input_SNG;
                         inputflow++; // Proceed to input DESCRIPTION
+                    }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return menu
+                        return;
                     }
                     else {
                         // Display: WARNING for invalid input
@@ -1998,6 +2077,7 @@ void Budget :: run_SetNewGoal(string TITLE) {
                     }
                     break;
                 
+
                 case 4: /* ----- Input: DESCRIPTION ----- */
                     cout << CYAN << "\t>> Enter DESCRIPTION(max 50 chars): " << RESET;
                     getline(cin, input_SNG);
@@ -2005,6 +2085,10 @@ void Budget :: run_SetNewGoal(string TITLE) {
                     if (input_SNG.size() <= 50) {
                         description = input_SNG;
                         inputflow++; // Proceed to notify user SET NEW GOAL SUCCESSFUL
+                    }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return menu
+                        return;
                     }
                     else {
                         // Display: WARNING for invalid input
@@ -2016,13 +2100,21 @@ void Budget :: run_SetNewGoal(string TITLE) {
                     }
                     break;
                 
+
                 default:
+                    // Add: New goal to Expense Limit List
+                    SavingsAndExpenseLim goal(date1, date2, newGoal, 0, description);
+                    addExpenseLim(goal);
+
+                    // Display: NOTIFICATION for successfully adding new goal
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Setting new goal successful!", YELLOW);
+                    displayCenteredLine_Colored(">> Press enter to continue...  ", YELLOW);
+                    getchar();
+                    return;
                     break;
             }
         }
-
-        
-
     }
 }
 
@@ -2032,8 +2124,13 @@ void Budget :: run_SetNewGoal(string TITLE) {
 
 
 
-// UPDATE: SET SAVINGS
-void Budget :: run_Savings() {
+
+
+/*-----------------------------------------------------------*/
+/*                      UPDATE: SAVINGS                      */
+/*-----------------------------------------------------------*/
+
+void Budget :: run_UpdateSavings() {
     string input;
 
     while (true) {
@@ -2098,7 +2195,7 @@ void Budget :: run_Savings() {
 }
 
 // UPDATE: ALLOWANCE
-void Budget :: run_Allowance() {
+void Budget :: run_UpdateAllowance() {
     string input;
     int page = 1;
 
@@ -2209,7 +2306,26 @@ void Budget :: run_Allowance() {
 }
 
 
+/*-----------------------------------------------------------*/
+/*                      UPDATE: SAVINGS                      */
+/*-----------------------------------------------------------*/
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*-----------------------------------------------------------*/
+/*                UPDATE: LOAD AND SAVE DATA                 */
+/*-----------------------------------------------------------*/
 
 void Budget :: loadData() {
     loadAllowances();
@@ -2223,7 +2339,6 @@ void Budget :: loadData() {
     calculateTotalBudget();
 }
 
-
 void Budget :: saveState() {
     saveAllowances();
     saveExpenses();
@@ -2234,6 +2349,23 @@ void Budget :: saveState() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*-----------------------------------------------------------*/
+/*                    UPDATE: MAIN FUNCTION                  */
+/*-----------------------------------------------------------*/
 
 int main() {
     Budget budget;
@@ -2250,11 +2382,11 @@ int main() {
 
         try {
             if (input == "1") {
-                budget.run_SetLimitExpenses();
+                budget.run_UpdateLimitExpenses();
             } else if (input == "2") {
-                budget.run_Savings();
+                budget.run_UpdateSavings();
             } else if (input == "3") {
-                budget.run_Allowance();
+                budget.run_UpdateAllowance();
             } else if (input == "4") {
                 // Handle option 4
             } else {

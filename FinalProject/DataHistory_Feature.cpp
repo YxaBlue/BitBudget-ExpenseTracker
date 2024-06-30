@@ -729,7 +729,7 @@ public:
     // Display Menu
     void displayUpdateMenu();
     void run_SetLimitExpenses();
-    void run_Savings();
+    void run_UpdateSavings();
     void run_UpdateAllowance(int);
 
     // Getters
@@ -977,7 +977,7 @@ void Budget :: run_SetLimitExpenses() {
     }
 }
 
-void Budget :: run_Savings() {
+void Budget :: run_UpdateSavings() {
     while (true) {
         clearScreen();
         const int menuWidth = 150;
