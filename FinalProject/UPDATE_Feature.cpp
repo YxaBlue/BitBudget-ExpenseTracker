@@ -356,7 +356,7 @@ private:
     vector<Expense> expenses;
     double expenseLimit;
     double savingsGoal;
-    double currentSavings;
+    double totalSavings;
     string expenseStartDate;
     string expenseDueDate;
     string savingsStartDate;
@@ -364,9 +364,9 @@ private:
     vector<Allowance> allowancesList;
 
     void calculateCurrentSavings() {
-        currentSavings = 0.0;
+        totalSavings = 0.0;
         for (const auto& allowance : allowancesList) {
-            currentSavings += allowance.getAmount();
+            totalSavings += allowance.getAmount();
         }
     }
 
@@ -414,7 +414,7 @@ Budget :: Budget() :
             totalBudget(0.0),
             expenseLimit(0.0),
             savingsGoal(0.0),
-            currentSavings(0.0) {}
+            totalSavings(0.0) {}
 
 
 
@@ -633,7 +633,7 @@ void Budget :: run_UpdateSavings() {
         displayCenteredLine(">> SAVINGS", BOLDWHITE, menuWidth);
         displayCenteredLine("*Date: [" + getSavingsStartDate() + " - " + getSavingsDueDate() + "]", WHITE, menuWidth);
         displayCenteredLine("*Savings GOAL:                       P" + to_string(savingsGoal), WHITE, menuWidth);
-        displayCenteredLine("*Current Savings:                    P" + to_string(currentSavings) + "/" + to_string(savingsGoal), WHITE, menuWidth);
+        displayCenteredLine("*Current Savings:                    P" + to_string(totalSavings) + "/" + to_string(savingsGoal), WHITE, menuWidth);
         displayCenteredLine("", menuWidth);
         displayCenteredLine("", menuWidth);
         displayCenteredLine("", menuWidth);

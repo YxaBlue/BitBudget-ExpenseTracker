@@ -951,7 +951,8 @@ istream& operator>>(istream& is, Allowance& allowance) {
 class Budget {
 private:
     double totalBudget;
-    double currentSavings;
+    double totalSavings;
+    double totalExpenses_LOE;
 
     double totalExpenses;
     double totalAllowance;
@@ -1025,8 +1026,6 @@ protected:
 
     void changeAllowance(int, int, string, double);
     void changeExpenses(int, int, string, string, double);
-    void changeExpenseGoal(int, int, string, double);
-    void changeSavingsGoal(int, int, string, double);
     void updateExpenseDateRange(const string&, const string&, int);
     void updateSavingsDateRange(const string&, const string&, int);
 
@@ -1037,7 +1036,7 @@ protected:
 public:
     Budget();
 
-    void calculateTotalBudget(); // DONE
+    void calculateTotalBudget();
     void setTotalBudget(double);
 
 
@@ -1055,7 +1054,7 @@ public:
     void displayUpdateMenu();
 
 
-    void run_UpdateLimitExpenses(); // DONE~
+    void run_UpdateLimitExpenses(); // DONE, need to work on how to add up the expenses.
     void run_UpdateSavings(); // working~
     void run_UpdateAllowance(); // working~
     void run_UpdateExpense(); // working~
@@ -1084,9 +1083,9 @@ public:
 /*--------------------------------------------------------*/
 
 void Budget :: calculateCurrentSavings() {
-    currentSavings = 0.0;
+    totalSavings = 0.0;
     for (const auto& savings : savingsList)
-        currentSavings += savings.get_currentAmt();
+        totalSavings += savings.get_currentAmt();
 }
 
 void Budget :: calculateTotalAllowance() {
@@ -1109,14 +1108,23 @@ void Budget :: calculateTotalExpenses() {
 
 void Budget :: calculateTotalAllowance_Today() {
     totalAllowance_Today = 0;
-    for (const auto& allowance : allowancesList_Today)
+    for (const auto& allowance : allowancesList_Today) {
+        if (allowance.getDate() == getDate_Today())
         totalAllowance_Today += allowance.getAmount();
+
+        else totalAllowance += allowance.getAmount();
+    }
 }
 
 void Budget :: calculateTotalExpenses_Today() {
     totalExpenses_Today = 0;
-    for (const auto& expense : expensesList_Today)
-        totalExpenses_Today += expense.getAmount();
+    for (const auto& expense : expensesList_Today) {
+        if (expense.getDate() == getDate_Today())
+            totalExpenses_Today += expense.getAmount();
+
+        else totalExpenses += expense.getAmount();
+    }
+        
 }
 
 void Budget :: calculateTotalBudget() {
@@ -1125,7 +1133,7 @@ void Budget :: calculateTotalBudget() {
     calculateTotalExpenses();
     calculateCurrentSavings();
 
-    totalBudget = totalAllowance - totalExpenses - currentSavings;
+    totalBudget = totalAllowance - totalExpenses - totalSavings;
 }
 
 
@@ -1145,7 +1153,7 @@ void Budget :: calculateTotalBudget() {
 /*--------------------------------------------------------*/
 Budget :: Budget() :
             totalBudget(0.0),
-            currentSavings(0.0) {}
+            totalSavings(0.0) {}
 
 
 
@@ -1483,10 +1491,11 @@ void Budget :: displayExpensesList_today(int page = 1)
 void Budget :: displaySavingsList()
 {
     int i = 1;
+    char border = 179;
     int items = savingsList.size();
 
     // Display: Headers
-    cout << string(5, ' ');
+    cout << string(3, ' ') << border;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
     displayTxtByColumn_CENTERED("DATE (Start-Due)", BOLDWHITE, 25);
     displayTxtByColumn_CENTERED("SAVINGS GOAL", BOLDWHITE, COLUMNWIDTH+2);
@@ -1498,12 +1507,12 @@ void Budget :: displaySavingsList()
     {
         stringstream stream1, stream2;
         stream1 << fixed << setprecision(2) << savingsData.get_goal();
-        stream2 << fixed << setprecision << savingsData.get_currentAmt();
+        stream2 << fixed << setprecision(2) << savingsData.get_currentAmt();
 
         string amt_str1 = stream1.str();
         string amt_str2 = stream2.str();
 
-        cout << "\n" << string(5, ' ');
+        cout << "\n" << string(3, ' ') << border;
         displayTxtByColumn_CENTERED(to_string(i++), WHITE, 7);
         displayTxtByColumn(savingsData.get_startDate() + " - " + savingsData.get_dueDate(), WHITE, 25);
         displayTxtByColumn( "P " + amt_str1, WHITE, COLUMNWIDTH+2);
@@ -1513,12 +1522,14 @@ void Budget :: displaySavingsList()
 
     // Display: Dummy data
     if (items < 4) {
-        cout << "\n" << string(5, ' ');
-        displayTxtByColumn_CENTERED(to_string(i++), WHITE, COLUMNWIDTH);
-        displayTxtByColumn("--/--/---- - --/--/----", WHITE, 25);
-        displayTxtByColumn( "P 0.00", WHITE, COLUMNWIDTH+2);
-        displayTxtByColumn("----------", WHITE, 60);
-        displayTxtByColumn("P 0.00  /  P 0.00", MAGENTA, COLUMNWIDTH*2);
+        for (int iter = items; iter < 4; iter++) {
+            cout << "\n" << string(3, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(i++), WHITE, 7);
+            displayTxtByColumn("--/--/---- - --/--/----", WHITE, 25);
+            displayTxtByColumn( "P 0.00", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("----------", WHITE, 60);
+            displayTxtByColumn("P 0.00  /  P 0.00", MAGENTA, COLUMNWIDTH*2);
+        }
     }
 }
 
@@ -1779,54 +1790,6 @@ void Budget :: changeExpenses(int index, int mode, string input_Str = "", string
     }
 }
 
-// CHANGE: Expense goal data [1-Goal, 2-Desc]
-void Budget :: changeExpenseGoal(int index, int mode, string input1, double amt)
-{
-    if ((index <= 0) || (index > expenseLimitsList.size())) return;
-        throw runtime_error(">> WARNING: Invalid expense goal index.");
-
-    SavingsAndExpenseLim& expenseGoal = expenseLimitsList[index - 1];
-
-    switch (mode) {
-        case 1:
-            // Change Expense Limit Goal
-            expenseGoal.set_goal(amt);
-            break;
-        
-        case 2:
-            // Change Description
-            expenseGoal.set_desc(input1);
-            break;
-            
-        default:
-            break;
-    }
-}
-
-// CHANGE: Savings goal data [1-Goal, 2-Desc]
-void Budget :: changeSavingsGoal(int index, int mode, string input1, double amt)
-{
-    if ((index <= 0) || (index > savingsList.size())) return;
-        throw runtime_error(">> WARNING: Invalid savings goal index.");
-
-    SavingsAndExpenseLim& savingsGoal = savingsList[index - 1];
-
-    switch (mode) {
-        case 1:
-            // Change Savings Goal
-            savingsGoal.set_goal(amt);
-            break;
-        
-        case 2:
-            // Change Description
-            savingsGoal.set_desc(input1);
-            break;
-            
-        default:
-            break;
-    }
-}
-
 void Budget :: updateExpenseDateRange(const string& startDate, const string& dueDate, int index)
 {
     // Check if index is out of bounds
@@ -1837,7 +1800,7 @@ void Budget :: updateExpenseDateRange(const string& startDate, const string& due
     // Update expense date range
     if (validateDateFormat(startDate) && validateDateFormat(dueDate) &&
         validateDate(startDate) && validateSecondDate(startDate, dueDate)) {
-            SavingsAndExpenseLim& expenseLimitData = expenseLimitsList[index-1];
+            SavingsAndExpenseLim& expenseLimitData = expenseLimitsList[index];
             expenseLimitData.set_startDate(startDate);
             expenseLimitData.set_dueDate(dueDate);
     }
@@ -1849,13 +1812,13 @@ void Budget :: updateExpenseDateRange(const string& startDate, const string& due
 void Budget :: updateSavingsDateRange(const string& startDate, const string& dueDate, int index)
 {
     // Check if index is out of bounds
-    if ((index <= 0) || (index > savingsList.size())) {
+    if ((index < 0) || (index >= savingsList.size())) {
         throw runtime_error("Index not found in expensesList.");
     }
 
     // Updata savings date range
     if (validateDate(startDate) && validateSecondDate(startDate, dueDate)) {
-            SavingsAndExpenseLim& savingsData = savingsList[index-1];
+            SavingsAndExpenseLim& savingsData = savingsList[index];
             savingsData.set_startDate(startDate);
             savingsData.set_dueDate(dueDate);
     }
@@ -1928,7 +1891,7 @@ void Budget :: run_UpdateLimitExpenses() {
 
         // Display: Expenses Total and New Limit
         cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> Expense Limit: EXPENSES:" << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
         displayExpenseLimitList();
         cout << "\n";
         cout << "\n";
@@ -1947,21 +1910,11 @@ void Budget :: run_UpdateLimitExpenses() {
         // Ask user for input
         getline(cin, input);
 
-        if (input == "1") { // Perform: SET NEW GOAL
-            run_LE_SetNewGoal();
-        }
-
-        else if (input == "2") { //
-            run_LE_EditGoal();
-        }
-
-        else if (input == "3") {
-            run_LE_DeleteGoal();
-        }
-
-        else if (input == "R" || input == "r") {
-            return; 
-        }
+        if (input == "1")       run_LE_SetNewGoal();
+        else if(input == "2")   run_LE_EditGoal();
+        else if (input == "3")  run_LE_DeleteGoal();
+        
+        else if (input == "R" || input == "r") return; 
     }
 }
 
@@ -1986,7 +1939,7 @@ void Budget :: run_LE_SetNewGoal() {
         border(205);
 
         // Display: Expenses Total and New Limit
-        cout << BOLDWHITE << "  >> SETTING NEW GOAL:" << RESET << endl;
+        cout << BOLDWHITE << "  >> SETTING NEW GOAL:\n" << RESET << endl;
         cout << string(5, ' ') << "* New Goal Amount:    " << GREEN << "P " << newGoal << RESET << endl;
         cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
         cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
@@ -2143,7 +2096,7 @@ void Budget :: run_LE_DeleteGoal() {
 
         // Display: Expenses Total and New Limit
         cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> Expense Limit: EXPENSES:" << RESET << endl;
+        cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
         displayExpenseLimitList();
         cout << "\n";
         cout << "\n";
@@ -2196,7 +2149,7 @@ void Budget :: run_LE_EditGoal() {
 
         // Display: Expenses Total and New Limit
         cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> Expense Limit: EXPENSES:" << RESET << endl;
+        cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
         displayExpenseLimitList();
         cout << "\n";
         cout << "\n";
@@ -2227,7 +2180,7 @@ void Budget :: run_LE_EditGoal() {
 
                     // Display: Expenses Total and New Limit
                     cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-                    cout << BOLDWHITE << "  >> Expense Limit: EXPENSES:" << RESET << endl;
+                    cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
                     displayExpenseLimitList();
                     cout << "\n";
                     cout << "\n";
@@ -2282,6 +2235,9 @@ void Budget :: run_LE_EditGoal() {
                         cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
                         cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
                         cout << "\n";
+                        cout << string(5, ' ') << "* Goal Amount:        " << BLUE <<  fixed << setprecision(2) << expenseLim.get_goal() << RESET << endl;
+                        cout << string(5, ' ') << "* Description:        " << BLUE <<  expenseLim.get_desc() << RESET << endl;
+                        cout << "\n";
                         cout << "\n";
                         border(196);
 
@@ -2329,7 +2285,7 @@ void Budget :: run_LE_EditGoal() {
 
                 // Edit AMOUNT
                 else if (input_str == "2") {
-                    SavingsAndExpenseLim expenseLim = expenseLimitsList[input_int - 1];
+                    SavingsAndExpenseLim& expenseLim = expenseLimitsList[input_int - 1];
                     double og_Goal = expenseLim.get_goal();
 
                     int inputflow = 1;
@@ -2343,18 +2299,24 @@ void Budget :: run_LE_EditGoal() {
                         border(205);
 
                         // Display original data
-                        cout << BOLDWHITE << "  >> EDITING START & DUE DATE:" << RESET << endl;
+                        cout << BOLDWHITE << "  >> EDITING GOAL AMOUNT:" << RESET << endl;
+                        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  expenseLim.get_startDate() << RESET << endl;
+                        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  expenseLim.get_dueDate() << RESET << endl;
                         cout << "\n";
-                        cout << string(5, ' ') << "* Goal Amount:         " << BLUE <<  fixed << setprecision(2) << og_Goal << RESET << endl;
+                        cout << string(5, ' ') << "* Goal Amount:        " << BLUE <<  fixed << setprecision(2) << og_Goal << RESET << endl;
+                        cout << "\n";
+                        cout << string(5, ' ') << "* Description:        " << BLUE <<  expenseLim.get_desc() << RESET << endl;
                         cout << "\n";
                         cout << "\n";
                         border(196);
 
-                        displayCenteredLine_NoNewLine(">> Enter NEW AMOUNT: ", CYAN);
-                        getline(cin, input_str);
+                        
 
                         switch (inputflow) {
                             case 1:
+                                displayCenteredLine_NoNewLine(">> Enter NEW AMOUNT: ", CYAN);
+                                getline(cin, input_str);
+
                                 if ((input_str == "R") || (input_str == "r")) return;
 
                                 if (isDouble(input_str)) {
@@ -2363,8 +2325,9 @@ void Budget :: run_LE_EditGoal() {
                                 }
                                 break;
 
+
                             default:
-                                changeExpenseGoal(input_int - 1, 1, "", og_Goal);
+                                expenseLim.set_goal(og_Goal);
 
                                 displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
                                 displayCenteredLine_Colored(">> Goal edited successfully!                            ", YELLOW);
@@ -2380,7 +2343,7 @@ void Budget :: run_LE_EditGoal() {
 
                 // Edit DESCRIPTION
                 else if (input_str == "3") {
-                    SavingsAndExpenseLim expenseLim = expenseLimitsList[input_int - 1];
+                    SavingsAndExpenseLim& expenseLim = expenseLimitsList[input_int - 1];
                     string og_desc = expenseLim.get_desc();
 
                     int inputflow = 1;
@@ -2394,9 +2357,12 @@ void Budget :: run_LE_EditGoal() {
                         border(205);
 
                         // Display original data
-                        cout << BOLDWHITE << "  >> EDITING START & DUE DATE:" << RESET << endl;
+                        cout << BOLDWHITE << "  >> EDITING DESCRIPTION:" << RESET << endl;
+                        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  expenseLim.get_startDate() << RESET << endl;
+                        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  expenseLim.get_dueDate() << RESET << endl;
+                        cout << string(5, ' ') << "* Goal Amount:        " << BLUE <<  fixed << setprecision(2) << expenseLim.get_goal() << RESET << endl;
                         cout << "\n";
-                        cout << string(5, ' ') << "* Description:         " << BLUE <<  og_desc << RESET << endl;
+                        cout << string(5, ' ') << "* Description:        " << BLUE <<  og_desc << RESET << endl;
                         cout << "\n";
                         cout << "\n";
                         border(196);
@@ -2414,8 +2380,9 @@ void Budget :: run_LE_EditGoal() {
                                 }
                                 break;
 
+
                             default:
-                                changeExpenseGoal(input_int - 1, 2, og_desc, 0);
+                                expenseLim.set_desc(og_desc);
 
                                 displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
                                 displayCenteredLine_Colored(">> Goal edited successfully!                            ", YELLOW);
@@ -2427,6 +2394,7 @@ void Budget :: run_LE_EditGoal() {
                     }
                 }
             }
+            
         }
         else if ((input_str == "R") || (input_str == "r")) return;
     }
@@ -2441,73 +2409,496 @@ void Budget :: run_LE_EditGoal() {
 
 
 
+
+
 /*-----------------------------------------------------------------------------------------*/
 /*                                   UPDATE: SAVINGS                                       */
 /*-----------------------------------------------------------------------------------------*/
 
-// void Budget :: run_UpdateSavings() {
-//     string input;
+void Budget :: run_UpdateSavings() {
+    string input;
 
-//     while (true) {
-//         clearScreen();
-//         // Display: UPDATE(SAVINGS) Title
-//         border(205);
-//         displayCenteredLine_Colored("UPDATE: SAVINGS", BLUE);
-//         border(205);
+    while (true) {
+        clearScreen();
+        // Display: UPDATE(SAVINGS) Title
+        border(205);
+        displayCenteredLine_Colored("UPDATE: SAVINGS", BLUE);
+        border(205);
 
-//         // Display: List of SAVINGS schedules
-//         displaySavingsList();
-//         cout << "\n";
-//         cout << "\n";
-//         cout << "\n";
-//         border(205);
+        // Display: List of SAVINGS schedules
+        cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+        cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
+        displaySavingsList();
+        cout << "\n";
+        cout << "\n";
+        cout << "\n";
+        border(205);
 
-//         // Display: OPTIONS
-//         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
-//         cout << "\n";
-//         displayCenteredLine_Colored("[1] SET/REWRITE GOAL", BOLDWHITE);
-//         displayCenteredLine_Colored("[2] SET/REWRITE DATE", BOLDWHITE);
-//         displayCenteredLine_Colored("[R] Return", BOLDWHITE);
-//         cout << "\n";
-//         displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+        // Display: OPTIONS
+        displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_NoColor("[ 1 ] SET NEW GOAL     ");
+        displayCenteredLine_NoColor("[ 2 ] EDIT GOAL        ");
+        displayCenteredLine_NoColor("[ 3 ] DELETE GOAL      ");
+        displayCenteredLine_NoColor("[ 4 ] SET ASIDE SAVINGS");
+        cout << "\n";
+        displayCenteredLine_NoColor("[R] Return");
+        cout << "\n";
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
-//         getline(cin, input);
+        getline(cin, input);
 
-//         if (input == "1") {
-//             double newGoal;
-//             cout << "Enter new savings goal: ";
-//             cin >> newGoal;
-//             setSavingsGoal(newGoal);
-//             cout << "New savings goal set to P" << newGoal << endl;
-//         }
-//         else if (input == "2") {
-//             string startDate, dueDate;
-//             cout << "Enter start date (MM/DD/YYYY): ";
-//             cin >> startDate;
-//             if (startDate == "R" || startDate == "r") {
-//                 continue;
-//             }
 
-//             cout << "Enter due date (MM/DD/YYYY): ";
-//             cin >> dueDate;
-//             if (dueDate == "R" || dueDate == "r") {
-//                 continue; 
-//             }
+        if(input == "1")        run_S_SetNewGoal();
+        else if(input == "2")   run_S_EditGoal();
+        //else if(input == "3")   run_S_DeleteGoal();
+        //else if(input == "4")   run_SetAsideSavings();
 
-//             // Validate and update date range
-//             try {
-//                 updateSavingsDateRange(startDate, dueDate);
-//                 cout << "Savings date range set from " << startDate << " to " << dueDate << endl;
-//             } catch (const exception& e) {
-//                 cout << "Error: " << e.what() << endl;
-//             }
-//         }
-//         else if (input == "R" || input == "r") {
-//             saveState();
-//             return; 
-//         }
-//     }
-// }
+        else if (input == "R" || input == "r") return; 
+        
+    }
+}
+
+// SAVINGS: Set New Goal
+void Budget :: run_S_SetNewGoal() {
+    int inputflow = 1;
+    string input_SNG;
+    double input_db;
+
+    // Input holders
+    double newGoal = 0;
+    string date1 = "MM/DD/YYYY";
+    string date2 = "MM/DD/YYYY";
+    string description = "----------";
+
+    while (true)
+    {
+        clearScreen();
+
+        // Display: UPDATE(TITLE)
+        border(205);
+        displayCenteredLine_Colored("UPDATE: SAVINGS (SET NEW GOAL)", BLUE);
+        border(205);
+
+        // Display: New Goal data
+        cout << BOLDWHITE << "  >> SETTING NEW GOAL:\n" << RESET << endl;
+        cout << string(5, ' ') << "* New Goal Amount:    " << GREEN << "P " << newGoal << RESET << endl;
+        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
+        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
+        cout << string(5, ' ') << "* Description:        " << BLUE <<  description << RESET << endl;
+        cout << "\n";
+        border(196);
+
+
+        // Display: Notice if Savings List reached max slot
+        if (savingsList.size() >= 4) {
+            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+            displayCenteredLine_Colored(">> You can set up to 4 GOALS at most!            ", YELLOW);
+            displayCenteredLine_NoNewLine(">> Returning to Savings Menu... (Press 'ENTER')  ", YELLOW);
+            getchar();
+            return; // Return to MENU
+        }
+
+        else {
+            switch (inputflow) {
+                case 1: /* ----- Input: NEW GOAL ----- */
+                    displayCenteredLine_NoNewLine(">> Enter AMOUNT: ", CYAN);
+                    getline(cin, input_SNG);
+
+                    if (isDouble(input_SNG))
+                    {
+                        input_db = stod(input_SNG);
+
+                        if (input_db > 0) {
+                            newGoal = input_db;
+                            inputflow++; // Proceed to input START DATE
+                        }
+                        else {
+                            // Display: WARNING for invalid input
+                            border(196);
+                            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                            displayCenteredLine_Colored(">> Please enter valid input.   ", YELLOW);
+                            displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+                            getchar();
+                        }
+                    }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return to menu
+                        return;
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.   ", YELLOW);
+                        displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+
+
+                case 2: /* ----- Input: START DATE ----- */
+                    displayCenteredLine_NoNewLine(">> Enter START DATE: ", CYAN);
+                    getline(cin, input_SNG);
+
+                    if (validateDate(input_SNG)) {
+                        date1 = input_SNG;
+                        inputflow++; // Proceed to input DUE DATE
+                    }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return to menu
+                        return;
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.   ", YELLOW);
+                        displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+
+
+                case 3: /* ----- Input: DUE DATE ----- */
+                    displayCenteredLine_NoNewLine(">> Enter DUE DATE: ", CYAN);
+                    getline(cin, input_SNG);
+
+                    if (validateSecondDate(date1, input_SNG)) {
+                        date2 = input_SNG;
+                        inputflow++; // Proceed to input DESCRIPTION
+                    }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return menu
+                        return;
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.   ", YELLOW);
+                        displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+                
+
+                case 4: /* ----- Input: DESCRIPTION ----- */
+                    cout << CYAN << "\t>> Enter DESCRIPTION(max 50 chars): " << RESET;
+                    getline(cin, input_SNG);
+
+                    if (input_SNG.size() <= 50) {
+                        description = input_SNG;
+                        inputflow++; // Proceed to notify user SET NEW GOAL SUCCESSFUL
+                    }
+                    else if ((input_SNG == "R") || (input_SNG == "r")) {
+                        // Return menu
+                        return;
+                    }
+                    else {
+                        // Display: WARNING for invalid input
+                        border(196);
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter description of 50 characters at most.", YELLOW);
+                        displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+                        getchar();
+                    }
+                    break;
+                
+
+                default:
+                    // Add: New goal to Savings List
+                    SavingsAndExpenseLim goal(date1, date2, newGoal, 0, description);
+                    addSavings(goal);
+
+                    // Display: NOTIFICATION for successfully adding new goal
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Setting new goal successful!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press enter to continue...  ", YELLOW);
+                    getchar();
+                    return;
+                    break;
+            }
+        }
+    }
+}
+
+// SAVINGS: Edit Goal
+void Budget :: run_S_EditGoal() {
+string input_str;
+    int input_int;
+
+    while (true)
+    {
+        clearScreen();
+        // Display: UPDATE(Savings) title
+        border(205);
+        displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+        border(205);
+
+        // Display: List of SAVINGS schedules
+        cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+        cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
+        displaySavingsList();
+        cout << "\n";
+        cout << "\n";
+        border(196);
+
+        displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_NoColor(">> Enter any index number to EDIT");
+        displayCenteredLine_NoColor(">> Enter 'R' to return           ");
+        cout << "\n";
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+
+        // Ask user for input
+        getline(cin, input_str);
+
+        if (isNumeric(input_str)) {
+            input_int = stoi(input_str);
+
+            if ((input_int > 0) && (input_int <= savingsList.size()))
+            {
+                while (true) {
+                    clearScreen();
+
+                    // Display: UPDATE(Savings) title
+                    border(205);
+                    displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+                    border(205);
+
+                    // Display: List of SAVINGS schedules
+                    cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+                    cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
+                    displaySavingsList();
+                    cout << "\n";
+                    cout << "\n";
+                    border(196);
+
+                    displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+                    cout << "\n";
+                    displayCenteredLine_NoColor("[ 1 ] START & DUE DATE");
+                    displayCenteredLine_NoColor("[ 2 ] GOAL            ");
+                    displayCenteredLine_NoColor("[ 3 ] DESCRIPTION     ");
+                    cout << "\n";
+                    displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+
+                    // Get user input
+                    getline(cin, input_str);
+
+                    if ((input_str == "R") || (input_str == "r") ||
+                        (input_str == "1") || (input_str == "2") ||
+                        (input_str == "3"))
+                    break;
+                }
+
+
+
+
+                // End function and return to Limit Expenses Menu
+                if ((input_str == "R") || (input_str == "r"))
+                return;
+
+
+
+
+                // Edit START & DUE GOAL
+                else if (input_str == "1") {
+                    SavingsAndExpenseLim savings = savingsList[input_int - 1];
+                    string date1 = savings.get_startDate();
+                    string date2 = savings.get_dueDate();
+
+                    int inputflow = 1;
+
+                    while (true) {
+                        clearScreen();
+
+                        // Display: UPDATE(Savings) title
+                        border(205);
+                        displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+                        border(205);
+
+                        // Display original data
+                        cout << BOLDWHITE << "  >> EDITING START & DUE DATE:" << RESET << endl;
+                        cout << "\n";
+                        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
+                        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
+                        cout << "\n";
+                        cout << string(5, ' ') << "* Goal Amount:        " << BLUE <<  fixed << setprecision(2) << savings.get_goal() << RESET << endl;
+                        cout << string(5, ' ') << "* Description:        " << BLUE <<  savings.get_desc() << RESET << endl;
+                        cout << "\n";
+                        cout << "\n";
+                        border(196);
+
+                        switch (inputflow) {
+                            case 1: // Input START DATE
+                                displayCenteredLine_NoNewLine("Enter Start Date(MM/DD/YYYY): ", CYAN);
+                                getline(cin , input_str);
+
+                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                if (validateDate(input_str)) {
+                                    date1 = input_str;
+                                    inputflow++;
+                                }
+                                break;
+
+
+                            case 2: // Input DUE DATE
+                                displayCenteredLine_NoNewLine("Enter Due Date(MM/DD/YYYY): ", CYAN);
+                                getline(cin , input_str);
+
+                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                if (validateSecondDate(date1, input_str)) {
+                                    date2 = input_str;
+                                    inputflow++;
+                                }
+                                break;
+
+
+                            default: // Notify user EDIT SUCCESSFUL
+                                updateSavingsDateRange(date1, date2, input_int - 1);
+
+                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                displayCenteredLine_Colored(">> Goal edited successfully!", YELLOW);
+                                displayCenteredLine_NoNewLine(">> Return to Savings Menu... (Press 'ENTER')  ", WHITE);
+                                getchar();
+                                return;
+                                break;
+                        }
+                    }
+                }
+
+
+
+                // Edit AMOUNT
+                else if (input_str == "2") {
+                    SavingsAndExpenseLim& savings = savingsList[input_int - 1];
+                    double og_Goal = savings.get_goal();
+
+                    int inputflow = 1;
+
+                    while (true) {
+                        clearScreen();
+
+                        // Display: UPDATE(Savings) title
+                        border(205);
+                        displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+                        border(205);
+
+                        // Display original data
+                        cout << BOLDWHITE << "  >> EDITING GOAL AMOUNT:" << RESET << endl;
+                        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  savings.get_startDate() << RESET << endl;
+                        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  savings.get_dueDate() << RESET << endl;
+                        cout << "\n";
+                        cout << string(5, ' ') << "* Goal Amount:        " << BLUE <<  fixed << setprecision(2) << og_Goal << RESET << endl;
+                        cout << "\n";
+                        cout << string(5, ' ') << "* Description:        " << BLUE <<  savings.get_desc() << RESET << endl;
+                        cout << "\n";
+                        cout << "\n";
+                        border(196);
+
+                        
+
+                        switch (inputflow) {
+                            case 1:
+                                displayCenteredLine_NoNewLine(">> Enter NEW AMOUNT: ", CYAN);
+                                getline(cin, input_str);
+
+                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                if (isDouble(input_str)) {
+                                    og_Goal = stod(input_str);
+                                    inputflow++;
+                                }
+                                break;
+
+
+                            default:
+                                savings.set_goal(og_Goal);
+
+                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                displayCenteredLine_Colored(">> Goal edited successfully!", YELLOW);
+                                displayCenteredLine_NoNewLine(">> Return to Limit of Expenses Menu... (Press 'ENTER')  ", WHITE);
+                                getchar();
+                                return;
+                                break;
+                        }
+                    }
+                }
+
+
+
+                // Edit DESCRIPTION
+                else if (input_str == "3") {
+                    SavingsAndExpenseLim& savings = savingsList[input_int - 1];
+                    string og_desc = savings.get_desc();
+
+                    int inputflow = 1;
+
+                    while (true) {
+                        clearScreen();
+
+                        // Display: UPDATE(Limit Of Expenses) title
+                        border(205);
+                        displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+                        border(205);
+
+                        // Display original data
+                        cout << BOLDWHITE << "  >> EDITING DESCRIPTION:" << RESET << endl;
+                        cout << string(5, ' ') << "* Start Date:         " << BLUE <<  savings.get_startDate() << RESET << endl;
+                        cout << string(5, ' ') << "* Due Date:           " << BLUE <<  savings.get_dueDate() << RESET << endl;
+                        cout << string(5, ' ') << "* Goal Amount:        " << BLUE <<  fixed << setprecision(2) << savings.get_goal() << RESET << endl;
+                        cout << "\n";
+                        cout << string(5, ' ') << "* Description:        " << BLUE <<  og_desc << RESET << endl;
+                        cout << "\n";
+                        cout << "\n";
+                        border(196);
+
+                        switch (inputflow) {
+                            case 1:
+                                displayCenteredLine_NoNewLine(">> Enter NEW DESCRIPTION: ", CYAN);
+                                getline(cin, input_str);
+
+                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                if (input_str.size() <= 50) {
+                                    og_desc = input_str;
+                                    inputflow++;
+                                }
+                                break;
+
+
+                            default:
+                                savings.set_desc(og_desc);
+
+                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                displayCenteredLine_Colored(">> Goal edited successfully!                            ", YELLOW);
+                                displayCenteredLine_NoNewLine(">> Return to Limit of Expenses Menu... (Press 'ENTER')  ", WHITE);
+                                getchar();
+                                return;
+                                break;
+                        }
+                    }
+                }
+            }
+            
+        }
+        else if ((input_str == "R") || (input_str == "r")) return;
+    }
+}
+
+// SAVINGS: Delete Goal
+void Budget :: run_S_DeleteGoal() {
+
+}
+
+// SAVINGS: Set Aside Savings
+void Budget :: run_SetAsideSavings() {
+
+}
+
 
 // // UPDATE: ALLOWANCE
 // void Budget :: run_UpdateAllowance() {
@@ -2705,7 +3096,7 @@ int main() {
                 budget.run_UpdateLimitExpenses();
             }
             else if (input == "2") {
-                //budget.run_UpdateSavings();
+                budget.run_UpdateSavings();
             }
             else if (input == "3") {
                 //budget.run_UpdateAllowance();
