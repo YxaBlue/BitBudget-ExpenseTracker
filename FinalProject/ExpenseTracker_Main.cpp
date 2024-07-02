@@ -88,13 +88,6 @@ void clearScreen();
 void print_BitBudgetMM(bool&, bool&);
 void print_QuitMenu();
 
-
-/* INBOX FUNCTIONS */
-// 
-void inbox_Options(int);
-void inbox_Title();
-void run_INBOX();
-
 void clearFile(string);
 bool IsNumeric(string);
 

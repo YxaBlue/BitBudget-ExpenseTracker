@@ -107,6 +107,351 @@ string getDate_Today();
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------------*/
+/*------------------------------- CATEGORY CLASS ----------------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class Category {
+private:
+    string categoryName_parent;
+    int totalBabyCategories;
+    vector<string> categoryName_baby;
+
+public:
+    // CONSTRUCTOR
+    Category(string, int);
+    void add_BabyCategory(string);
+
+    // CATEGORY GETTERS
+    string getParentCategory() const;
+    int getTotalBabyCategories() const;
+    vector<string> getBabyCategories() const;
+
+    // Friend Functions
+    friend ostream& operator<<(ostream& outFILE, const Category &categoryHol);
+    friend istream& operator>>(istream& inFILE, Category &categoryHol);
+};
+
+
+
+
+
+
+/*---------------------------------------------------------------------------------*/
+/*-------------------------- SavingsAndExpenseLim CLASS ---------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class SavingsAndExpenseLim {
+private:
+    string startDate;
+    string dueDate;
+    double goal;
+    double currentAmt;
+    string description;
+
+public:
+    SavingsAndExpenseLim(string, string, double, double, string);
+
+    // GETTERS
+    string get_startDate() const;
+    string get_dueDate() const;
+    double get_goal() const;
+    double get_currentAmt() const;
+    string get_desc() const;
+
+    // SETTERS
+    void set_startDate(string);
+    void set_dueDate(string);
+    void set_goal(double);
+    void set_currentAmt(double);
+    void set_desc(string);
+
+    // SAVE & LOAD TO FILE
+    friend ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol);
+    friend istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol);
+};
+
+
+
+
+
+
+
+
+
+/*---------------------------------------------------------------------------------*/
+/*------------------------------- EXPENSE CLASS -----------------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class Expense {
+private:
+    string dateCreated;
+
+    string date;
+    double amount;
+    string account;
+
+    string category;
+    string babyCategory;
+    string description;
+
+
+public:
+    // CONSTRUCTORS
+    Expense(string, string, double, string, string, string, string);
+
+    // GETTERS
+    string getDateCreated() const;
+    string getDate() const;
+    string getCategory() const;
+    string getBabyCategory() const;
+    string getDescription() const;
+    string getAccount() const;
+    double getAmount() const;
+
+    // SETTERS
+    void setDate(string);
+    void setCategory(string);
+    void setBabyCategory(string);
+    void setDescription(string);
+    void setAccount(string);
+    void setAmount(double);
+
+    // SAVE & LOAD TO FILE
+    friend ostream& operator<<(ostream& os, const Expense& expense);
+    friend istream& operator>>(istream& is, Expense& expense);
+};
+
+
+
+
+
+
+
+
+
+
+/*---------------------------------------------------------------------------------*/
+/*--------------------------------- BUDGET CLASS ----------------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class Allowance {
+private:
+    string dateCreated;
+    string date;
+    double amount;
+    string account;
+    string description;
+
+
+public:
+    // CONSTRUCTORS
+    Allowance(string Date, double Amount, string Account, string Description)
+    : dateCreated(getDate_Today()), date(date), amount(amount), account(account), description(description) {}
+
+    // GETTERS
+    string getDateCreated() const;
+    string getDate() const;
+    double getAmount() const;
+    string getAccount() const;
+    string getDescription() const;
+
+    // SETTERS
+    void setDate(string);
+    void setAmount(double);
+    void setAccount(string);
+    void setDescription(string);
+    void setDateCreated();
+
+    // SAVE & LOAD TO FILE
+    friend ostream& operator<<(ostream& os, const Allowance& allowance);
+    friend istream& operator>>(istream& is, Allowance& allowance);
+};
+
+
+
+
+
+
+
+
+/*---------------------------------------------------------------------------------*/
+/*--------------------------------- BUDGET CLASS ----------------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class Budget {
+private:
+    double totalBudget;
+    double totalSavings;
+    double totalExpenses_LOE;
+
+    double totalGoal_Savings;
+    double totalGoal_LOE;
+
+    double totalExpenses;
+    double totalAllowance;
+    double totalExpenses_Today;
+    double totalAllowance_Today;
+
+    vector<Expense> expensesList;
+    vector<Allowance> allowancesList;
+    vector<Expense> expensesList_Today;
+    vector<Allowance> allowancesList_Today;
+
+    vector<SavingsAndExpenseLim> savingsList;
+    vector<SavingsAndExpenseLim> expenseLimitsList;
+
+    vector<Category> CategoryList;
+
+
+
+
+
+protected:
+    // CALCULATORS
+    void calculateCurrentSavings();
+    void calculateTotalGoal_Savings();
+    void calculateTotalGoal_ExpenseLim();
+    void calculateTotalExpenses();
+    void calculateTotalAllowance();
+    void calculateTotalExpenses_Today();
+    void calculateTotalAllowance_Today();
+
+
+    // LOAD/SAVE DATA
+    void loadExpenses();
+    void loadAllowances();
+    void loadSavings();
+    void loadExpenseLimits();
+    void loadCategoryList();
+    void saveExpenses() const;
+    void saveAllowances() const;
+    void saveSavings() const;
+    void saveExpenseLimits() const;
+    void saveCategoryList() const;
+
+
+    // UPDATE: LIMIT OF EXPENSES [Features] ~DONE, need to deal with notifications
+    void displayMenu_UpdateLE();
+    void run_LE_SetNewGoal();
+    void run_LE_EditGoal();
+    void run_LE_DeleteGoal();
+
+    // UPDATE: SAVINGS [Features] ~DONE, need to deal with notifications
+    void displayMenu_UpdateSavings();
+    void run_S_SetNewGoal();
+    void run_S_EditGoal();
+    void run_S_DeleteGoal();
+    void run_SetAsideSavings();
+    bool track_SavingsGoal(); // working~
+
+    // UPDATE: ALLOWANCE [Features]
+    void run_AddAllowance(); // working~
+    void run_DeleteAllowance(); // working~
+    void run_EditAllowance(); // working~
+
+    // UPDATE: EXPENSES [Features]
+    void run_AddExpenses(); // working~
+    void run_DeleteExpenses(); // working~
+    void run_EditExpenses(); // working~
+    bool track_ExpensesLimit(); // working~
+
+
+    // CLASS ADDERS
+    void addExpense(const Expense&);
+    void addAllowance(const Allowance&);
+    void addSavings(const SavingsAndExpenseLim&);
+    void addExpenseLim(const SavingsAndExpenseLim&);
+    void addCategory(const Category&);
+
+
+    // ALLOWANCE/EXPENSE/GOAL REMOVERS
+    void removeAllowance(int);
+    void removeExpense(int);
+    void removeSavings(int);
+    void removeExpenseLimit(int);
+
+
+    // DATE UPDATERS
+    void updateExpenseDateRange(const string&, const string&, int);
+    void updateSavingsDateRange(const string&, const string&, int);
+
+
+
+
+
+public:
+    // CONSTRUCTORS
+    Budget();
+
+
+    // CALCULATORS
+    void calculateTotalBudget();
+    void setTotalBudget(double);
+
+
+    // NOTIFIERS
+    void notifyDue_Savings(); // working~
+    void notifyDue_ExpenseGoal(); // working~
+
+
+    // DISPLAY DATA [ALLOWANCES / EXPENSES / CATEGORIES / ETC.]
+    void displayAllowancesList_today(int);
+    void displayExpensesList_today(int);
+    void displaySavingsList();
+    void displayExpenseLimitList();
+    void displayCategoryList_parent();
+    void displayCategoryList_bbys(int);
+    void displayUpdateMenu();
+
+
+    // UPDATE: ALL MAIN FEATURES TO RUN IN MAIN FUNCTION
+
+    void run_UpdateLimitExpenses(); // DONE, need to work on how to add up the expenses.
+    void run_UpdateSavings(); // working~
+    void run_UpdateAllowance(); // working
+    void run_UpdateExpense(); // working~
+
+
+    // LOAD/SAVE ALL DATA
+    void loadData();
+    void saveState();
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
 /*_________________________________________________________________________________*/
 /*------------------------ DISPLAY TEXT-STYLE UI FUNCTIONS ------------------------*/
 /*_________________________________________________________________________________*/
@@ -189,6 +534,9 @@ void clearScreen() {
         system("clear");
     #endif
 }
+
+
+
 
 
 
@@ -314,315 +662,6 @@ string getDate_Today()
 
     return dateToday; 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------------*/
-/*------------------------------- CATEGORY CLASS ----------------------------------*/
-/*---------------------------------------------------------------------------------*/
-
-class Category {
-private:
-    string categoryName_parent;
-    int totalBabyCategories;
-    vector<string> categoryName_baby;
-
-public:
-    // Constructors
-    Category(string, int);
-
-    // Category getters
-    string getParentCategory() const;
-    int getTotalBabyCategories() const;
-    vector<string> getBabyCategories() const;
-
-    // Category Public MFs
-    void add_BabyCategory(string);
-
-    // Friend Functions
-    friend ostream& operator<<(ostream& outFILE, const Category &categoryHol);
-    friend istream& operator>>(istream& inFILE, Category &categoryHol);
-};
-
-
-
-
-
-
-/*---------------------------------------------------------------------------------*/
-/*-------------------------- SavingsAndExpenseLim CLASS ---------------------------*/
-/*---------------------------------------------------------------------------------*/
-
-class SavingsAndExpenseLim {
-private:
-    string startDate;
-    string dueDate;
-    double goal;
-    double currentAmt;
-    string description;
-
-public:
-    SavingsAndExpenseLim(string, string, double, double, string);
-
-    string get_startDate() const;
-    string get_dueDate() const;
-    double get_goal() const;
-    double get_currentAmt() const;
-    string get_desc() const;
-
-    void set_startDate(string);
-    void set_dueDate(string);
-    void set_goal(double);
-    void set_currentAmt(double);
-    void set_desc(string);
-
-    friend ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol);
-    friend istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol);
-};
-
-
-
-
-
-
-
-
-
-/*---------------------------------------------------------------------------------*/
-/*------------------------------- EXPENSE CLASS -----------------------------------*/
-/*---------------------------------------------------------------------------------*/
-
-class Expense {
-private:
-    string dateCreated;
-
-    string date;
-    double amount;
-    string account;
-
-    string category;
-    string babyCategory;
-    string description;
-
-
-public:
-    Expense(string, string, double, string, string, string, string);
-
-    string getDateCreated() const;
-    string getDate() const;
-    string getCategory() const;
-    string getBabyCategory() const;
-    
-    string getDescription() const;
-    string getAccount() const;
-    double getAmount() const;
-
-
-    void setDate(string);
-    void setCategory(string);
-    void setBabyCategory(string);
-
-    void setDescription(string);
-    void setAccount(string);
-    void setAmount(double);
-
-
-    friend ostream& operator<<(ostream& os, const Expense& expense);
-    friend istream& operator>>(istream& is, Expense& expense);
-};
-
-
-
-
-
-
-
-
-
-
-/*---------------------------------------------------------------------------------*/
-/*--------------------------------- BUDGET CLASS ----------------------------------*/
-/*---------------------------------------------------------------------------------*/
-
-class Allowance {
-private:
-    string dateCreated;
-    string date;
-    double amount;
-    string account;
-    string description;
-
-
-public:
-    Allowance(string Date, double Amount, string Account, string Description)
-    : dateCreated(getDate_Today()), date(date), amount(amount), account(account), description(description) {}
-
-    string getDateCreated() const;
-    string getDate() const;
-    double getAmount() const;
-    string getAccount() const;
-    string getDescription() const;
-
-    void setDate(string);
-    void setAmount(double);
-    void setAccount(string);
-    void setDescription(string);
-    void setDateCreated();
-
-    friend ostream& operator<<(ostream& os, const Allowance& allowance);
-    friend istream& operator>>(istream& is, Allowance& allowance);
-};
-
-
-
-
-
-
-
-
-/*---------------------------------------------------------------------------------*/
-/*--------------------------------- BUDGET CLASS ----------------------------------*/
-/*---------------------------------------------------------------------------------*/
-
-class Budget {
-private:
-    double totalBudget;
-    double totalSavings;
-    double totalExpenses_LOE;
-
-    double totalGoal_Savings;
-    double totalGoal_LOE;
-
-    double totalExpenses;
-    double totalAllowance;
-    double totalExpenses_Today;
-    double totalAllowance_Today;
-
-    vector<Expense> expensesList;
-    vector<Allowance> allowancesList;
-    vector<Expense> expensesList_Today;
-    vector<Allowance> allowancesList_Today;
-
-    vector<SavingsAndExpenseLim> savingsList;
-    vector<SavingsAndExpenseLim> expenseLimitsList;
-
-    vector<Category> CategoryList;
-
-
-
-
-
-protected:
-    void calculateCurrentSavings();
-    void calculateTotalGoal_Savings();
-    void calculateTotalGoal_ExpenseLim();
-
-    void calculateTotalExpenses();
-    void calculateTotalAllowance();
-    void calculateTotalExpenses_Today();
-    void calculateTotalAllowance_Today();
-
-
-    void loadExpenses();
-    void loadAllowances();
-    void loadSavings();
-    void loadExpenseLimits();
-    void loadCategoryList();
-    void saveExpenses() const;
-    void saveAllowances() const;
-    void saveSavings() const;
-    void saveExpenseLimits() const;
-    void saveCategoryList() const;
-
-
-    void run_LE_SetNewGoal();
-    void run_LE_EditGoal();
-    void run_LE_DeleteGoal();
-
-    void run_S_SetNewGoal(); // working~
-    void run_S_EditGoal(); // working~
-    void run_S_DeleteGoal(); // working~
-    void run_SetAsideSavings(); // working~
-    void setAside_Savings(int, double); // working~
-
-    void run_AddAllowance(); // working~
-    void run_DeleteAllowance(); // working~
-    void run_EditAllowance(); // working~
-
-    void run_AddExpenses(); // working~
-    void run_DeleteExpenses(); // working~
-    void run_EditExpenses(); // working~
-    void track_ExpensesLimit(); // working~
-
-
-    void addExpense(const Expense&);
-    void addAllowance(const Allowance&);
-    void addSavings(const SavingsAndExpenseLim&);
-    void addExpenseLim(const SavingsAndExpenseLim&);
-    void addCategory(const Category&);
-
-    void removeAllowance(int);
-    void removeExpense(int);
-    void removeSavings(int);
-    void removeExpenseLimit(int);
-
-    void changeAllowance(int, int, string, double);
-
-    void updateExpenseDateRange(const string&, const string&, int);
-    void updateSavingsDateRange(const string&, const string&, int);
-
-
-
-
-
-public:
-    Budget();
-
-    void calculateTotalBudget();
-    void setTotalBudget(double);
-
-
-    void notifyDue_Savings(); // working~
-    void notifyDue_ExpenseGoal(); // working~
-
-
-    void displayAllowancesList_today(int);
-    void displayExpensesList_today(int);
-    void displaySavingsList();
-    void displayExpenseLimitList();
-    void displayCategoryList_parent();
-    void displayCategoryList_bbys(int);
-
-    void displayUpdateMenu();
-
-
-    void run_UpdateLimitExpenses(); // DONE, need to work on how to add up the expenses.
-    void run_UpdateSavings(); // working~
-    void run_UpdateAllowance(); // working~
-    void run_UpdateExpense(); // working~
-
-
-    void loadData();
-    void saveState();
-
-};
-
-
-
 
 
 
@@ -1617,17 +1656,6 @@ void Budget :: setTotalBudget(double budget) {
     totalBudget = budget;
 }
 
-void Budget :: setAside_Savings(int index, double saveAmt) {
-    if (totalBudget < saveAmt)
-        throw runtime_error(">> WARNING: The amount to set aside exceeds your budget.");
-
-    if ((index <= 0) || (index > savingsList.size()))
-        throw runtime_error(">> ERROR: There is no such Savings Goal set at said index.");
-
-    SavingsAndExpenseLim& savingsHol = savingsList[index - 1];
-    savingsHol.set_currentAmt(saveAmt);
-}
-
 void Budget :: addExpense(const Expense& expense) {
     expensesList_Today.push_back(expense);
 }
@@ -1697,40 +1725,6 @@ void Budget :: removeSavings(int index) {
     }
 }
 
-// CHANGE: Allowance data created during present day [1-Date, 2-Amount, 3-Acc, 4-Desc]
-void Budget :: changeAllowance(int index, int mode, string input_Str = "", double input_Db = 0)
-{
-    if ((index <= 0) || (index > allowancesList_Today.size())) 
-        throw runtime_error(">> WARNING: Invalid allowance index.");
-
-    Allowance& allowanceHol = allowancesList_Today[index - 1];
-
-    switch (mode) {
-        case 1:
-            // Edit Date
-            allowanceHol.setDate(input_Str);
-            break;
-        
-        case 2:
-            // Edit Amount
-            allowanceHol.setAmount(input_Db);
-            break;
-        
-        case 3:
-            // Edit Account
-            allowanceHol.setAccount(input_Str);
-            break;
-        
-        case 4:
-            // Edit Description
-            allowanceHol.setDescription(input_Str);
-            break;
-
-        default:
-            break;
-    }
-}
-
 void Budget :: updateExpenseDateRange(const string& startDate, const string& dueDate, int index)
 {
     // Check if index is out of bounds
@@ -1792,16 +1786,17 @@ void Budget :: displayUpdateMenu() {
     displayCenteredLine_Colored("UPDATE", BLUE);
     border(205);
 
+    cout << BOLDWHITE << "  >> Total Allowance:          P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Total Expenses(Today):    P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
+    border(196);
+
     // Display: Options
     displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
     cout << "\n";
-    displayCenteredLine_Colored("[ 1 ] LIMIT OF EXPENSES    ", WHITE);
-    displayCenteredLine_Colored("[ 2 ] SAVINGS              ", WHITE);
+    displayCenteredLine_Colored("[ 1 ] LIMIT OF EXPENSES        [ 3 ] Update ALLOWANCE  ", WHITE);
+    displayCenteredLine_Colored("[ 2 ] SAVINGS                  [ 4 ] Update TRANSACTION", WHITE);
     cout << "\n";
-    displayCenteredLine_Colored("[ 3 ] Update ALLOWANCE     ", WHITE);
-    displayCenteredLine_Colored("[ 4 ] Update TRANSACTION   ", WHITE);
-    cout << "\n";
-    displayCenteredLine_Colored("[ R ] Return               ", WHITE);
+    displayCenteredLine_Colored("[ R ] Return", WHITE);
     cout << "\n";
 
     border(196);
@@ -1824,23 +1819,32 @@ void Budget :: displayUpdateMenu() {
 
 /* ------------------------------------------------------------------------- */ 
 /*                        UPDATE: LIMIT OF EXPENSES                          */ 
-/* ------------------------------------------------------------------------- */ 
-void Budget :: run_UpdateLimitExpenses() {
-    string input;
-    while (true) {
+/* ------------------------------------------------------------------------- */
+
+void Budget :: displayMenu_UpdateLE() {
         clearScreen();
+        
         // Display: UPDATE(Limit Of Expenses) title
         border(205);
         displayCenteredLine_Colored("UPDATE: LIMIT OF EXPENSES", BLUE);
         border(205);
 
         // Display: Expenses Total and New Limit
-        cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Total Allowance:          P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Total Savings:            P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Total Expenses(Today):    P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
         displayExpenseLimitList();
         cout << "\n";
         cout << "\n";
         border(196);
+}
+
+
+void Budget :: run_UpdateLimitExpenses() {
+    string input;
+    while (true) {
+        displayMenu_UpdateLE();
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
@@ -2038,19 +2042,7 @@ void Budget :: run_LE_DeleteGoal() {
     
     while (true) 
     {
-        clearScreen();
-        // Display: UPDATE(Limit Of Expenses) title
-        border(205);
-        displayCenteredLine_Colored("UPDATE: LIMIT OF EXPENSES (DELETE GOAL)", BLUE);
-        border(205);
-
-        // Display: Expenses Total and New Limit
-        cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
-        displayExpenseLimitList();
-        cout << "\n";
-        cout << "\n";
-        border(196);
+        displayMenu_UpdateLE();
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
@@ -2093,19 +2085,7 @@ void Budget :: run_LE_EditGoal() {
 
     while (true)
     {
-        clearScreen();
-        // Display: UPDATE(Limit Of Expenses) title
-        border(205);
-        displayCenteredLine_Colored("UPDATE: LIMIT OF EXPENSES (EDIT GOAL)", BLUE);
-        border(205);
-
-        // Display: Expenses Total and New Limit
-        cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
-        displayExpenseLimitList();
-        cout << "\n";
-        cout << "\n";
-        border(196);
+        displayMenu_UpdateLE();
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
@@ -2123,20 +2103,7 @@ void Budget :: run_LE_EditGoal() {
             if ((input_int > 0) && (input_int <= expenseLimitsList.size()))
             {
                 while (true) {
-                    clearScreen();
-
-                    // Display: UPDATE(Limit Of Expenses) title
-                    border(205);
-                    displayCenteredLine_Colored("UPDATE: LIMIT OF EXPENSES (EDIT GOAL)", BLUE);
-                    border(205);
-
-                    // Display: Expenses Total and New Limit
-                    cout << BOLDWHITE << "  >> TOTAL EXPENSES(Today):    P " << totalExpenses_Today << "\n" << RESET << endl;
-                    cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
-                    displayExpenseLimitList();
-                    cout << "\n";
-                    cout << "\n";
-                    border(196);
+                    displayMenu_UpdateLE();
 
                     displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
                     cout << "\n";
@@ -2375,24 +2342,29 @@ void Budget :: run_LE_EditGoal() {
 /*                                   UPDATE: SAVINGS                                       */
 /*-----------------------------------------------------------------------------------------*/
 
+void Budget :: displayMenu_UpdateSavings() {
+    clearScreen();
+
+    // Display: UPDATE(Savings) title
+    border(205);
+    displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+    border(205);
+
+    // Display: List of SAVINGS schedules
+    cout << BOLDWHITE << "  >> Total Allowance:      P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Savings Goals:\n" << RESET << endl;
+    displaySavingsList();
+    cout << "\n";
+    cout << "\n";
+    border(196);
+}
+
 void Budget :: run_UpdateSavings() {
     string input;
 
     while (true) {
-        clearScreen();
-        // Display: UPDATE(SAVINGS) Title
-        border(205);
-        displayCenteredLine_Colored("UPDATE: SAVINGS", BLUE);
-        border(205);
-
-        // Display: List of SAVINGS schedules
-        cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
-        cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
-        displaySavingsList();
-        cout << "\n";
-        cout << "\n";
-        cout << "\n";
-        border(205);
+        displayMenu_UpdateSavings();
 
         // Display: OPTIONS
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
@@ -2412,7 +2384,7 @@ void Budget :: run_UpdateSavings() {
         if(input == "1")        run_S_SetNewGoal();
         else if(input == "2")   run_S_EditGoal();
         else if(input == "3")   run_S_DeleteGoal();
-        //else if(input == "4")   run_SetAsideSavings();
+        else if(input == "4")   run_SetAsideSavings();
 
         else if (input == "R" || input == "r") return; 
         
@@ -2441,11 +2413,14 @@ void Budget :: run_S_SetNewGoal() {
         border(205);
 
         // Display: New Goal data
+        cout << BOLDWHITE << "  >> Total Allowance:      P " << fixed << setprecision << totalAllowance << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> SETTING NEW GOAL:\n" << RESET << endl;
         cout << string(5, ' ') << "* New Goal Amount:    " << GREEN << "P " << newGoal << RESET << endl;
         cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
         cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
         cout << string(5, ' ') << "* Description:        " << BLUE <<  description << RESET << endl;
+        cout << "\n";
+        cout << "\n";
         cout << "\n";
         border(196);
 
@@ -2592,19 +2567,7 @@ string input_str;
 
     while (true)
     {
-        clearScreen();
-        // Display: UPDATE(Savings) title
-        border(205);
-        displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
-        border(205);
-
-        // Display: List of SAVINGS schedules
-        cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
-        cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
-        displaySavingsList();
-        cout << "\n";
-        cout << "\n";
-        border(196);
+        displayMenu_UpdateSavings();
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
@@ -2622,20 +2585,7 @@ string input_str;
             if ((input_int > 0) && (input_int <= savingsList.size()))
             {
                 while (true) {
-                    clearScreen();
-
-                    // Display: UPDATE(Savings) title
-                    border(205);
-                    displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
-                    border(205);
-
-                    // Display: List of SAVINGS schedules
-                    cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
-                    cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
-                    displaySavingsList();
-                    cout << "\n";
-                    cout << "\n";
-                    border(196);
+                    displayMenu_UpdateSavings();
 
                     displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
                     cout << "\n";
@@ -2861,19 +2811,7 @@ void Budget :: run_S_DeleteGoal() {
     
     while (true) 
     {
-        clearScreen();
-        // Display: UPDATE(Limit Of Expenses) title
-        border(205);
-        displayCenteredLine_Colored("UPDATE: SAVINGS (DELETE GOAL)", BLUE);
-        border(205);
-
-        // Display: List of SAVINGS schedules
-        cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
-        cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
-        displaySavingsList();
-        cout << "\n";
-        cout << "\n";
-        border(196);
+        displayMenu_UpdateSavings();
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
@@ -2914,33 +2852,83 @@ void Budget :: run_SetAsideSavings() {
     
     while (true) 
     {
-        clearScreen();
-        // Display: UPDATE(Limit Of Expenses) title
-        border(205);
-        displayCenteredLine_Colored("UPDATE: SAVINGS (DELETE GOAL)", BLUE);
-        border(205);
-
-        // Display: List of SAVINGS schedules
-        cout << BOLDWHITE << "Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
-        cout << BOLDWHITE << "Savings Goals:\n" << RESET << endl;
-        displaySavingsList();
-        cout << "\n";
-        cout << "\n";
-        border(196);
+        displayMenu_UpdateSavings();
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
-        displayCenteredLine_NoColor(">> Enter any index number to DELETE");
-        displayCenteredLine_NoColor(">> Enter 'R' to return             ");
+        displayCenteredLine_NoColor(">> Enter any index number to SET ASIDE SAVINGS");
+        displayCenteredLine_NoColor(">> Enter 'R' to return                        ");
         cout << "\n";
         displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
-        // Ask user for input
+        // Ask user for input [index in savingsList]
         getline(cin, input_str);
 
+        if ((input_str == "R") || (input_str == "r")) return;
+
+        else if ((isNumeric(input_str)) && (input_str.size() > 0))
+        {
+            input_int = stoi(input_str);
+
+            if ((input_int > 0) && (input_int <= savingsList.size()))
+            {
+                SavingsAndExpenseLim& savings = savingsList[input_int - 1]; 
+
+                // Input valid amount to set aside
+                while (true) {
+                    clearScreen();
+                
+                    // Display: UPDATE(Savings) title
+                    border(205);
+                    displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+                    border(205);
+
+                    cout << BOLDWHITE << "  >> Total Allowance:      P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+
+                    // Display original data
+                    cout << BOLDWHITE << "  >> EDITING DESCRIPTION:" << RESET << endl;
+                    cout << string(5, ' ') << "* Start Date:         " << BLUE << savings.get_startDate() << RESET << endl;
+                    cout << string(5, ' ') << "* Due Date:           " << BLUE << savings.get_dueDate() << RESET << endl;
+                    cout << string(5, ' ') << "* Description:        " << BLUE << savings.get_desc() << RESET << endl;
+                    cout << "\n";
+                    cout << string(5, ' ') << "* Current Amount:     " << BLUE << "P " << fixed << setprecision(2) << savings.get_currentAmt() << " / P " << savings.get_goal() << RESET << endl;
+                    cout << "\n";
+                    cout << "\n";
+                    border(196);
+
+                    displayCenteredLine_NoNewLine(">> Enter AMOUNT to save: ", CYAN);
+                    getline(cin, input_str);
+
+                    if ((input_str == "R") || (input_str == "r")) return;
+
+                    else if ((isDouble(input_str)) && (input_str.size() > 0)) {
+                        double amt = stod(input_str);
+                        double currentAmt = savings.get_currentAmt();
+                        double maxAmt = savings.get_goal() - currentAmt;
+
+                        if ((amt > 0) && (amt <= maxAmt) && (amt <= totalAllowance)) {
+                            savings.set_currentAmt(currentAmt + amt);
+                            calculateTotalBudget();
+
+                            // Display: Notice that Amount Saved Successfully
+                            border(196);
+                            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                            displayCenteredLine_Colored(">> Amount is added to your Savings Goal!", YELLOW);
+                            displayCenteredLine_NoNewLine(">> Returning to Savings Menu... (Press 'ENTER')  ", WHITE);
+                            getchar();
+                            return;
+                        }
+                    }
+                }
+            }
+
+        }
 
     }
 }
+
+
+
 
 
 // // UPDATE: ALLOWANCE
