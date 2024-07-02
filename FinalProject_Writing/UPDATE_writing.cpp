@@ -324,17 +324,12 @@ string getDate_Today()
 
 
 
+
+
+
+
+
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-
-
-
-
-
-
-
-
-
 
 /*---------------------------------------------------------------------------------*/
 /*------------------------------- CATEGORY CLASS ----------------------------------*/
@@ -362,97 +357,6 @@ public:
     friend ostream& operator<<(ostream& outFILE, const Category &categoryHol);
     friend istream& operator>>(istream& inFILE, Category &categoryHol);
 };
-
-
-/* CATEGORY CLASS: Constructors */
-/*------------------------------*/
-
-Category :: Category(string catName_parent, int babyCat_Total) :
-                categoryName_parent(catName_parent),
-                totalBabyCategories(babyCat_Total) {}
-
-
-
-/* CATEGORY CLASS: Constructors */
-/*------------------------------*/
-
-string Category :: getParentCategory() const            { return categoryName_parent; }
-int Category :: getTotalBabyCategories() const          { return totalBabyCategories; }
-vector<string> Category :: getBabyCategories() const    { return categoryName_baby; }
-
-
-
-/* CATEGORY CLASS: Public MFs */
-/*----------------------------*/
-
-void Category :: add_BabyCategory(string babyCatName)
-{
-    categoryName_baby.push_back(babyCatName);
-    totalBabyCategories = categoryName_baby.size();
-}
-
-
-// WRITE category/ies
-ostream& operator<<(ostream& outFILE, const Category &categoryHol)
-{
-    size_t size;
-
-    // WRITE parent category name
-    size = categoryHol.categoryName_parent.size();
-    outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    outFILE.write(categoryHol.categoryName_parent.c_str(), size);
-
-    // WRITE total baby categories
-    outFILE.write(reinterpret_cast<const char*>(&categoryHol.totalBabyCategories), sizeof(categoryHol.totalBabyCategories));
-
-    // WRITE all baby categories
-    for(const auto& babyCategory : categoryHol.categoryName_baby)
-    {
-        size = babyCategory.size();
-        outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
-        outFILE.write(babyCategory.c_str(), size);
-    }
-
-    return outFILE;
-}
-
-
-// READ category/ies
-istream& operator>>(istream& inFILE, Category &categoryHol)
-{
-    size_t size;
-    string catNameHol;
-
-    // READ Parent Category Name
-    inFILE.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'parent category name size' from file");
-    categoryHol.categoryName_parent.resize(size);
-    inFILE.read(&categoryHol.categoryName_parent[0], size);
-    if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'parent category name' from file");
-
-    // READ Total Baby Categories
-    inFILE.read(reinterpret_cast<char*>(&categoryHol.totalBabyCategories), sizeof(categoryHol.totalBabyCategories));
-    if(!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'Total baby category/ies name' from file");
-
-    // READ Baby Category Name/s
-    categoryHol.categoryName_baby.clear();
-    for (int i = 0; i < categoryHol.totalBabyCategories; i++)
-    {
-        inFILE.read(reinterpret_cast<char*>(&size), sizeof(size));
-        if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'baby category name size' from file");
-        catNameHol.resize(size);
-        inFILE.read(&catNameHol[0], size);
-        if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'baby category name' from file");
-        categoryHol.categoryName_baby.push_back(catNameHol); 
-
-    }
-
-    return inFILE;
-}
-
-
-
-
 
 
 
@@ -489,113 +393,6 @@ public:
     friend ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol);
     friend istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol);
 };
-
-
-
-/* SavingsAndExpenseLim Class (Public): CONSTRUCTORS */
-/*--------------------------------------*/
-
-SavingsAndExpenseLim :: SavingsAndExpenseLim(string start, string due, double amt, double currAmt, string desc) :
-    startDate(start), 
-    dueDate(due),
-    goal(amt),
-    currentAmt(currAmt),
-    description(desc) {}
-
-
-
-/* SavingsAndExpenseLim Class (Public): GETTERS */
-/*----------------------------------------------*/
-
-string SavingsAndExpenseLim :: get_startDate() const        { return startDate; }
-string SavingsAndExpenseLim :: get_dueDate() const          { return dueDate; }
-double SavingsAndExpenseLim :: get_goal() const             { return goal; }
-double SavingsAndExpenseLim :: get_currentAmt() const       { return currentAmt; }
-string SavingsAndExpenseLim :: get_desc() const             { return description; }
-
-
-
-
-/* SavingsAndExpenseLim Class (Public): SETTERS */
-/*----------------------------------------------*/
-
-void SavingsAndExpenseLim :: set_startDate(string newDate)              { startDate = newDate; }
-void SavingsAndExpenseLim :: set_dueDate(string newDate)                { dueDate = newDate; }
-void SavingsAndExpenseLim :: set_goal(double newGoal)                   { goal = newGoal; }
-void SavingsAndExpenseLim :: set_currentAmt(double newCurrSavings)      { currentAmt = newCurrSavings; }
-void SavingsAndExpenseLim :: set_desc(string newDesc)                   { description = newDesc; }
-
-
-
-
-
-// WRITE SavingsAndExpenseLimit data
-ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol)
-{
-    string::size_type size;
-
-    // WRITE startDate
-    size = savingsHol.startDate.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(savingsHol.startDate.c_str(), size);
-
-    // WRITE dueDate
-    size = savingsHol.dueDate.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(savingsHol.dueDate.c_str(), size);
-
-    // WRITE goal
-    os.write(reinterpret_cast<const char*>(&savingsHol.goal), sizeof(savingsHol.goal));
-
-    // WRITE currentAmt
-    os.write(reinterpret_cast<const char*>(&savingsHol.currentAmt), sizeof(savingsHol.currentAmt));
-
-    // WRITE description
-    size = savingsHol.description.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(savingsHol.description.c_str(), size);
-
-    return os;
-}
-
-// READ SavingsAndExpenseLim data
-istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol)
-{
-    size_t size;
-
-    //READ startDate
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'startDate size' from file");
-    savingsHol.startDate.resize(size);
-    is.read(&savingsHol.startDate[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'startDate' from file");
-
-    //READ dueDate
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'dueDate size' from file");
-    savingsHol.dueDate.resize(size);
-    is.read(&savingsHol.dueDate[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'dueDate' from file");
-
-    // READ goal
-    is.read(reinterpret_cast<char*>(&savingsHol.goal), sizeof(savingsHol.goal));
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'goal' from file");
-
-    // READ currentAmt
-    is.read(reinterpret_cast<char*>(&savingsHol.currentAmt), sizeof(savingsHol.currentAmt));
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'current amount' from file");
-
-    //READ description
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'description size' from file");
-    savingsHol.description.resize(size);
-    is.read(&savingsHol.description[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'description' from file");
-
-    return is;
-}
-
-
 
 
 
@@ -649,148 +446,6 @@ public:
 };
 
 
-/* EXPENSE Class (Public): CONSTRUCTOR */
-/*-------------------------------------*/
-
-Expense :: Expense(string DateCreated, string Date,
-                   double Amt, string Cat, string bbyCat,
-                   string Acc, string Desc) :
-            dateCreated(DateCreated), 
-            date(Date),
-            amount(Amt),
-            category(Cat),
-            babyCategory(bbyCat),
-            account(Acc),
-            description(Desc) {}
-
-
-
-/* EXPENSE Class MFs(Public): GETTERS */
-/*------------------------------------*/
-
-string Expense :: getDateCreated() const    { return dateCreated; }
-string Expense :: getDate() const           { return date; }
-double Expense :: getAmount() const         { return amount; }
-string Expense :: getCategory() const       { return category; }
-string Expense :: getBabyCategory() const   { return babyCategory; }
-string Expense :: getAccount() const        { return account; }
-string Expense :: getDescription() const    { return description; }
-
-
-
-/* EXPENSE Class MFs(Public): SETTERS */
-/*------------------------------------*/
-
-void Expense :: setDate(string newDate)             { date = newDate; }
-void Expense :: setAmount(double newAmt)            { amount = newAmt; }
-void Expense :: setCategory(string newCat)          { category = newCat; }
-void Expense :: setBabyCategory(string newBbyCat)   { babyCategory = newBbyCat; }
-void Expense :: setAccount(string newAcc)           { account = newAcc; }
-void Expense :: setDescription(string newDesc)      { description = newDesc; }
-
-
-
-
-// WRITE Expenses to file
-ostream& operator<<(ostream& os, const Expense& expense)
-{
-    size_t size;
-
-    // WRITE dateCreated
-    size = expense.dateCreated.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(expense.dateCreated.c_str(), size);
-
-    // WRITE date
-    size = expense.date.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(expense.date.c_str(), size);
-
-    // WRITE amount
-    os.write(reinterpret_cast<const char*>(&expense.amount), sizeof(expense.amount));
-
-    // WRITE category
-    size = expense.category.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(expense.category.c_str(), size);
-
-    // WRITE baby category
-    size = expense.babyCategory.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(expense.babyCategory.c_str(), size);
-
-    // WRITE account
-    size  = expense.account.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(expense.account.c_str(), size);
-
-    // WRITE description
-    size = expense.description.size();
-    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    os.write(expense.description.c_str(), size);
-
-    return os;
-}
-
-
-
-// READ Expenses from file
-istream& operator>>(istream& is, Expense& expense) {
-
-    size_t size;
-
-    // READ dateCreated
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date created size' from file");
-    expense.dateCreated.resize(size);
-    is.read(&expense.dateCreated[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date created' from file");
-
-    // READ date
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date size' from file");
-    expense.date.resize(size);
-    is.read(&expense.date[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date' from file");
-
-    // READ amount
-    is.read(reinterpret_cast<char*>(&expense.amount), sizeof(expense.amount));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'amount' from file");
-
-    // READ category
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'category size' from file");
-    expense.category.resize(size);
-    is.read(&expense.category[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'category' from file");
-
-    // READ baby category
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'baby category size' from file");
-    expense.babyCategory.resize(size);
-    is.read(&expense.babyCategory[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'baby category' from file");
-
-    // READ account
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'account size' from file");
-    expense.account.resize(size);
-    is.read(&expense.account[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'account' from file");
-
-    // READ description
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'description size' from file");
-    expense.description.resize(size);
-    is.read(&expense.description[0], size);
-    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'description' from file");
-
-    return is;
-}
-
-
-
-
 
 
 
@@ -800,7 +455,7 @@ istream& operator>>(istream& is, Expense& expense) {
 
 
 /*---------------------------------------------------------------------------------*/
-/*------------------------------- ALLOWANCE CLASS ---------------------------------*/
+/*--------------------------------- BUDGET CLASS ----------------------------------*/
 /*---------------------------------------------------------------------------------*/
 
 class Allowance {
@@ -831,111 +486,6 @@ public:
     friend ostream& operator<<(ostream& os, const Allowance& allowance);
     friend istream& operator>>(istream& is, Allowance& allowance);
 };
-
-
-
-/* ALLOWANCE class MF(Public): GETTERS */
-/*-------------------------------------*/
-
-string Allowance :: getDateCreated() const  { return dateCreated; }
-string Allowance :: getDate() const         { return date; }
-double Allowance :: getAmount() const       { return amount; }
-string Allowance :: getAccount() const      { return account; }
-string Allowance :: getDescription() const  { return description; }
-
-
-
-
-/* ALLOWANCE class MF(Public): SETTERS */
-/*-------------------------------------*/
-
-void Allowance :: setDate(string newDate)         { date = newDate; }
-void Allowance :: setAmount(double newAmt)        { amount = newAmt; }
-void Allowance :: setAccount(string newAcc)       { account = newAcc; }
-void Allowance :: setDescription(string newDesc)  { description = newDesc; }
-void Allowance :: setDateCreated()                { dateCreated = getDate_Today(); }
-
-
-
-/* ALLOWANCE class Friends (Public): File Handling Operators */
-/*-----------------------------------------------------------*/
-
-// WRITE Allowance data
-ostream& operator<<(ostream& os, const Allowance& allowance) {
-    size_t dateSize = allowance.date.size();
-    size_t accountSize = allowance.account.size();
-    size_t descSize = allowance.description.size();
-    size_t dateCreatedSize = allowance.dateCreated.size();
-
-    // WRITE dateCreated
-    os.write(reinterpret_cast<const char*>(&dateCreatedSize), sizeof(dateCreatedSize));
-    os.write(allowance.dateCreated.c_str(), dateCreatedSize);
-
-    // WRITE date
-    os.write(reinterpret_cast<const char*>(&dateSize), sizeof(dateSize));
-    os.write(allowance.date.c_str(), dateSize);
-
-    // WRITE account
-    os.write(reinterpret_cast<const char*>(&accountSize), sizeof(accountSize));
-    os.write(allowance.account.c_str(), accountSize);
-    
-    // WRITE description
-    os.write(reinterpret_cast<const char*>(&descSize), sizeof(descSize));
-    os.write(allowance.description.c_str(), descSize);
-
-    // WRITE amount
-    os.write(reinterpret_cast<const char*>(&allowance.amount), sizeof(allowance.amount));
-
-    return os;
-}
-
-// READ Allowance data
-istream& operator>>(istream& is, Allowance& allowance) {
-    size_t dateSize, accountSize, descSize, dateCreatedSize;
-
-    is.read(reinterpret_cast<char*>(&dateCreatedSize), sizeof(dateCreatedSize));
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date created size' from file");
-    allowance.date.resize(dateCreatedSize);
-    is.read(&allowance.dateCreated[0], dateCreatedSize);
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date created' from file");
-
-    is.read(reinterpret_cast<char*>(&dateSize), sizeof(dateSize));
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date size' from file");
-    allowance.date.resize(dateSize);
-    is.read(&allowance.date[0], dateSize);
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date' from file");
-
-    is.read(reinterpret_cast<char*>(&accountSize), sizeof(accountSize));
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'account size' from file");
-    allowance.account.resize(accountSize);
-    is.read(&allowance.account[0], accountSize);
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'account' from file");
-
-    is.read(reinterpret_cast<char*>(&descSize), sizeof(descSize));
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'description size' from file");
-    allowance.description.resize(descSize);
-    is.read(&allowance.description[0], descSize);
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'description' from file");
-
-    is.read(reinterpret_cast<char*>(&allowance.amount), sizeof(allowance.amount));
-    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'amount' from file");
-    return is;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-
 
 
 
@@ -1078,9 +628,432 @@ public:
 
 
 
-/*--------------------------------------------------------*/
-/*          BUDGET class(Protected): CALCULATOR           */
-/*--------------------------------------------------------*/
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+
+/* CATEGORY CLASS: Constructors */
+Category :: Category(string catName_parent, int babyCat_Total) :
+                categoryName_parent(catName_parent),
+                totalBabyCategories(babyCat_Total) {}
+
+/* CATEGORY CLASS: Constructors */
+string Category :: getParentCategory() const            { return categoryName_parent; }
+int Category :: getTotalBabyCategories() const          { return totalBabyCategories; }
+vector<string> Category :: getBabyCategories() const    { return categoryName_baby; }
+
+/* CATEGORY CLASS: Public MFs */
+void Category :: add_BabyCategory(string babyCatName)
+{
+    categoryName_baby.push_back(babyCatName);
+    totalBabyCategories = categoryName_baby.size();
+}
+
+// WRITE category/ies
+ostream& operator<<(ostream& outFILE, const Category &categoryHol)
+{
+    size_t size;
+
+    // WRITE parent category name
+    size = categoryHol.categoryName_parent.size();
+    outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    outFILE.write(categoryHol.categoryName_parent.c_str(), size);
+
+    // WRITE total baby categories
+    outFILE.write(reinterpret_cast<const char*>(&categoryHol.totalBabyCategories), sizeof(categoryHol.totalBabyCategories));
+
+    // WRITE all baby categories
+    for(const auto& babyCategory : categoryHol.categoryName_baby)
+    {
+        size = babyCategory.size();
+        outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
+        outFILE.write(babyCategory.c_str(), size);
+    }
+    return outFILE;
+}
+
+// READ category/ies
+istream& operator>>(istream& inFILE, Category &categoryHol)
+{
+    size_t size;
+    string catNameHol;
+
+    // READ Parent Category Name
+    inFILE.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'parent category name size' from file");
+    categoryHol.categoryName_parent.resize(size);
+    inFILE.read(&categoryHol.categoryName_parent[0], size);
+    if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'parent category name' from file");
+
+    // READ Total Baby Categories
+    inFILE.read(reinterpret_cast<char*>(&categoryHol.totalBabyCategories), sizeof(categoryHol.totalBabyCategories));
+    if(!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'Total baby category/ies name' from file");
+
+    // READ Baby Category Name/s
+    categoryHol.categoryName_baby.clear();
+    for (int i = 0; i < categoryHol.totalBabyCategories; i++)
+    {
+        inFILE.read(reinterpret_cast<char*>(&size), sizeof(size));
+        if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'baby category name size' from file");
+        catNameHol.resize(size);
+        inFILE.read(&catNameHol[0], size);
+        if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'baby category name' from file");
+        categoryHol.categoryName_baby.push_back(catNameHol); 
+
+    }
+    return inFILE;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* SavingsAndExpenseLim Class (Public): CONSTRUCTORS */
+SavingsAndExpenseLim :: SavingsAndExpenseLim(string start, string due, double amt, double currAmt, string desc) :
+    startDate(start), 
+    dueDate(due),
+    goal(amt),
+    currentAmt(currAmt),
+    description(desc) {}
+
+/* SavingsAndExpenseLim Class (Public): GETTERS */
+string SavingsAndExpenseLim :: get_startDate() const        { return startDate; }
+string SavingsAndExpenseLim :: get_dueDate() const          { return dueDate; }
+double SavingsAndExpenseLim :: get_goal() const             { return goal; }
+double SavingsAndExpenseLim :: get_currentAmt() const       { return currentAmt; }
+string SavingsAndExpenseLim :: get_desc() const             { return description; }
+
+/* SavingsAndExpenseLim Class (Public): SETTERS */
+void SavingsAndExpenseLim :: set_startDate(string newDate)              { startDate = newDate; }
+void SavingsAndExpenseLim :: set_dueDate(string newDate)                { dueDate = newDate; }
+void SavingsAndExpenseLim :: set_goal(double newGoal)                   { goal = newGoal; }
+void SavingsAndExpenseLim :: set_currentAmt(double newCurrSavings)      { currentAmt = newCurrSavings; }
+void SavingsAndExpenseLim :: set_desc(string newDesc)                   { description = newDesc; }
+
+// WRITE SavingsAndExpenseLimit data
+ostream& operator<<(ostream& os, const SavingsAndExpenseLim& savingsHol)
+{
+    string::size_type size;
+
+    // WRITE startDate
+    size = savingsHol.startDate.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(savingsHol.startDate.c_str(), size);
+
+    // WRITE dueDate
+    size = savingsHol.dueDate.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(savingsHol.dueDate.c_str(), size);
+
+    // WRITE goal
+    os.write(reinterpret_cast<const char*>(&savingsHol.goal), sizeof(savingsHol.goal));
+
+    // WRITE currentAmt
+    os.write(reinterpret_cast<const char*>(&savingsHol.currentAmt), sizeof(savingsHol.currentAmt));
+
+    // WRITE description
+    size = savingsHol.description.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(savingsHol.description.c_str(), size);
+
+    return os;
+}
+
+// READ SavingsAndExpenseLim data
+istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol)
+{
+    size_t size;
+
+    //READ startDate
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'startDate size' from file");
+    savingsHol.startDate.resize(size);
+    is.read(&savingsHol.startDate[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'startDate' from file");
+
+    //READ dueDate
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'dueDate size' from file");
+    savingsHol.dueDate.resize(size);
+    is.read(&savingsHol.dueDate[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'dueDate' from file");
+
+    // READ goal
+    is.read(reinterpret_cast<char*>(&savingsHol.goal), sizeof(savingsHol.goal));
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'goal' from file");
+
+    // READ currentAmt
+    is.read(reinterpret_cast<char*>(&savingsHol.currentAmt), sizeof(savingsHol.currentAmt));
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'current amount' from file");
+
+    //READ description
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'description size' from file");
+    savingsHol.description.resize(size);
+    is.read(&savingsHol.description[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'description' from file");
+
+    return is;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* EXPENSE Class (Public): CONSTRUCTOR */
+Expense :: Expense(string DateCreated, string Date,
+                   double Amt, string Cat, string bbyCat,
+                   string Acc, string Desc) :
+            dateCreated(DateCreated), 
+            date(Date),
+            amount(Amt),
+            category(Cat),
+            babyCategory(bbyCat),
+            account(Acc),
+            description(Desc) {}
+
+
+
+/* EXPENSE Class MFs(Public): GETTERS */
+string Expense :: getDateCreated() const    { return dateCreated; }
+string Expense :: getDate() const           { return date; }
+double Expense :: getAmount() const         { return amount; }
+string Expense :: getCategory() const       { return category; }
+string Expense :: getBabyCategory() const   { return babyCategory; }
+string Expense :: getAccount() const        { return account; }
+string Expense :: getDescription() const    { return description; }
+
+/* EXPENSE Class MFs(Public): SETTERS */
+void Expense :: setDate(string newDate)             { date = newDate; }
+void Expense :: setAmount(double newAmt)            { amount = newAmt; }
+void Expense :: setCategory(string newCat)          { category = newCat; }
+void Expense :: setBabyCategory(string newBbyCat)   { babyCategory = newBbyCat; }
+void Expense :: setAccount(string newAcc)           { account = newAcc; }
+void Expense :: setDescription(string newDesc)      { description = newDesc; }
+
+// WRITE Expenses to file
+ostream& operator<<(ostream& os, const Expense& expense)
+{
+    size_t size;
+
+    // WRITE dateCreated
+    size = expense.dateCreated.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(expense.dateCreated.c_str(), size);
+
+    // WRITE date
+    size = expense.date.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(expense.date.c_str(), size);
+
+    // WRITE amount
+    os.write(reinterpret_cast<const char*>(&expense.amount), sizeof(expense.amount));
+
+    // WRITE category
+    size = expense.category.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(expense.category.c_str(), size);
+
+    // WRITE baby category
+    size = expense.babyCategory.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(expense.babyCategory.c_str(), size);
+
+    // WRITE account
+    size  = expense.account.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(expense.account.c_str(), size);
+
+    // WRITE description
+    size = expense.description.size();
+    os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    os.write(expense.description.c_str(), size);
+
+    return os;
+}
+
+// READ Expenses from file
+istream& operator>>(istream& is, Expense& expense) {
+
+    size_t size;
+
+    // READ dateCreated
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date created size' from file");
+    expense.dateCreated.resize(size);
+    is.read(&expense.dateCreated[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date created' from file");
+
+    // READ date
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date size' from file");
+    expense.date.resize(size);
+    is.read(&expense.date[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'date' from file");
+
+    // READ amount
+    is.read(reinterpret_cast<char*>(&expense.amount), sizeof(expense.amount));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'amount' from file");
+
+    // READ category
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'category size' from file");
+    expense.category.resize(size);
+    is.read(&expense.category[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'category' from file");
+
+    // READ baby category
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'baby category size' from file");
+    expense.babyCategory.resize(size);
+    is.read(&expense.babyCategory[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'baby category' from file");
+
+    // READ account
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'account size' from file");
+    expense.account.resize(size);
+    is.read(&expense.account[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'account' from file");
+
+    // READ description
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'description size' from file");
+    expense.description.resize(size);
+    is.read(&expense.description[0], size);
+    if (!is.good()) throw runtime_error(">> ERROR[Expenses]: Unable to read 'description' from file");
+
+    return is;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* ALLOWANCE class MF(Public): GETTERS */
+string Allowance :: getDateCreated() const  { return dateCreated; }
+string Allowance :: getDate() const         { return date; }
+double Allowance :: getAmount() const       { return amount; }
+string Allowance :: getAccount() const      { return account; }
+string Allowance :: getDescription() const  { return description; }
+
+/* ALLOWANCE class MF(Public): SETTERS */
+void Allowance :: setDate(string newDate)         { date = newDate; }
+void Allowance :: setAmount(double newAmt)        { amount = newAmt; }
+void Allowance :: setAccount(string newAcc)       { account = newAcc; }
+void Allowance :: setDescription(string newDesc)  { description = newDesc; }
+void Allowance :: setDateCreated()                { dateCreated = getDate_Today(); }
+
+// WRITE Allowance data
+ostream& operator<<(ostream& os, const Allowance& allowance) {
+    size_t dateSize = allowance.date.size();
+    size_t accountSize = allowance.account.size();
+    size_t descSize = allowance.description.size();
+    size_t dateCreatedSize = allowance.dateCreated.size();
+
+    // WRITE dateCreated
+    os.write(reinterpret_cast<const char*>(&dateCreatedSize), sizeof(dateCreatedSize));
+    os.write(allowance.dateCreated.c_str(), dateCreatedSize);
+
+    // WRITE date
+    os.write(reinterpret_cast<const char*>(&dateSize), sizeof(dateSize));
+    os.write(allowance.date.c_str(), dateSize);
+
+    // WRITE account
+    os.write(reinterpret_cast<const char*>(&accountSize), sizeof(accountSize));
+    os.write(allowance.account.c_str(), accountSize);
+    
+    // WRITE description
+    os.write(reinterpret_cast<const char*>(&descSize), sizeof(descSize));
+    os.write(allowance.description.c_str(), descSize);
+
+    // WRITE amount
+    os.write(reinterpret_cast<const char*>(&allowance.amount), sizeof(allowance.amount));
+
+    return os;
+}
+
+// READ Allowance data
+istream& operator>>(istream& is, Allowance& allowance) {
+    size_t dateSize, accountSize, descSize, dateCreatedSize;
+
+    is.read(reinterpret_cast<char*>(&dateCreatedSize), sizeof(dateCreatedSize));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date created size' from file");
+    allowance.date.resize(dateCreatedSize);
+    is.read(&allowance.dateCreated[0], dateCreatedSize);
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date created' from file");
+
+    is.read(reinterpret_cast<char*>(&dateSize), sizeof(dateSize));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date size' from file");
+    allowance.date.resize(dateSize);
+    is.read(&allowance.date[0], dateSize);
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'date' from file");
+
+    is.read(reinterpret_cast<char*>(&accountSize), sizeof(accountSize));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'account size' from file");
+    allowance.account.resize(accountSize);
+    is.read(&allowance.account[0], accountSize);
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'account' from file");
+
+    is.read(reinterpret_cast<char*>(&descSize), sizeof(descSize));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'description size' from file");
+    allowance.description.resize(descSize);
+    is.read(&allowance.description[0], descSize);
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'description' from file");
+
+    is.read(reinterpret_cast<char*>(&allowance.amount), sizeof(allowance.amount));
+    if (!is.good()) throw runtime_error(">> ERROR: Unable to read 'amount' from file");
+    return is;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------*/
+/*                          BUDGET class(Protected): CALCULATOR                         */
+/*--------------------------------------------------------------------------------------*/
 
 void Budget :: calculateCurrentSavings() {
     totalSavings = 0.0;
@@ -1135,28 +1108,6 @@ void Budget :: calculateTotalBudget() {
 
     totalBudget = totalAllowance - totalExpenses - totalSavings;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*--------------------------------------------------------*/
-/*           BUDGET class(Public): CONSTRUCTOR            */
-/*--------------------------------------------------------*/
-Budget :: Budget() :
-            totalBudget(0.0),
-            totalSavings(0.0) {}
-
-
-
 
 
 
@@ -1331,13 +1282,20 @@ void Budget :: saveCategoryList() const
 
 
 
+/*--------------------------------------------------------------------------------------*/
+/*                          BUDGET class(Public): CONSTRUCTOR                           */
+/*--------------------------------------------------------------------------------------*/
+// 
+Budget :: Budget() :
+            totalBudget(0.0),
+            totalSavings(0.0) {}
 
 
 
 
-/*----------------------------------------------------------*/
-/*          BUDGET class MFs(Public): DISPLAY LISTS         */
-/*----------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------*/
+/*                        BUDGET class MFs(Public): DISPLAY LISTS                       */
+/*--------------------------------------------------------------------------------------*/
 
 void Budget :: displayAllowancesList_today(int page = 1)
 {
@@ -1345,6 +1303,7 @@ void Budget :: displayAllowancesList_today(int page = 1)
     char border = 179;
 
     // Display: Headers
+    cout << string(3, ' ') << border;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
     displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH);
     displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH + 2);
@@ -1378,7 +1337,7 @@ void Budget :: displayAllowancesList_today(int page = 1)
             stream << fixed << setprecision(2) << amt_db;
             string amt_str = stream.str();
 
-            cout << "\n" << string(13, ' ') << border;
+            cout << "\n" << string(3, ' ') << border;
             displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, 7);
             displayTxtByColumn(allowance.getDate(), WHITE, COLUMNWIDTH);
             displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
@@ -1391,7 +1350,7 @@ void Budget :: displayAllowancesList_today(int page = 1)
             int vacant = dataPerPage - items;
 
             for (i = 0; i < vacant; i++) {
-                cout << "\n" << string(13, ' ') << border;
+                cout << "\n" << string(3, ' ') << border;
                 displayTxtByColumn_CENTERED(to_string(++start), WHITE, 7);
                 displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
                 displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
@@ -1403,7 +1362,7 @@ void Budget :: displayAllowancesList_today(int page = 1)
     else {
         // Display: Dummy data
         for (i = 0; i < 5; i++) {
-            cout << "\n" << string(13, ' ') << border;
+            cout << "\n" << string(3, ' ') << border;
             displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, 7);
             displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
             displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
@@ -1419,12 +1378,13 @@ void Budget :: displayExpensesList_today(int page = 1)
     char border = 179;
 
     // Display: Headers
+    cout << string(3, ' ') << border;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
     displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH);
     displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH + 2);
     displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH);
     displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDWHITE, COLUMNWIDTH);
+    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDWHITE, 60);
 
     int ExpensesSize = expensesList_Today.size();
 
@@ -1453,7 +1413,7 @@ void Budget :: displayExpensesList_today(int page = 1)
             stream << fixed << setprecision(2) << amt_db;
             string amt_str = stream.str();
 
-            cout << "\n" << string(13, ' ') << border;
+            cout << "\n" << string(3, ' ') << border;
             displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, 7);
             displayTxtByColumn(expense.getDate(), WHITE, COLUMNWIDTH);
             displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
@@ -1466,7 +1426,7 @@ void Budget :: displayExpensesList_today(int page = 1)
             int vacant = dataPerPage - items;
 
             for (i = 0; i < vacant; i++) {
-                cout << "\n" << string(13, ' ') << border;
+                cout << "\n" << string(3, ' ') << border;
                 displayTxtByColumn_CENTERED(to_string(++start), WHITE, 7);
                 displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
                 displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
@@ -1478,7 +1438,7 @@ void Budget :: displayExpensesList_today(int page = 1)
     else {
         // Display: Dummy data
         for (i = 0; i < 5; i++) {
-            cout << "\n" << string(13, ' ') << border;
+            cout << "\n" << string(3, ' ') << border;
             displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, 7);
             displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
             displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
@@ -2442,7 +2402,7 @@ void Budget :: run_UpdateSavings() {
         displayCenteredLine_NoColor("[ 3 ] DELETE GOAL      ");
         displayCenteredLine_NoColor("[ 4 ] SET ASIDE SAVINGS");
         cout << "\n";
-        displayCenteredLine_NoColor("[R] Return");
+        displayCenteredLine_NoColor("[R] Return             ");
         cout << "\n";
         displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
