@@ -359,9 +359,6 @@ void Inbox :: loadNotifications()
 
         inFILE.close();
     }
-    else {
-        displayCenteredLine_Colored(">> ERROR: Unable to read Inbox File", YELLOW);
-    }
 }
 
 // WRITE Notifications to file
@@ -381,9 +378,6 @@ void Inbox :: saveNotifications()
         }
 
         outFILE.close();
-    }
-    else {
-        displayCenteredLine_Colored(">> ERROR: Unable to read Inbox File", YELLOW);
     }
 }
 

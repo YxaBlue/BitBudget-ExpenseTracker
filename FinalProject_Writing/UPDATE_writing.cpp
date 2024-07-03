@@ -60,6 +60,7 @@ const string ExpenseLimitFILE = "ExpenseLimits.bin";
 const string SavingsFILE = "Savings.bin";
 
 const string CategoryListFILE = "CATEGORYList.bin";
+const string AccountListFILE = "ACCOUNTList.bin";
 const string InboxFILE = "Inbox.bin";
 
 
@@ -68,12 +69,14 @@ const string InboxFILE = "Inbox.bin";
 
 
 
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
 /*_________________________________________________________________________________*/
 /*-------------------------------- FUNCTIONS LIST: --------------------------------*/
 /*_________________________________________________________________________________*/
 
 /* DISPLAY FUNCTIONS */
-//
+
 void border(char, int);
 void displayCenteredLine_NoColor(const string, int);
 void displayCenteredLine_Colored(const string, const string, int);
@@ -88,7 +91,7 @@ void clearScreen();
 
 
 /* EXTRA FUNCTIONS */
-//
+
 void clearFile(string);
 bool isNumeric(string);
 bool isDouble(string);
@@ -131,19 +134,19 @@ string getDate_Today();
 
 class Category {
 private:
-    string categoryName_parent;
-    int totalBabyCategories;
-    vector<string> categoryName_baby;
+    string parentName;
+    int babiesTotal;
+    vector<string> babyNames;
 
 public:
     // CONSTRUCTOR
     Category(string, int);
-    void add_BabyCategory(string);
+    void addBaby(string);
 
     // CATEGORY GETTERS
-    string getParentCategory() const;
-    int getTotalBabyCategories() const;
-    vector<string> getBabyCategories() const;
+    string getParent() const;
+    int getTotalBaby() const;
+    vector<string> getBabies() const;
 
     // Friend Functions
     friend ostream& operator<<(ostream& outFILE, const Category &categoryHol);
@@ -250,7 +253,7 @@ public:
 
 
 /*---------------------------------------------------------------------------------*/
-/*--------------------------------- BUDGET CLASS ----------------------------------*/
+/*-------------------------------- ALLOWANCE CLASS --------------------------------*/
 /*---------------------------------------------------------------------------------*/
 
 class Allowance {
@@ -264,8 +267,8 @@ private:
 
 public:
     // CONSTRUCTORS
-    Allowance(string Date, double Amount, string Account, string Description)
-    : dateCreated(getDate_Today()), date(date), amount(amount), account(account), description(description) {}
+    Allowance(string DateCreated, string Date, double Amount, string Account, string Description)
+    : dateCreated(DateCreated), date(Date), amount(Amount), account(Account), description(Description) {}
 
     // GETTERS
     string getDateCreated() const;
@@ -320,7 +323,7 @@ private:
     vector<SavingsAndExpenseLim> expenseLimitsList;
 
     vector<Category> CategoryList;
-
+    vector<string> AccountList;
 
 
 
@@ -342,11 +345,13 @@ protected:
     void loadSavings();
     void loadExpenseLimits();
     void loadCategoryList();
+    void loadAccountList();
     void saveExpenses() const;
     void saveAllowances() const;
     void saveSavings() const;
     void saveExpenseLimits() const;
     void saveCategoryList() const;
+    void saveAccountList() const;
 
 
     // UPDATE: LIMIT OF EXPENSES [Features] ~DONE, need to deal with notifications
@@ -369,6 +374,7 @@ protected:
     void run_EditAllowance(); // working~
 
     // UPDATE: EXPENSES [Features]
+    void displayMenu_UpdateExpense(int);
     void run_AddExpenses(); // working~
     void run_DeleteExpenses(); // working~
     void run_EditExpenses(); // working~
@@ -381,6 +387,7 @@ protected:
     void addSavings(const SavingsAndExpenseLim&);
     void addExpenseLim(const SavingsAndExpenseLim&);
     void addCategory(const Category&);
+    void addAccount(const string&);
 
 
     // ALLOWANCE/EXPENSE/GOAL REMOVERS
@@ -420,13 +427,14 @@ public:
     void displayExpenseLimitList();
     void displayCategoryList_parent();
     void displayCategoryList_bbys(int);
+    void displayAccountList();
+
     void displayUpdateMenu();
 
 
     // UPDATE: ALL MAIN FEATURES TO RUN IN MAIN FUNCTION
-
     void run_UpdateLimitExpenses(); // DONE, need to work on how to add up the expenses.
-    void run_UpdateSavings(); // working~
+    void run_UpdateSavings(); // DONE, need to work on the notification part
     void run_UpdateAllowance(); // working
     void run_UpdateExpense(); // working~
 
@@ -683,19 +691,19 @@ string getDate_Today()
 
 /* CATEGORY CLASS: Constructors */
 Category :: Category(string catName_parent, int babyCat_Total) :
-                categoryName_parent(catName_parent),
-                totalBabyCategories(babyCat_Total) {}
+                parentName(catName_parent),
+                babiesTotal(babyCat_Total) {}
 
 /* CATEGORY CLASS: Constructors */
-string Category :: getParentCategory() const            { return categoryName_parent; }
-int Category :: getTotalBabyCategories() const          { return totalBabyCategories; }
-vector<string> Category :: getBabyCategories() const    { return categoryName_baby; }
+string Category :: getParent() const            { return parentName; }
+int Category :: getTotalBaby() const          { return babiesTotal; }
+vector<string> Category :: getBabies() const    { return babyNames; }
 
 /* CATEGORY CLASS: Public MFs */
-void Category :: add_BabyCategory(string babyCatName)
+void Category :: addBaby(string babyCatName)
 {
-    categoryName_baby.push_back(babyCatName);
-    totalBabyCategories = categoryName_baby.size();
+    babyNames.push_back(babyCatName);
+    babiesTotal = babyNames.size();
 }
 
 // WRITE category/ies
@@ -704,15 +712,15 @@ ostream& operator<<(ostream& outFILE, const Category &categoryHol)
     size_t size;
 
     // WRITE parent category name
-    size = categoryHol.categoryName_parent.size();
+    size = categoryHol.parentName.size();
     outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
-    outFILE.write(categoryHol.categoryName_parent.c_str(), size);
+    outFILE.write(categoryHol.parentName.c_str(), size);
 
     // WRITE total baby categories
-    outFILE.write(reinterpret_cast<const char*>(&categoryHol.totalBabyCategories), sizeof(categoryHol.totalBabyCategories));
+    outFILE.write(reinterpret_cast<const char*>(&categoryHol.babiesTotal), sizeof(categoryHol.babiesTotal));
 
     // WRITE all baby categories
-    for(const auto& babyCategory : categoryHol.categoryName_baby)
+    for(const auto& babyCategory : categoryHol.babyNames)
     {
         size = babyCategory.size();
         outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
@@ -730,24 +738,24 @@ istream& operator>>(istream& inFILE, Category &categoryHol)
     // READ Parent Category Name
     inFILE.read(reinterpret_cast<char*>(&size), sizeof(size));
     if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'parent category name size' from file");
-    categoryHol.categoryName_parent.resize(size);
-    inFILE.read(&categoryHol.categoryName_parent[0], size);
+    categoryHol.parentName.resize(size);
+    inFILE.read(&categoryHol.parentName[0], size);
     if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'parent category name' from file");
 
     // READ Total Baby Categories
-    inFILE.read(reinterpret_cast<char*>(&categoryHol.totalBabyCategories), sizeof(categoryHol.totalBabyCategories));
+    inFILE.read(reinterpret_cast<char*>(&categoryHol.babiesTotal), sizeof(categoryHol.babiesTotal));
     if(!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'Total baby category/ies name' from file");
 
     // READ Baby Category Name/s
-    categoryHol.categoryName_baby.clear();
-    for (int i = 0; i < categoryHol.totalBabyCategories; i++)
+    categoryHol.babyNames.clear();
+    for (int i = 0; i < categoryHol.babiesTotal; i++)
     {
         inFILE.read(reinterpret_cast<char*>(&size), sizeof(size));
         if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'baby category name size' from file");
         catNameHol.resize(size);
         inFILE.read(&catNameHol[0], size);
         if (!inFILE.good()) throw runtime_error(">> ERROR[Category]: Unable to read 'baby category name' from file");
-        categoryHol.categoryName_baby.push_back(catNameHol); 
+        categoryHol.babyNames.push_back(catNameHol); 
 
     }
     return inFILE;
@@ -819,7 +827,7 @@ istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol)
 {
     size_t size;
 
-    //READ startDate
+    //READ start Date
     is.read(reinterpret_cast<char*>(&size), sizeof(size));
     if (!is.good()) throw runtime_error(">> ERROR[Savings/LOE]: Unable to read 'startDate size' from file");
     savingsHol.startDate.resize(size);
@@ -1178,9 +1186,9 @@ void Budget :: calculateTotalBudget() {
 
 
 
-/*--------------------------------------------------------------------------------------*/
-/*     BUDGET class MFs(Protected): LOAD & SAVE Functions - Allowance and Expenses      */
-/*--------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------*/
+/*     BUDGET class MFs(Protected): LOAD & SAVE Functions - Allowance/Expenses/Categories/ETC.      */
+/*--------------------------------------------------------------------------------------------------*/
 
 // LOAD: Expenses list from file
 void Budget :: loadExpenses() {
@@ -1221,7 +1229,7 @@ void Budget :: loadAllowances()
     ifstream inFile(AllowancesFILE, ios::binary);
     if (inFile.is_open()) {
         while (inFile.peek() != EOF) {
-            Allowance allowance("", 0.0, "", "");
+            Allowance allowance("", "", 0.0, "", "");
             inFile >> allowance;
 
             if (allowance.getDateCreated() == getDate_Today()) {
@@ -1334,7 +1342,36 @@ void Budget :: saveCategoryList() const
     }
 }
 
+// LOAD: Account List from file
+void Budget :: loadAccountList()
+{
+    size_t size;
+    string acc;
 
+    ifstream inFILE(AccountListFILE, ios::binary);
+    if (inFILE.is_open()) {
+        while(inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
+        {
+            acc.resize(size);
+            inFILE.read(&acc[0], size);
+            AccountList.push_back(acc);
+        }
+        inFILE.close();
+    }
+}
+
+// SAVE: Account List to file
+void Budget :: saveAccountList() const
+{
+    ofstream outFILE(AccountListFILE, ios::binary | ios::trunc);
+    if (outFILE.is_open()) {
+        for (const auto& acc : AccountList)
+        {
+            outFILE << acc;
+        }
+        outFILE.close();
+    }
+}
 
 
 
@@ -1603,7 +1640,7 @@ void Budget :: displayCategoryList_parent() {
     
     // Load all parent categories
     for (const auto& catHol : CategoryList) {
-        ParentCategories.push_back(catHol.getParentCategory());
+        ParentCategories.push_back(catHol.getParent());
     }
 
     // Fill in vacant slots
@@ -1612,17 +1649,18 @@ void Budget :: displayCategoryList_parent() {
     // Display ParentCategories by 2 columns
     for (int i = 0; i < ParentCategories.size() / 2; i++) {
         cout << string(50, ' ') << border;
-        displayTxtByColumn(to_string(i+1) + " " + ParentCategories[i], WHITE, 20);
-        displayTxtByColumn(to_string(i+6) + " " + ParentCategories[i + 6], WHITE, 20);
+        displayTxtByColumn("[ " + to_string(i+1) + " ] " + ParentCategories[i], WHITE, 25);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + ParentCategories[i + 6], WHITE, 25);
         cout << "\n";
     }
+    displayCenteredLine_NoColor("[ A ] ADD New Category");
 }
 
 void Budget :: displayCategoryList_bbys(int index_Parent) {
     if ((index_Parent <= 0) || (index_Parent > CategoryList.size())) return;
 
     char border = 179;
-    vector<string> BbyCategories = CategoryList[index_Parent - 1].getBabyCategories();
+    vector<string> BbyCategories = CategoryList[index_Parent - 1].getBabies();
 
     // Fill in vacant slots
     while (BbyCategories.size() < 10) BbyCategories.push_back("----------");
@@ -1630,11 +1668,36 @@ void Budget :: displayCategoryList_bbys(int index_Parent) {
     // Display BbyCategories by 2 columns
     for (int i = 0; i < BbyCategories.size() / 2; i++) {
         cout << string(50, ' ') << border;
-        displayTxtByColumn(to_string(i+1) + " " + BbyCategories[i], WHITE, 20);
-        displayTxtByColumn(to_string(i+6) + " " + BbyCategories[i + 6], WHITE, 20);
+        displayTxtByColumn("[ " + to_string(i+1) + " ] " + BbyCategories[i], WHITE, 25);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + BbyCategories[i + 6], WHITE, 25);
         cout << "\n";
     }
+    displayCenteredLine_NoColor("[ A ] ADD New Subcategory");
 }
+
+void Budget :: displayAccountList() {
+    char border = 179;
+    vector<string> Accounts;
+    
+    // Load all parent categories
+    for (const auto& acc : AccountList) {
+        Accounts.push_back(acc);
+    }
+
+    // Fill in vacant slots
+    while (Accounts.size() < 10) Accounts.push_back("----------");
+
+    // Display ParentCategories by 2 columns
+    for (int i = 0; i < Accounts.size() / 2; i++) {
+        cout << string(50, ' ') << border;
+        displayTxtByColumn("[ " + to_string(i+1) + " ] " + Accounts[i], WHITE, 20);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + Accounts[i + 6], WHITE, 20);
+        cout << "\n";
+    }
+    displayCenteredLine_NoColor("[ A ] ADD New Account");
+}
+
+
 
 
 
@@ -1683,6 +1746,13 @@ void Budget :: addCategory(const Category& categoryHol) {
         throw runtime_error(">> WARNING: There can only be 10 Categories at max.");
 
     CategoryList.push_back(categoryHol);
+}
+
+void Budget :: addAccount(const string& acc) {
+    if (AccountList.size() == 10)
+        throw runtime_error(">> WARNING: There can only be 10 Accounts at max.");
+
+    AccountList.push_back(acc);
 }
 
 void Budget :: removeAllowance(int index) {
@@ -2931,6 +3001,257 @@ void Budget :: run_SetAsideSavings() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+/*-----------------------------------------------------------------------------------------*/
+/*                                   UPDATE: EXPENSES                                      */
+/*-----------------------------------------------------------------------------------------*/
+
+void Budget :: displayMenu_UpdateExpense(int page = 1) {
+    clearScreen();
+    
+    // Display: UPDATE(Expense) Title
+    border(205);
+    displayCenteredLine_Colored("UPDATE: EXPENSES", BLUE);
+    border(205);
+
+    // Display: Total Allowance and Expenses(today)
+    cout << BOLDWHITE << "  >> Total Allowance:            P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Total Expenses(Today):      P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Expenses (Today):      P " << RESET << endl;
+
+    // Display: Expenses Data
+    displayExpensesList_today(page);
+    cout << "\n";
+    cout << "\n";
+    border(196);
+}
+
+
+
+void Budget :: run_UpdateExpense() {
+    int page = 1;
+    int maxPages = expensesList_Today.size() / 5;
+    if ((expensesList_Today.size() % 5) != 0) maxPages++;
+
+    string input_str;
+
+    while (true) {
+        displayMenu_UpdateExpense(page);
+
+        displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_NoColor("[1] Previous Page           [4] DELETE Expenses");
+        displayCenteredLine_NoColor("[2] Next Page               [5] EDIT Expenses  ");
+        displayCenteredLine_NoColor("[3] ADD Expenses            [R] RETURN         ");
+        cout << "\n";
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+
+        getline(cin, input_str);
+
+        if (input_str == "1") {
+            // Display previous page
+            if (page > 1) page--;
+        }
+
+        else if (input_str == "2") {
+            // Display next page
+            if (page < maxPages) page++;
+        }
+
+        else if (input_str == "3") run_AddExpenses();
+        //else if (input_str == "4") run_DeleteExpenses();
+        //else if (input_str == "5") run_EditExpenses();
+        else if ((input_str == "R") || (input_str == "r")) return;
+    }
+}
+
+
+
+void Budget :: run_AddExpenses() {
+    string input_str;
+    int input_int;
+    int inputFlow = 1;
+    double amt;
+    Category cat("", 0);
+    vector<string> bbys;
+    Expense newExpense(getDate_Today(), "MM/DD/YYYY", 0.0, "----------", "----------", "----------", "----------");
+
+    while (true) {
+        clearScreen();
+        
+        // Display: UPDATE(Expense) Title
+        border(205);
+        displayCenteredLine_Colored("UPDATE: EXPENSES (ADD)", BLUE);
+        border(205);
+
+        // Display: Total Allowance and Expenses(today)
+        cout << BOLDWHITE << "  >> Total Allowance:            P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Total Expenses(Today):      P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
+        border(196);
+
+        // Display: New Expense Data
+        if (inputFlow == 3) {
+            cout << BOLDWHITE << "  >> CATEGORY LIST: " << RESET << endl;
+            displayCategoryList_parent();
+        }
+        else if (inputFlow == 4) {
+            cout << BOLDWHITE << "  >> SUBCATEGORY LIST: " << RESET << endl;
+            displayCategoryList_bbys(input_int);
+        }
+        else if (inputFlow == 5) {
+            cout << BOLDWHITE << "  >> ACCOUNT LIST: " << RESET << endl;
+            displayAccountList();
+        }
+        else {
+            cout << BOLDWHITE << "  >> ADDING NEW EXPENSE: " << RESET << endl;
+            cout << string(5, ' ') << "* DATE:             " << GREEN << newExpense.getDate() << RESET << endl;
+            cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << newExpense.getAmount() << RESET << endl;
+            cout << string(5, ' ') << "* CATEGORY:         " << GREEN << newExpense.getCategory() << RESET << endl;
+            cout << string(5, ' ') << "* SUBCATEGORY:      " << GREEN << newExpense.getBabyCategory() << RESET << endl;
+            cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << newExpense.getAccount() << RESET << endl;
+            cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << newExpense.getDescription() << RESET << endl;
+            cout << "\n";
+            cout << "\n";
+        }
+        border(196);
+
+        switch (inputFlow) {
+            case 1: // Input DATE
+                displayCenteredLine_NoNewLine(">> Enter DATE: ", CYAN);
+                getline(cin , input_str);
+
+                if (validateDateFormat(input_str)) {
+                    newExpense.setDate(input_str);
+                    inputFlow++;
+                }
+                else if ((input_str == "R") || (input_str == "r")) return;
+                break;
+
+
+            case 2: // Input AMOUNT
+                displayCenteredLine_NoNewLine(">> Enter AMOUNT: ", CYAN);
+                getline(cin , input_str);
+
+                if ((isDouble(input_str)) && (input_str.size() > 0)) {
+                    amt = stod(input_str);
+
+                    if ((amt > 0) && (amt <= totalBudget)) {
+                        newExpense.setAmount(amt);
+                        inputFlow++;
+                    }
+                }
+                else if ((input_str == "R") || (input_str == "r")) return;
+                break;
+
+
+            case 3: // Input PARENT CATEGORY
+                displayCenteredLine_NoNewLine(">> Enter CATEGORY: ", CYAN);
+                getline(cin , input_str);
+                
+                if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+                    input_int = stoi(input_str);
+
+                    if ((input_int > 0) && (input_int <= CategoryList.size())) {
+                        cat = CategoryList[input_int - 1];
+                        bbys = cat.getBabies();
+                        newExpense.setCategory(cat.getParent());
+                    }
+                }
+                break;
+
+
+            case 4: // Input BABY CATEGORY
+                displayCenteredLine_NoNewLine(">> Enter CATEGORY: ", CYAN);
+                getline(cin , input_str);
+                
+                if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+                    input_int = stoi(input_str);
+
+                    if ((input_int > 0) && (input_int <= cat.getTotalBaby())) {
+                        newExpense.setBabyCategory(bbys[input_int-1]);
+                    }
+                }
+                break;
+
+
+            case 5: // Input ACCOUNT
+                displayCenteredLine_NoNewLine(">> Enter ACCOUNT: ", CYAN);
+                getline(cin , input_str);
+                
+                if ((isNumeric(input_str)) &&  (input_str.size() > 0)) {
+                    input_int = stoi(input_str); 
+                    if ((input_int > 0) && (input_int <= AccountList.size())) {
+                        newExpense.setAccount(AccountList[input_int - 1]);
+                        inputFlow++;
+                    }
+                }
+
+                else if ((input_str == "A") || (input_str == "a")) {
+                    /* PREFORM: ADD NEW CATEGORY */
+                    while (true) {
+                        clearScreen();
+
+                        // Display: UPDATE(Expense) Title
+                        border(205);
+                        displayCenteredLine_Colored("UPDATE: EXPENSES (ADD ACCOUNT)", BLUE);
+                        border(205);
+
+                        displayAccountList();
+                        border(196);
+
+                        if (AccountList.size() == 10) {
+                            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                            displayCenteredLine_Colored  (">> You can create up to 10 Accounts!             ", YELLOW);
+                            displayCenteredLine_NoNewLine(">> Returning to Savings Menu... (Press 'ENTER')  ", YELLOW);
+                            getchar();
+                            return; // Return to MENU
+                        }
+                        displayCenteredLine_NoNewLine(">> Enter NEW ACCOUNT(20 chars max): ", CYAN);
+                        getline(cin, input_str);
+
+                        if ((input_str.size() > 0) && (input_str.size() <= 20)) {
+                            addAccount(input_str);
+                        }
+                    }
+                }
+
+                else if ((input_str == "R") || (input_str == "r")) return;
+
+                break;
+
+
+            case 6: // Input DESCRIPTION
+                displayCenteredLine_NoNewLine(">> Enter DESCRIPTION: ", CYAN);
+                getline(cin , input_str);
+
+                if (input_str.size() <= 50) {
+                    newExpense.setDescription(input_str);
+                    inputFlow++;
+                }
+                else if ((input_str == "R") || (input_str == "r")) return;
+                break;
+
+
+            default: // NOTIFY: New Expense Added.
+                break;
+        }
+    }
+}
+
+
+
+
+
+
 // // UPDATE: ALLOWANCE
 // void Budget :: run_UpdateAllowance() {
 //     string input;
@@ -3072,6 +3393,7 @@ void Budget :: loadData() {
     loadExpenseLimits();
     loadSavings();
     loadCategoryList();
+    loadAccountList();
 
     calculateTotalAllowance();
     calculateTotalExpenses();
@@ -3084,6 +3406,16 @@ void Budget :: saveState() {
     saveExpenseLimits();
     saveSavings();
     saveCategoryList();
+    saveAccountList();
+
+    allowancesList.clear();
+    allowancesList_Today.clear();
+    expensesList.clear();
+    expensesList_Today.clear();
+    savingsList.clear();
+    expenseLimitsList.clear();
+    CategoryList.clear();
+    AccountList.clear();
 }
 
 
@@ -3133,7 +3465,7 @@ int main() {
                 //budget.run_UpdateAllowance();
             }
             else if (input == "4") {
-                // Handle option 4
+                //budget.run_UpdateExpense();
             }
             else {
                 cout << "Invalid option, please try again.\n";

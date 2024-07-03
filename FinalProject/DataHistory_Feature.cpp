@@ -344,13 +344,13 @@ public:
 
 
     // Category getters
-    string getParentCategory() const;
-    int getTotalBabyCategories() const;
-    vector<string> getBabyCategories() const;
+    string getParent() const;
+    int getTotalBaby() const;
+    vector<string> getBabies() const;
 
 
     // Category Public MFs
-    void add_BabyCategory(string);
+    void addBaby(string);
 
     void displayParentCategories(int);
     void displayBabyCategories(string);
@@ -371,14 +371,14 @@ Category :: Category(string catName_parent, int babyCat_Total) :
 
 
 // CATEGORY CLASS: Getters
-string Category :: getParentCategory() const            { return categoryName_parent; }
-int Category :: getTotalBabyCategories() const          { return totalBabyCategories; }
-vector<string> Category :: getBabyCategories() const    { return categoryName_baby; }
+string Category :: getParent() const            { return categoryName_parent; }
+int Category :: getTotalBaby() const          { return totalBabyCategories; }
+vector<string> Category :: getBabies() const    { return categoryName_baby; }
 
 
 
 // CATEGORY CLASS: Public MFs
-void Category :: add_BabyCategory(string babyCatName)
+void Category :: addBaby(string babyCatName)
 {
     categoryName_baby.push_back(babyCatName);
     totalBabyCategories = categoryName_baby.size();
