@@ -141,12 +141,16 @@ private:
 public:
     // CONSTRUCTOR
     Category(string, int);
-    void addBaby(string);
 
     // CATEGORY GETTERS
     string getParent() const;
     int getTotalBaby() const;
     vector<string> getBabies() const;
+
+    // CATEGORY SETTERS
+    void addBaby(string);
+    void setParent(string);
+    void setBaby(int, string);
 
     // Friend Functions
     friend ostream& operator<<(ostream& outFILE, const Category &categoryHol);
@@ -379,6 +383,11 @@ protected:
     void run_DeleteExpenses(); // working~
     void run_EditExpenses(); // working~
     bool track_ExpensesLimit(); // working~
+
+    // UPDATE: ALLOWANCE/EXPENSE [Add Accounts, Category, Subcategory]
+    void run_AddAccount(string);
+    void run_AddCategory(string);
+    void run_AddSubcategory(int, string);
 
 
     // CLASS ADDERS
@@ -696,14 +705,20 @@ Category :: Category(string catName_parent, int babyCat_Total) :
 
 /* CATEGORY CLASS: Constructors */
 string Category :: getParent() const            { return parentName; }
-int Category :: getTotalBaby() const          { return babiesTotal; }
+int Category :: getTotalBaby() const            { return babiesTotal; }
 vector<string> Category :: getBabies() const    { return babyNames; }
 
 /* CATEGORY CLASS: Public MFs */
-void Category :: addBaby(string babyCatName)
-{
+void Category :: addBaby(string babyCatName) {
     babyNames.push_back(babyCatName);
     babiesTotal = babyNames.size();
+}
+
+void Category :: setParent(string newParent)  { parentName = newParent; }
+
+void Category :: setBaby(int index, string newBby) {
+    if ((index >= 0) && (index < babyNames.size()))
+    babyNames[index] = newBby;
 }
 
 // WRITE category/ies
@@ -1363,11 +1378,14 @@ void Budget :: loadAccountList()
 // SAVE: Account List to file
 void Budget :: saveAccountList() const
 {
+    size_t size;
+
     ofstream outFILE(AccountListFILE, ios::binary | ios::trunc);
     if (outFILE.is_open()) {
-        for (const auto& acc : AccountList)
-        {
-            outFILE << acc;
+        for (const auto& acc : AccountList) {
+            size = acc.size();
+            outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
+            outFILE.write(acc.c_str(), size);
         }
         outFILE.close();
     }
@@ -1474,13 +1492,14 @@ void Budget :: displayExpensesList_today(int page = 1)
     char border = 179;
 
     // Display: Headers
-    cout << string(3, ' ') << border;
+    cout << border;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
-    displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH + 2);
-    displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED_NB("DESCRIPTION", BOLDWHITE, 60);
+    displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH-2);
+    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("SUBCATEGORY", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 54);
 
     int ExpensesSize = expensesList_Today.size();
 
@@ -1509,37 +1528,43 @@ void Budget :: displayExpensesList_today(int page = 1)
             stream << fixed << setprecision(2) << amt_db;
             string amt_str = stream.str();
 
-            cout << "\n" << string(3, ' ') << border;
-            displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, 7);
-            displayTxtByColumn(expense.getDate(), WHITE, COLUMNWIDTH);
-            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
-            displayTxtByColumn(expense.getAccount(), WHITE, COLUMNWIDTH);
-            displayTxtByColumn(expense.getDescription(), WHITE, 60);
+            cout << "\n" << border;
+            displayTxtByColumn_CENTERED(to_string(start+1), WHITE, 7);
+            displayTxtByColumn(expense.getDate(), WHITE, COLUMNWIDTH-2);
+            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getCategory(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getBabyCategory(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getAccount(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getDescription(), WHITE, 54);
         }
 
         // Display remaining empty slots
         if (items < 5) {
             int vacant = dataPerPage - items;
 
-            for (i = 0; i < vacant; i++) {
-                cout << "\n" << string(3, ' ') << border;
+            for (i = 0; i <= vacant; i++) {
+                cout << "\n" << border;
                 displayTxtByColumn_CENTERED(to_string(++start), WHITE, 7);
-                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
-                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
-                displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
-                displayTxtByColumn("----- ----- -----", WHITE, 60);
+                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH-2);
+                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("----- ----- -----", WHITE, 54);
             }
         }
     }
     else {
         // Display: Dummy data
         for (i = 0; i < 5; i++) {
-            cout << "\n" << string(3, ' ') << border;
-            displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, 7);
-            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
-            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
-            displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
-            displayTxtByColumn("----- ----- -----", WHITE, 60);
+            cout << "\n" << border;
+            displayTxtByColumn_CENTERED(to_string(i+1), WHITE, 7);
+            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH-2);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("----- ----- -----", WHITE, 54);
         }
     }
 }
@@ -1644,18 +1669,18 @@ void Budget :: displayCategoryList_parent() {
     }
 
     // Fill in vacant slots
-    while (ParentCategories.size() < 10) ParentCategories.push_back("----------");
+    while (ParentCategories.size() <= 10) ParentCategories.push_back("----------");
 
     // Display ParentCategories by 2 columns
     for (int i = 0; i < ParentCategories.size() / 2; i++) {
         cout << string(50, ' ') << border;
         displayTxtByColumn("[ " + to_string(i+1) + " ] " + ParentCategories[i], WHITE, 25);
-        displayTxtByColumn("[ " + to_string(i+6) + " ] " + ParentCategories[i + 6], WHITE, 25);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + ParentCategories[i + 5], WHITE, 25);
         cout << "\n";
     }
-    displayCenteredLine_NoColor("[ A ] ADD New Category");
 }
 
+// just directly input user's input. No need to -1
 void Budget :: displayCategoryList_bbys(int index_Parent) {
     if ((index_Parent <= 0) || (index_Parent > CategoryList.size())) return;
 
@@ -1663,16 +1688,15 @@ void Budget :: displayCategoryList_bbys(int index_Parent) {
     vector<string> BbyCategories = CategoryList[index_Parent - 1].getBabies();
 
     // Fill in vacant slots
-    while (BbyCategories.size() < 10) BbyCategories.push_back("----------");
+    while (BbyCategories.size() <= 10) BbyCategories.push_back("----------");
 
     // Display BbyCategories by 2 columns
     for (int i = 0; i < BbyCategories.size() / 2; i++) {
         cout << string(50, ' ') << border;
         displayTxtByColumn("[ " + to_string(i+1) + " ] " + BbyCategories[i], WHITE, 25);
-        displayTxtByColumn("[ " + to_string(i+6) + " ] " + BbyCategories[i + 6], WHITE, 25);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + BbyCategories[i + 5], WHITE, 25);
         cout << "\n";
     }
-    displayCenteredLine_NoColor("[ A ] ADD New Subcategory");
 }
 
 void Budget :: displayAccountList() {
@@ -1685,16 +1709,15 @@ void Budget :: displayAccountList() {
     }
 
     // Fill in vacant slots
-    while (Accounts.size() < 10) Accounts.push_back("----------");
+    while (Accounts.size() <= 10) Accounts.push_back("----------");
 
     // Display ParentCategories by 2 columns
     for (int i = 0; i < Accounts.size() / 2; i++) {
         cout << string(50, ' ') << border;
-        displayTxtByColumn("[ " + to_string(i+1) + " ] " + Accounts[i], WHITE, 20);
-        displayTxtByColumn("[ " + to_string(i+6) + " ] " + Accounts[i + 6], WHITE, 20);
+        displayTxtByColumn("[ " + to_string(i+1) + " ] " + Accounts[i], WHITE, 25);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + Accounts[i + 5], WHITE, 25);
         cout << "\n";
     }
-    displayCenteredLine_NoColor("[ A ] ADD New Account");
 }
 
 
@@ -1856,7 +1879,7 @@ void Budget :: displayUpdateMenu() {
     displayCenteredLine_Colored("UPDATE", BLUE);
     border(205);
 
-    cout << BOLDWHITE << "  >> Total Allowance:          P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
     cout << BOLDWHITE << "  >> Total Expenses(Today):    P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
     border(196);
 
@@ -1900,7 +1923,7 @@ void Budget :: displayMenu_UpdateLE() {
         border(205);
 
         // Display: Expenses Total and New Limit
-        cout << BOLDWHITE << "  >> Total Allowance:          P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Total Savings:            P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Total Expenses(Today):    P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Expense Limit:\n" << RESET << endl;
@@ -2421,8 +2444,8 @@ void Budget :: displayMenu_UpdateSavings() {
     border(205);
 
     // Display: List of SAVINGS schedules
-    cout << BOLDWHITE << "  >> Total Allowance:      P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
-    cout << BOLDWHITE << "  >> Current Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Total Savings:            P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
     cout << BOLDWHITE << "  >> Savings Goals:\n" << RESET << endl;
     displaySavingsList();
     cout << "\n";
@@ -2483,8 +2506,9 @@ void Budget :: run_S_SetNewGoal() {
         border(205);
 
         // Display: New Goal data
-        cout << BOLDWHITE << "  >> Total Allowance:      P " << fixed << setprecision << totalAllowance << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> SETTING NEW GOAL:\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
+        border(196);
+        cout << BOLDWHITE << "  >> SETTING NEW GOAL:" << RESET << endl;
         cout << string(5, ' ') << "* New Goal Amount:    " << GREEN << "P " << newGoal << RESET << endl;
         cout << string(5, ' ') << "* Start Date:         " << BLUE <<  date1 << RESET << endl;
         cout << string(5, ' ') << "* Due Date:           " << BLUE <<  date2 << RESET << endl;
@@ -3007,6 +3031,216 @@ void Budget :: run_SetAsideSavings() {
 
 
 
+/*-----------------------------------------------------------------------------------------*/
+/*             UPDATE: ALLOWANCE/EXPENSE [Add Accounts, Category, Subcategory]             */
+/*-----------------------------------------------------------------------------------------*/
+void Budget :: run_AddAccount(string TITLE) {
+    string input_str, confirm;
+    int inputFlow = 1;
+
+    while (true) {
+        clearScreen();
+
+        // Display: UPDATE(Expense) Title
+        border(205);
+        displayCenteredLine_Colored(TITLE, BLUE);
+        border(205);
+
+        cout << BOLDWHITE << "  >> ACCOUNT LIST:\n" << RESET << endl;
+        displayAccountList();
+        cout << "\n";
+        border(196);
+
+        if (AccountList.size() >= 10) {
+            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+            displayCenteredLine_Colored(">> You can create up to 10 Accounts!", YELLOW);
+            displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..      ", WHITE);
+            getchar();
+            return; // Return to MENU
+        }
+        else {
+            switch (inputFlow) {
+                case 1: // INPUT NEW ACCOUNT
+                    displayCenteredLine_NoNewLine(">> Enter NEW ACCOUNT(15 chars max): ", CYAN);
+                    getline(cin, input_str);
+                    
+                    if ((input_str == "R") || (input_str == "r")) return;
+
+                    else if ((input_str.size() > 0) && (input_str.size() <= 15)) {
+                        border(196);
+                        displayCenteredLine_Colored(">> Is this final? This cannot be changed after confirming...", BOLDYELLOW);
+                        displayCenteredLine_NoNewLine(">> Enter (Y) to confirm. (ENTER) if otherwise: ", CYAN);
+                        getline(cin , confirm);
+
+                        if ((confirm == "Y") || (confirm == "y")) {
+                            addAccount(input_str);
+                            inputFlow++;
+                        }
+                    }
+                    break;
+                
+
+                case 2: // NOTIFY AND END FUNCTION
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Account added successfully!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..", WHITE);
+                    getchar();
+                    return; // Return to MENU
+                    break;
+
+
+                default:
+                    break;
+            }
+        }
+
+    }
+}
+
+
+
+void Budget :: run_AddCategory(string TITLE) {
+    string input_str, confirm;
+    Category cat("", 0);
+    int inputFlow = 1;
+
+    while (true) {
+        clearScreen();
+
+        // Display: Title
+        border(205);
+        displayCenteredLine_Colored(TITLE, BLUE);
+        border(205);
+
+        cout << BOLDWHITE << "  >> CATEGORY LIST:\n" << RESET << endl;
+        displayCategoryList_parent();
+        cout << "\n";
+        border(196);
+
+        if (CategoryList.size() >= 10) {
+            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+            displayCenteredLine_Colored(">> You can create up to 10 Categories!", YELLOW);
+            displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..      ", WHITE);
+            getchar();
+            return; // Return to MENU
+        }
+        else {
+            switch (inputFlow) {
+                case 1: // INPUT NEW CATEGORY
+                    displayCenteredLine_NoNewLine(">> Enter NEW CATEGORY(15 chars max): ", CYAN);
+                    getline(cin, input_str);
+                    
+                    if ((input_str == "R") || (input_str == "r")) return;
+
+                    else if ((input_str.size() > 0) && (input_str.size() <= 15)) {
+                        border(196);
+                        displayCenteredLine_Colored(">> Is this final? This cannot be changed after confirming...", BOLDYELLOW);
+                        displayCenteredLine_NoNewLine(">> Enter (Y) to confirm. (ENTER) if otherwise: ", CYAN);
+                        getline(cin , confirm);
+
+                        if ((confirm == "Y") || (confirm == "y")) {
+                            cat.setParent(input_str);
+                            addCategory(cat);
+                            inputFlow++;
+                        }
+                    }
+                    break;
+                
+
+                case 2: // NOTIFY AND END FUNCTION
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Category added successfully!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..", WHITE);
+                    getchar();
+                    return; // Return to MENU
+                    break;
+
+
+                default:
+                    break;
+            }
+        }
+
+    }
+}
+
+
+
+void Budget :: run_AddSubcategory(int index, string TITLE) {
+    if ((index <= 0) || (index > CategoryList.size())) return;
+
+    string input_str, confirm;
+    Category& cat = CategoryList[index - 1];
+    int inputFlow = 1;
+
+    while (true) {
+        clearScreen();
+
+        // Display: Title
+        border(205);
+        displayCenteredLine_Colored(TITLE, BLUE);
+        border(205);
+
+        cout << BOLDWHITE << "  >> SUBCATEGORY LIST (" + cat.getParent() + "):" << RESET << endl;
+        displayCategoryList_bbys(index);
+        cout << "\n";
+        border(196);
+
+        if (cat.getTotalBaby() >= 10) {
+            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+            displayCenteredLine_Colored(">> You can create up to 10 Subcategories!", YELLOW);
+            displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..      ", WHITE);
+            getchar();
+            return; // Return to MENU
+        }
+        else {
+            switch (inputFlow) {
+                case 1: // INPUT NEW SUBCATEGORY
+                    displayCenteredLine_NoNewLine(">> Enter NEW SUBCATEGORY(15 chars max): ", CYAN);
+                    getline(cin, input_str);
+                    
+                    if ((input_str == "R") || (input_str == "r")) return;
+
+                    else if ((input_str.size() > 0) && (input_str.size() <= 15)) {
+                        border(196);
+                        displayCenteredLine_Colored(">> Is this final? This cannot be changed after confirming...", BOLDYELLOW);
+                        displayCenteredLine_NoNewLine(">> Enter (Y) to confirm. Press (ENTER) if otherwise: ", CYAN);
+                        getline(cin , confirm);
+
+                        if ((confirm == "Y") || (confirm == "y")) {
+                            inputFlow++;
+                            cat.addBaby(input_str);
+                        }
+                    }
+                    break;
+                
+
+                case 2: // NOTIFY AND END FUNCTION
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Subcategory added successfully!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..", WHITE);
+                    getchar();
+                    return; // Return to MENU
+                    break;
+
+
+                default:
+                    break;
+            }
+        }
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3024,11 +3258,13 @@ void Budget :: displayMenu_UpdateExpense(int page = 1) {
     border(205);
 
     // Display: Total Allowance and Expenses(today)
-    cout << BOLDWHITE << "  >> Total Allowance:            P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
-    cout << BOLDWHITE << "  >> Total Expenses(Today):      P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
-    cout << BOLDWHITE << "  >> Expenses (Today):      P " << RESET << endl;
+    cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Current Savings:          P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
+    cout << BOLDWHITE << "  >> Total Expenses(Today):    P " << fixed << setprecision(2) << totalExpenses_Today << "\n\n" << RESET << endl;
+    border(196);
 
     // Display: Expenses Data
+    cout << BOLDWHITE << "  >> Expenses (Today):\n" << RESET << endl;
     displayExpensesList_today(page);
     cout << "\n";
     cout << "\n";
@@ -3078,10 +3314,10 @@ void Budget :: run_UpdateExpense() {
 
 void Budget :: run_AddExpenses() {
     string input_str;
-    int input_int;
+    int input_int, index;
     int inputFlow = 1;
+
     double amt;
-    Category cat("", 0);
     vector<string> bbys;
     Expense newExpense(getDate_Today(), "MM/DD/YYYY", 0.0, "----------", "----------", "----------", "----------");
 
@@ -3094,7 +3330,7 @@ void Budget :: run_AddExpenses() {
         border(205);
 
         // Display: Total Allowance and Expenses(today)
-        cout << BOLDWHITE << "  >> Total Allowance:            P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Total Expenses(Today):      P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
         border(196);
 
@@ -3102,14 +3338,23 @@ void Budget :: run_AddExpenses() {
         if (inputFlow == 3) {
             cout << BOLDWHITE << "  >> CATEGORY LIST: " << RESET << endl;
             displayCategoryList_parent();
+            cout << "\n";
+            displayCenteredLine_NoColor("[ A ] ADD New Category");
+            cout << "\n";
         }
         else if (inputFlow == 4) {
             cout << BOLDWHITE << "  >> SUBCATEGORY LIST: " << RESET << endl;
             displayCategoryList_bbys(input_int);
+            cout << "\n";
+            displayCenteredLine_NoColor("[ A ] ADD New Subcategory");
+            cout << "\n";
         }
         else if (inputFlow == 5) {
             cout << BOLDWHITE << "  >> ACCOUNT LIST: " << RESET << endl;
             displayAccountList();
+            cout << "\n";
+            displayCenteredLine_NoColor("[ A ] ADD New Account");
+            cout << "\n";
         }
         else {
             cout << BOLDWHITE << "  >> ADDING NEW EXPENSE: " << RESET << endl;
@@ -3154,37 +3399,46 @@ void Budget :: run_AddExpenses() {
 
 
             case 3: // Input PARENT CATEGORY
-                displayCenteredLine_NoNewLine(">> Enter CATEGORY: ", CYAN);
+                displayCenteredLine_NoNewLine(">> Enter CATEGORY(index num): ", CYAN);
                 getline(cin , input_str);
                 
                 if ((isNumeric(input_str)) && (input_str.size() > 0)) {
                     input_int = stoi(input_str);
 
                     if ((input_int > 0) && (input_int <= CategoryList.size())) {
-                        cat = CategoryList[input_int - 1];
-                        bbys = cat.getBabies();
+                        index = input_int;
+                        Category cat = CategoryList[index - 1];
+
                         newExpense.setCategory(cat.getParent());
+                        inputFlow++;
                     }
                 }
+                else if ((input_str == "A") || (input_str == "a")) run_AddCategory("UPDATE: EXPENSES (ADD)");
+                else if ((input_str == "R") || (input_str == "r")) return;
                 break;
 
 
             case 4: // Input BABY CATEGORY
-                displayCenteredLine_NoNewLine(">> Enter CATEGORY: ", CYAN);
+                displayCenteredLine_NoNewLine(">> Enter SUBCATEGORY(index num.): ", CYAN);
                 getline(cin , input_str);
                 
                 if ((isNumeric(input_str)) && (input_str.size() > 0)) {
                     input_int = stoi(input_str);
+                    Category cat = CategoryList[index - 1];
+                    bbys = cat.getBabies();
 
                     if ((input_int > 0) && (input_int <= cat.getTotalBaby())) {
                         newExpense.setBabyCategory(bbys[input_int-1]);
+                        inputFlow++;
                     }
                 }
+                else if ((input_str == "A") || (input_str == "a")) run_AddSubcategory(index, "UPDATE: EXPENSES (ADD)");
+                else if ((input_str == "R") || (input_str == "r")) return;
                 break;
 
 
             case 5: // Input ACCOUNT
-                displayCenteredLine_NoNewLine(">> Enter ACCOUNT: ", CYAN);
+                displayCenteredLine_NoNewLine(">> Enter ACCOUNT(index num): ", CYAN);
                 getline(cin , input_str);
                 
                 if ((isNumeric(input_str)) &&  (input_str.size() > 0)) {
@@ -3195,42 +3449,14 @@ void Budget :: run_AddExpenses() {
                     }
                 }
 
-                else if ((input_str == "A") || (input_str == "a")) {
-                    /* PREFORM: ADD NEW CATEGORY */
-                    while (true) {
-                        clearScreen();
-
-                        // Display: UPDATE(Expense) Title
-                        border(205);
-                        displayCenteredLine_Colored("UPDATE: EXPENSES (ADD ACCOUNT)", BLUE);
-                        border(205);
-
-                        displayAccountList();
-                        border(196);
-
-                        if (AccountList.size() == 10) {
-                            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
-                            displayCenteredLine_Colored  (">> You can create up to 10 Accounts!             ", YELLOW);
-                            displayCenteredLine_NoNewLine(">> Returning to Savings Menu... (Press 'ENTER')  ", YELLOW);
-                            getchar();
-                            return; // Return to MENU
-                        }
-                        displayCenteredLine_NoNewLine(">> Enter NEW ACCOUNT(20 chars max): ", CYAN);
-                        getline(cin, input_str);
-
-                        if ((input_str.size() > 0) && (input_str.size() <= 20)) {
-                            addAccount(input_str);
-                        }
-                    }
-                }
-
+                else if ((input_str == "A") || (input_str == "a")) run_AddAccount("UPDATE: EXPENSES (ADD)");
                 else if ((input_str == "R") || (input_str == "r")) return;
 
                 break;
 
 
             case 6: // Input DESCRIPTION
-                displayCenteredLine_NoNewLine(">> Enter DESCRIPTION: ", CYAN);
+                cout << CYAN << "\t>> Enter DESCRIPTION (50 chars max): " << RESET;
                 getline(cin , input_str);
 
                 if (input_str.size() <= 50) {
@@ -3242,6 +3468,13 @@ void Budget :: run_AddExpenses() {
 
 
             default: // NOTIFY: New Expense Added.
+                addExpense(newExpense);
+
+                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                displayCenteredLine_Colored(">> New Expense added successfully!", YELLOW);
+                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..", WHITE);
+                getchar();
+                return; // Return to MENU
                 break;
         }
     }
@@ -3440,9 +3673,10 @@ void Budget :: saveState() {
 
 int main() {
     Budget budget;
-    budget.setTotalBudget(0.0);
+    budget.setTotalBudget(0);
     budget.loadData();
     budget.calculateTotalBudget();
+    budget.setTotalBudget(500);
 
     string input;
     while (true) {
@@ -3465,7 +3699,7 @@ int main() {
                 //budget.run_UpdateAllowance();
             }
             else if (input == "4") {
-                //budget.run_UpdateExpense();
+                budget.run_UpdateExpense();
             }
             else {
                 cout << "Invalid option, please try again.\n";
