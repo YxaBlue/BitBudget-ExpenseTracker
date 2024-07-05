@@ -372,6 +372,8 @@ protected:
     void run_SetAsideSavings();
     bool track_SavingsGoal(); // working~
 
+
+
     // UPDATE: ALLOWANCE [Features]
     void run_AddAllowance(); // working~
     void run_DeleteAllowance(); // working~
@@ -380,14 +382,16 @@ protected:
     // UPDATE: EXPENSES [Features]
     void displayMenu_UpdateExpense(int);
     void run_AddExpenses(); // working~
-    void run_DeleteExpenses(); // working~
+    void run_DeleteExpenses();
     void run_EditExpenses(); // working~
+    void perform_EditExpense(int, int); 
     bool track_ExpensesLimit(); // working~
 
-    // UPDATE: ALLOWANCE/EXPENSE [Add Accounts, Category, Subcategory]
+    // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
     void run_AddAccount(string);
     void run_AddCategory(string);
     void run_AddSubcategory(int, string);
+
 
 
     // CLASS ADDERS
@@ -1454,8 +1458,8 @@ void Budget :: displayAllowancesList_today(int page = 1)
             cout << "\n" << string(3, ' ') << border;
             displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, 7);
             displayTxtByColumn(allowance.getDate(), WHITE, COLUMNWIDTH);
-            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH + 2);
-            displayTxtByColumn(allowance.getAccount(), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(allowance.getAccount(), WHITE, COLUMNWIDTH+2);
             displayTxtByColumn(allowance.getDescription(), WHITE, 60);
         }
 
@@ -1463,12 +1467,12 @@ void Budget :: displayAllowancesList_today(int page = 1)
         if (items < 5) {
             int vacant = dataPerPage - items;
 
-            for (i = 0; i < vacant; i++) {
+            for (i = 0; i <= vacant; i++) {
                 cout << "\n" << string(3, ' ') << border;
                 displayTxtByColumn_CENTERED(to_string(++start), WHITE, 7);
                 displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
-                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
-                displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
+                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
                 displayTxtByColumn("----- ----- -----", WHITE, 60);
             }
         }
@@ -1479,8 +1483,8 @@ void Budget :: displayAllowancesList_today(int page = 1)
             cout << "\n" << string(3, ' ') << border;
             displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, 7);
             displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
-            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH + 2);
-            displayTxtByColumn("-----", WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
             displayTxtByColumn("----- ----- -----", WHITE, 60);
         }
     }
@@ -1886,8 +1890,10 @@ void Budget :: displayUpdateMenu() {
     // Display: Options
     displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
     cout << "\n";
-    displayCenteredLine_Colored("[ 1 ] LIMIT OF EXPENSES        [ 3 ] Update ALLOWANCE  ", WHITE);
-    displayCenteredLine_Colored("[ 2 ] SAVINGS                  [ 4 ] Update TRANSACTION", WHITE);
+    displayCenteredLine_Colored("[ 1 ] LIMIT OF EXPENSES ", WHITE);
+    displayCenteredLine_Colored("[ 2 ] SAVINGS           ", WHITE);
+    displayCenteredLine_Colored("[ 3 ] Update ALLOWANCE  ", WHITE);
+    displayCenteredLine_Colored("[ 4 ] Update TRANSACTION", WHITE);
     cout << "\n";
     displayCenteredLine_Colored("[ R ] Return", WHITE);
     cout << "\n";
@@ -2977,7 +2983,7 @@ void Budget :: run_SetAsideSavings() {
                     displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
                     border(205);
 
-                    cout << BOLDWHITE << "  >> Total Allowance:      P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
+                    cout << BOLDWHITE << "  >> Total Budget:      P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
 
                     // Display original data
                     cout << BOLDWHITE << "  >> EDITING DESCRIPTION:" << RESET << endl;
@@ -3000,7 +3006,7 @@ void Budget :: run_SetAsideSavings() {
                         double currentAmt = savings.get_currentAmt();
                         double maxAmt = savings.get_goal() - currentAmt;
 
-                        if ((amt > 0) && (amt <= maxAmt) && (amt <= totalAllowance)) {
+                        if ((amt > 0) && (amt <= maxAmt) && (amt <= totalBudget)) {
                             savings.set_currentAmt(currentAmt + amt);
                             calculateTotalBudget();
 
@@ -3013,12 +3019,13 @@ void Budget :: run_SetAsideSavings() {
                             return;
                         }
                     }
+
                 }
             }
 
         }
-
     }
+    
 }
 
 
@@ -3304,8 +3311,8 @@ void Budget :: run_UpdateExpense() {
         }
 
         else if (input_str == "3") run_AddExpenses();
-        //else if (input_str == "4") run_DeleteExpenses();
-        //else if (input_str == "5") run_EditExpenses();
+        else if (input_str == "4") run_DeleteExpenses();
+        else if (input_str == "5") run_EditExpenses();
         else if ((input_str == "R") || (input_str == "r")) return;
     }
 }
@@ -3331,32 +3338,42 @@ void Budget :: run_AddExpenses() {
 
         // Display: Total Allowance and Expenses(today)
         cout << BOLDWHITE << "  >> Current Budget:           P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Current Savings:          P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Total Expenses(Today):      P " << fixed << setprecision(2) << totalExpenses_Today << "\n" << RESET << endl;
         border(196);
 
         // Display: New Expense Data
         if (inputFlow == 3) {
+            // Display: Category List
             cout << BOLDWHITE << "  >> CATEGORY LIST: " << RESET << endl;
             displayCategoryList_parent();
             cout << "\n";
             displayCenteredLine_NoColor("[ A ] ADD New Category");
             cout << "\n";
+            cout << BOLDWHITE << "  >> Enter the number of the Category you a want to input. Enter (A) if you want to add a new Category." << RESET << endl;
         }
         else if (inputFlow == 4) {
+            // Display: Subcategory List
             cout << BOLDWHITE << "  >> SUBCATEGORY LIST: " << RESET << endl;
             displayCategoryList_bbys(input_int);
             cout << "\n";
             displayCenteredLine_NoColor("[ A ] ADD New Subcategory");
             cout << "\n";
+            cout << BOLDWHITE << "  >> Enter the number of the Subcategory you a want to input. Enter (A) if you want to add a new Subcategory." << RESET << endl;
+            cout << "\n";
         }
         else if (inputFlow == 5) {
+            // Display Account List
             cout << BOLDWHITE << "  >> ACCOUNT LIST: " << RESET << endl;
             displayAccountList();
             cout << "\n";
             displayCenteredLine_NoColor("[ A ] ADD New Account");
             cout << "\n";
+            cout << BOLDWHITE << "  >> Enter the number of the Account you a want to input. Enter (A) if you want to add a new Account." << RESET << endl;
+            cout << "\n";
         }
         else {
+            // Display: Input of new expense
             cout << BOLDWHITE << "  >> ADDING NEW EXPENSE: " << RESET << endl;
             cout << string(5, ' ') << "* DATE:             " << GREEN << newExpense.getDate() << RESET << endl;
             cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << newExpense.getAmount() << RESET << endl;
@@ -3374,7 +3391,7 @@ void Budget :: run_AddExpenses() {
                 displayCenteredLine_NoNewLine(">> Enter DATE: ", CYAN);
                 getline(cin , input_str);
 
-                if (validateDateFormat(input_str)) {
+                if (validateDate(input_str)) {
                     newExpense.setDate(input_str);
                     inputFlow++;
                 }
@@ -3471,8 +3488,8 @@ void Budget :: run_AddExpenses() {
                 addExpense(newExpense);
 
                 displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-                displayCenteredLine_Colored(">> New Expense added successfully!", YELLOW);
-                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue..", WHITE);
+                displayCenteredLine_Colored  (">> New Expense added successfully!", YELLOW);
+                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...   ", WHITE);
                 getchar();
                 return; // Return to MENU
                 break;
@@ -3482,134 +3499,434 @@ void Budget :: run_AddExpenses() {
 
 
 
+void Budget :: run_DeleteExpenses() {
+    int page = 1;
+    int maxPages = expensesList_Today.size() / 5;
+    if ((expensesList_Today.size() % 5) != 0) maxPages++;
+
+    string input_str;
+    int input_int;
+    vector<string> subcategories;
+
+    while (true) {
+        displayMenu_UpdateExpense(page);
+
+        displayCenteredLine_Colored("OPTIONS (DELETE)", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_NoColor("[P] Previous Page           [N] Next Page");
+        cout << "\n";
+        displayCenteredLine_NoColor(">> Enter index number of Expense data to delete");
+        cout << "\n";
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+
+        getline(cin, input_str);
+
+        if ((input_str == "P") || (input_str == "p")) {
+            // Display previous page
+            if (page > 1) page--;
+        }
+
+        else if ((input_str == "N") || (input_str == "n")) {
+            // Display next page
+            if (page < maxPages) page++;
+        }
+
+        else if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+            input_int = stoi(input_str);
+
+            if ((input_int > 0) && (input_int <= expensesList_Today.size())) {
+                removeExpense(input_int - 1);
+
+                // Notify: Expense Deleted Successfully
+                border(196);
+                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                displayCenteredLine_Colored(">> Expense data deleted successfully!", YELLOW);
+                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...      ", WHITE);
+                getchar();
+                return;
+            }
+        }
+
+    }
+}
 
 
 
-// // UPDATE: ALLOWANCE
-// void Budget :: run_UpdateAllowance() {
-//     string input;
-//     int page = 1;
+void Budget :: run_EditExpenses() {
+    int page = 1;
+    int maxPages = expensesList_Today.size() / 5;
+    if ((expensesList_Today.size() % 5) != 0) maxPages++;
 
-//     int maxPages = allowancesList_Today.size() / 5;
-//     if ((allowancesList_Today.size() % 5) != 0) maxPages++;
+    string input_str;
+    int input_int, i = 0, subCat_size;
+    int inputFlow = 1;
 
-//     while (true) {
-//         clearScreen();
+    while (true) {
+        displayMenu_UpdateExpense(page);
 
-//         // Display: UPDATE ALLOWANCE title
-//         border(205);
-//         displayCenteredLine_Colored("UPDATE: ALLOWANCE", BLUE);
-//         border(205);
+        // Display: Options
+        displayCenteredLine_Colored("OPTIONS (EDIT)", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_NoColor("[P] Previous Page           [N] Next Page");
+        cout << "\n";
+        displayCenteredLine_NoColor(">> Enter index number of Expense data to edit");
+        cout << "\n";
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
 
-//         // Display: Allowances today
-//         cout << BOLDWHITE << "  >> DATA:" << RESET << endl;
-//         cout << "\n";
-//         displayAllowancesList_today(page);
-
-//         // Display: Options
-//         border(196);
-//         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
-//         displayCenteredLine_NoColor("[1] Previous Page           [4] DELETE Allowance");
-//         displayCenteredLine_NoColor("[2] Next Page               [5] EDIT Allowance  ");
-//         displayCenteredLine_NoColor("[3] ADD Allowance           [R] RETURN          ");
-//         cout << "\n";
-//         displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
-
-//         // Get user input
-//         getline(cin, input);
-
-//         if (input == "1") {
-//             // Display: PREVIOUS PAGE
-//             if (page > 1) page--;
-//         }
-//         else if (input == "2") {
-//             // Display: NEXT PAGE
-//             if (page < maxPages) page++;
-//         }
-//         else if (input == "3") {
-//             // Perform: ADD Allowance
-//             int inputFlow = 1;
-//             string date = "--/--/----";
-//             double amount = 0;
-//             string account = "-----";
-//             string desc = "-----";
-
-//             while (true) {
-//                 clearScreen();
-
-//                 // Display: UPDATE ALLOWANCE title
-//                 border(205);
-//                 displayCenteredLine_Colored("UPDATE: ALLOWANCE(ADD)", BLUE);
-//                 border(205);
-                
-//                 // Display: Inputted data
-//                 cout << BOLDWHITE << ">> NEW ALLOWANCE:\n" << RESET << endl;
-//                 cout << "\t" << "* DATE:      " << date << endl;
-//                 cout << "\t" << "* AMOUNT:    " << setprecision(2) << amount << endl;
-
-//                 // Ask user for input
-//                 switch (inputFlow) {
-//                     case 1:
-//                         displayCenteredLine_NoNewLine(">> Enter DATE(MM/DD/YYYY): ");
-//                         inputFlow++;
-//                         break;
-//                 }
-//             }
-
-//             cout << "Enter date (MM/DD/YYYY): ";
-//             cin >> date;
-//             if (!validateDateFormat(date)) {
-//                 cout << "Invalid date format. Please try again." << endl;
-//                 continue;
-//             }
-//             cout << "Enter amount: ";
-//             cin >> amount;
-//             cout << "Enter account: ";
-//             cin >> account;
-//             cout << "Enter description: ";
-//             cin.ignore();
-//             getline(cin, description);
-
-//             Allowance newAllowance(date, amount, account, description);
-//             addAllowance(newAllowance);
-//             cout << "New allowance added." << endl;
-//         }
-//         else if (input == "4") {
-//             int index;
-//             cout << "Enter index to delete (1-" << allowancesList.size() << "): ";
-//             cin >> index;
-//             index--;
-//             if (index >= 0 && index < allowancesList.size()) {
-//                 removeAllowance(index);
-//                 cout << "Allowance deleted." << endl;
-//             } else {
-//                 cout << "Invalid index. Please try again." << endl;
-//             }
-//         }
-//         else if (input == "R" || input == "r") {
-//             saveState();
-//             return;
-//         }
-//         else {
-//             cout << "Invalid option, please try again." << endl;
-//         }
-//     }
-// }
+        // Get user input
+        getline(cin, input_str);
 
 
+        if ((input_str == "P") || (input_str == "p")) {
+            // Display previous page
+            if (page > 1) page--;
+        }
+
+        else if ((input_str == "N") || (input_str == "n")) {
+            // Display next page
+            if (page < maxPages) page++;
+        }
+
+        else if ((input_str == "R") || (input_str == "r")) {
+            // End function
+            return;
+        }
+
+        else if ((isNumeric(input_str)) && (input_str.size() > 0))
+        {
+            input_int = stoi(input_str);
+
+            if ((input_int > 0) && (input_int <= expensesList_Today.size()))
+            {
+                // Get expense and make reference
+                Expense& expense = expensesList_Today[input_int - 1];
+
+                // PERFORM: EDIT
+                while (true) {
+                    displayMenu_UpdateExpense(page);
+
+                    // Display: Options to edit
+                    displayCenteredLine_Colored("OPTIONS (EDIT)", BOLDWHITE);
+                    cout << "\n";
+                    displayCenteredLine_NoColor("[ 1 ] DATE                      [ 4 ] ACCOUNT    ");
+                    displayCenteredLine_NoColor("[ 2 ] AMOUNT                    [ 5 ] DESCRIPTION");
+                    displayCenteredLine_NoColor("[ 3 ] CATEGORY & SUBCATEGORY    [ R ] Return     ");
+                    cout << "\n";
+                    displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+
+                    // Get input from user
+                    getline(cin, input_str);
+
+                    if ((input_str == "R") || ((input_str == "r"))) return;
+                    if ((isNumeric(input_str)) && (input_str.size() > 0))
+                    {
+                        input_int = stoi(input_str);
+
+                        if ((input_int >= 1) && (input_int <= 6))
+                        {
+                            switch (input_int)
+                            {
+                                case 1: /* EDIT DATE */
+                                    while (true) {
+                                        clearScreen();
+
+                                        // Display: UPDATE(Expense) Title
+                                        border(205);
+                                        displayCenteredLine_Colored("UPDATE: EXPENSES (EDIT)", BLUE);
+                                        border(205);
+
+                                        // Display: Expense Details to be edited
+                                        cout << BOLDWHITE << "  >> EDITING DATE: " << RESET << endl;
+                                        cout << string(5, ' ') << "* DATE:             " << YELLOW << expense.getDate() << RESET << endl;
+                                        cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << expense.getAmount() << RESET << endl;
+                                        cout << string(5, ' ') << "* CATEGORY:         " << GREEN << expense.getCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* SUBCATEGORY:      " << GREEN << expense.getBabyCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << expense.getAccount() << RESET << endl;
+                                        cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << expense.getDescription() << RESET << endl;
+                                        border(196);
+
+                                        switch (inputFlow) {
+                                            case 1:
+                                                displayCenteredLine_NoNewLine(">> Enter NEW DATE: ", CYAN);
+                                                getline(cin, input_str);
+
+                                                if ((input_str == "R") || (input_str == "r")) return;
+                                                else if (validateDate(input_str)) {
+                                                    expense.setDate(input_str);
+                                                    inputFlow++;
+                                                }
+                                                break;
+
+                                            default:
+                                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                                displayCenteredLine_Colored(">> Expense Date edited successfully!", YELLOW);
+                                                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...      ", WHITE);
+                                                getchar();
+                                                return;
+                                                break;
+                                        }
+                                    }
+                                    break;
+                                
+
+                                case 2: /* EDIT AMOUNT */
+                                    while (true) {
+                                        clearScreen();
+
+                                        // Display: UPDATE(Expense) Title
+                                        border(205);
+                                        displayCenteredLine_Colored("UPDATE: EXPENSES (EDIT)", BLUE);
+                                        border(205);
+
+                                        // Display: Expense Details to be edited
+                                        cout << BOLDWHITE << "  >> EDITING AMOUNT: " << RESET << endl;
+                                        cout << string(5, ' ') << "* DATE:             " << GREEN << expense.getDate() << RESET << endl;
+                                        cout << string(5, ' ') << "* AMOUNT:           " << YELLOW << "P " << fixed << setprecision(2) << expense.getAmount() << RESET << endl;
+                                        cout << string(5, ' ') << "* CATEGORY:         " << GREEN << expense.getCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* SUBCATEGORY:      " << GREEN << expense.getBabyCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << expense.getAccount() << RESET << endl;
+                                        cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << expense.getDescription() << RESET << endl;
+                                        border(196);
+
+                                        switch (inputFlow) {
+                                            case 1:
+                                                displayCenteredLine_NoNewLine(">> Enter NEW AMOUNT: ", CYAN);
+                                                getline(cin, input_str);
+
+                                                if ((input_str == "R") || (input_str == "r")) return;
+                                                else if ((isDouble(input_str)) && (input_str.size() > 0)) {
+                                                    double amt = stod(input_str);
+                                                    if (amt > 0) {
+                                                        expense.setAmount(amt);
+                                                        inputFlow++;
+                                                    }
+                                                }
+                                                break;
+
+                                            default:
+                                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                                displayCenteredLine_Colored(">> Expense Amount edited successfully!", YELLOW);
+                                                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...      ", WHITE);
+                                                getchar();
+                                                return;
+                                                break;
+                                        }
+                                    }
+                                    break;
+
+                                
+                                case 3: /* EDIT CATEGORY */
+                                    while (true) {
+                                        clearScreen();
+
+                                        // Display: UPDATE(Expense) Title
+                                        border(205);
+                                        displayCenteredLine_Colored("UPDATE: EXPENSES (EDIT)", BLUE);
+                                        border(205);
+
+                                        // Display: Expense Details to be edited
+                                        cout << BOLDWHITE << "  >> EDITING CATEGORY & SUBCATEGORY: " << RESET << endl;
+                                        cout << string(5, ' ') << "* DATE:             " << GREEN << expense.getDate() << RESET << endl;
+                                        cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << expense.getAmount() << RESET << endl;
+                                        cout << string(5, ' ') << "* CATEGORY:         " << YELLOW << expense.getCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* SUBCATEGORY:      " << YELLOW << expense.getBabyCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << expense.getAccount() << RESET << endl;
+                                        cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << expense.getDescription() << RESET << endl;
+                                        border(196);
+
+                                        // Display: Category & Subcategory List
+                                        if (inputFlow == 1) {
+                                            cout << BOLDWHITE << "  >> CATEGORY LIST: " << RESET << endl;
+                                            displayCategoryList_parent();
+                                            cout << "\n";
+                                            displayCenteredLine_NoColor("[ A ] ADD New Category");
+                                            cout << "\n";
+                                            border(196);
+                                        }
+                                        else if (inputFlow == 2) {
+                                            cout << BOLDWHITE << "  >> SUBCATEGORY LIST: " << RESET << endl;
+                                            displayCategoryList_bbys(i);
+                                            cout << "\n";
+                                            displayCenteredLine_NoColor("[ A ] ADD New Subcategory");
+                                            cout << "\n";
+                                            border(196);
+                                        }
+                                        
+                                        
+                                        switch (inputFlow) {
+                                            case 1: // Get user input
+                                                displayCenteredLine_NoNewLine(">> Enter NEW CATEGORY: ", CYAN);
+                                                getline(cin, input_str);
+
+                                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                                else if ((input_str =="A") || (input_str == "a")) run_AddCategory("UPDATE: EXPENSES (EDIT)");
+
+                                                else if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+                                                    input_int = i = stoi(input_str);
+
+                                                    if ((input_int > 0) && (input_int <= CategoryList.size())) {
+                                                        Category cat = CategoryList[input_int - 1];
+                                                        expense.setCategory(cat.getParent());
+                                                        inputFlow++;
+                                                    }
+                                                }
+                                                break;
+                                            
+                                            case 2:
+                                                displayCenteredLine_NoNewLine(">> Enter NEW SUBCATEGORY: ", CYAN);
+                                                getline(cin, input_str);
+
+                                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                                else if ((input_str =="A") || (input_str == "a")) run_AddSubcategory(i, "UPDATE: EXPENSES (EDIT)");
+
+                                                else if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+                                                    input_int = stoi(input_str);
+
+                                                    if ((input_int > 0) && (input_int <= subCat_size)) {
+                                                        Category cat = CategoryList[i-1];
+                                                        vector<string> subcats = cat.getBabies();
+                                                        string newSubcat = subcats[input_int-1];
+
+                                                        expense.setBabyCategory(newSubcat);
+                                                        inputFlow++;
+                                                    }
+                                                }
+                                                break;
+
+                                            default: // Display: Notice edit successful
+                                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                                displayCenteredLine_Colored(">> Expense Category & Subcategory edited successfully!", YELLOW);
+                                                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...      ", WHITE);
+                                                getchar();
+                                                return;
+                                                break;
+                                        }
+                                    }
+                                    break;
 
 
-/*-----------------------------------------------------------*/
-/*                      UPDATE: SAVINGS                      */
-/*-----------------------------------------------------------*/
+
+                                case 4: /* EDIT ACOUNT */
+                                    while (true) {
+                                        clearScreen();
+
+                                        // Display: UPDATE(Expense) Title
+                                        border(205);
+                                        displayCenteredLine_Colored("UPDATE: EXPENSES (ADD)", BLUE);
+                                        border(205);
+
+                                        // Display: Expense Details to be edited
+                                        cout << BOLDWHITE << "  >> EDITING ACCOUNT: " << RESET << endl;
+                                        cout << string(5, ' ') << "* DATE:             " << GREEN << expense.getDate() << RESET << endl;
+                                        cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << expense.getAmount() << RESET << endl;
+                                        cout << string(5, ' ') << "* CATEGORY:         " << GREEN << expense.getCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* SUBCATEGORY:      " << GREEN << expense.getBabyCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* ACCOUNT:          " << YELLOW << expense.getAccount() << RESET << endl;
+                                        cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << expense.getDescription() << RESET << endl;
+                                        border(196);
+
+                                        // Display: Account List
+                                        cout << BOLDWHITE << "  >> ACCOUNT LIST: " << RESET << endl;
+                                        displayAccountList();
+                                        cout << "\n";
+                                        displayCenteredLine_NoColor("[ A ] ADD New Account");
+                                        cout << "\n";
+                                        border(196);
+                                        
+                                        switch (inputFlow) {
+                                            case 1:
+                                                displayCenteredLine_NoNewLine(">> Enter NEW ACCOUNT: ", CYAN);
+                                                getline(cin, input_str);
+
+                                                if ((input_str == "R") || (input_str == "r")) return;
+
+                                                else if ((input_str =="A") || (input_str == "a")) run_AddAccount("UPDATE: EXPENSES (EDIT)");
+
+                                                else if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+                                                    input_int = stoi(input_str);
+
+                                                    if ((input_int > 0) && (input_int <= AccountList.size())) {
+                                                        string acc = AccountList[input_int - 1];
+                                                        expense.setAccount(acc);
+                                                        inputFlow++;
+                                                    }
+                                                    
+                                                }
+                                                break;
+
+                                            default:
+                                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                                displayCenteredLine_Colored(">> Expense Account edited successfully!", YELLOW);
+                                                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...      ", WHITE);
+                                                getchar();
+                                                return;
+                                                break;
+                                        }
+                                    }
+                                    break;
 
 
+                                case 5: /* EDIT DESCRIPTION */
+                                    while (true) {
+                                        clearScreen();
 
+                                        // Display: UPDATE(Expense) Title
+                                        border(205);
+                                        displayCenteredLine_Colored("UPDATE: EXPENSES (ADD)", BLUE);
+                                        border(205);
 
+                                        // Display: Expense Details to be edited
+                                        cout << BOLDWHITE << "  >> EDITING DESCRIPTION: " << RESET << endl;
+                                        cout << string(5, ' ') << "* DATE:             " << GREEN << expense.getDate() << RESET << endl;
+                                        cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << expense.getAmount() << RESET << endl;
+                                        cout << string(5, ' ') << "* CATEGORY:         " << GREEN << expense.getCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* SUBCATEGORY:      " << GREEN << expense.getBabyCategory() << RESET << endl;
+                                        cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << expense.getAccount() << RESET << endl;
+                                        cout << string(5, ' ') << "* DESCRIPTION:      " << YELLOW << expense.getDescription() << RESET << endl;
+                                        border(196);
 
+                                        switch (inputFlow) {
+                                            case 1:
+                                                displayCenteredLine_NoNewLine(">> Enter NEW DESCRIPTION: ", CYAN);
+                                                getline(cin, input_str);
 
+                                                if ((input_str == "R") || (input_str == "r")) return;
 
+                                                else if ((input_str =="A") || (input_str == "a")) run_AddAccount("UPDATE: EXPENSES (EDIT)");
 
+                                                else if (input_str.size() <= 50) {
+                                                    expense.setDescription(input_str);
+                                                    inputFlow++;
+                                                }
+                                                break;
+
+                                            default:
+                                                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                                                displayCenteredLine_Colored(">> Expense Description edited successfully!", YELLOW);
+                                                displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...      ", WHITE);
+                                                getchar();
+                                                return;
+                                                break;
+                                        }
+                                    }
+                                    break;
+
+                                
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        }
+
+    }
+}
 
 
 
@@ -3673,13 +3990,11 @@ void Budget :: saveState() {
 
 int main() {
     Budget budget;
-    budget.setTotalBudget(0);
     budget.loadData();
-    budget.calculateTotalBudget();
-    budget.setTotalBudget(500);
 
     string input;
     while (true) {
+        budget.calculateTotalBudget();
         budget.displayUpdateMenu();
         getline(cin, input);
 
