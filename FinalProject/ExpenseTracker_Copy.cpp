@@ -264,9 +264,9 @@ void print_QuitMenu() {
 class Notification {
 private:
     string reminder = "   (OvO)/  Spent anything today? Update your tracker now! \n   Go to UPDATE and record today's transaction\n";
-    string warning = "   (O-O)!  Uh oh... You have exceeded your expense limit!\n   Better tone down the spending when possible!\n";
-    string progressReport_Pos = "   (>u<)/  Your progress is looking great!\n   Take a look at DATA & HISTORY and see how you did.\n";
-    string progressReport_Neg  = "   (O-O)!  Oh no... Your progress is not looking great... \n   Take a look at DATA & HISTORY and see why. \n   Try to limit your expenses whenever possible (;-;)\n";
+    string ExpenseLimReport_Neg = "   (O-O)!  Uh oh... You have exceeded your expense limit!\n   Better tone down the spending when possible!\n";
+    string savingsReport = "   (>u<)/  Your progress is looking great!\n   Take a look at DATA & HISTORY and see how you did.\n";
+    string ExpenseLimReport_Pos  = "   (O-O)!  Oh no... Your progress is not looking great... \n   Take a look at DATA & HISTORY and see why. \n   Try to limit your expenses whenever possible (;-;)\n";
     string loginNotif = "   (OwO)/ Hello! Welcome to BitBudget: Expense Tracker!\n   Get started by UPDATEing XD\n";
 
 
@@ -292,13 +292,13 @@ bool Notification:: createNotification(int mode) {
             NewNotif += reminder;
             break;
         case 2:
-            NewNotif += warning;
+            NewNotif += ExpenseLimReport_Neg;
             break;
         case 3:
-            NewNotif += progressReport_Pos;
+            NewNotif += savingsReport;
             break;            
         case 4:
-            NewNotif += progressReport_Neg;
+            NewNotif += ExpenseLimReport_Pos;
             break;
         case 5:
             NewNotif += loginNotif;

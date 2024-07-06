@@ -78,9 +78,9 @@ const string InboxFILE = "Inbox.bin";
 /* DISPLAY FUNCTIONS */
 //
 void border(char, int);
-void displayCenteredLine_NoColor(const string, int);
-void displayCenteredLine_Colored(const string, const string, int);
-void displayCenteredLine_NoNewLine(const string, const string, int);
+void displayCenteredLine_NoColor(const string&, int);
+void displayCenteredLine_Colored(const string&, const string&, int);
+void displayCenteredLine_NoNewLine(const string&, const string&, int);
 
 void displayTxtByColumn(const string &, const string &, int);
 void displayTxtByColumn_CENTERED(const string &, const string &, int);
@@ -103,20 +103,13 @@ bool validateSecondDate(const string &, const string &);
 string getDate_Today();
 tm parseDate(const string&);
 bool isDateInRange(const string&, const string&, const string&);
+string getCurrentTime();
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+/* BITBUDGET FUNCTIONS */
+//
+void print_BitBudgetMM(bool&, bool&);
+void print_QuitMenu();
 
 
 
@@ -254,10 +247,6 @@ public:
 
 
 
-
-
-
-
 /*---------------------------------------------------------------------------------*/
 /*-------------------------------- ALLOWANCE CLASS --------------------------------*/
 /*---------------------------------------------------------------------------------*/
@@ -294,8 +283,6 @@ public:
     friend ostream& operator<<(ostream& os, const Allowance& allowance);
     friend istream& operator>>(istream& is, Allowance& allowance);
 };
-
-
 
 
 
@@ -384,10 +371,9 @@ protected:
     // UPDATE: EXPENSES [Features]
     void displayMenu_UpdateExpense(int);
     void run_AddExpenses(); // working~
-    void run_DeleteExpenses();
+    void run_DeleteExpenses(); 
     void run_EditExpenses(); // working~
-    void perform_EditExpense(int, int); 
-    bool track_ExpensesLimit(); // working~
+    void track_ExpensesLimit(bool&); // working~
 
     // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
     void run_AddAccount(string);
@@ -467,6 +453,60 @@ public:
 
 
 
+/*---------------------------------------------------------------------------------*/
+/*------------------------------- NOTIFICATION CLASS ------------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class Notification {
+private:
+    string reminder =               "   (OvO)/  Spent anything today? Update your tracker now! \n    Go to UPDATE and record today's transaction\n";
+    string ExpenseLimReport_Neg =   "   (O-O)!  Uh oh... You have exceeded your expense limit!\n    Better tone down the spending when possible!\n";
+    string savingsReport =          "   (>u<)/  Your savings has now been added back to your allowance!\n    Take a look at UPDATE: SAVINGS\n";
+    string ExpenseLimReport_Pos  =  "   (O-O)!  Hey! An expense goal has reached its due!\n    You spent your money pretty well! GREAT JOB!\n";
+    string loginNotif =             "   (OwO)/ Hello! Welcome to BitBudget: Expense Tracker!\n    Get started by UPDATEing, or maybe take a look at your DATA & HISTORY XD\n";
+
+
+public:
+    bool createNotification(int, string);
+};
+
+
+
+
+
+
+
+
+
+
+/*---------------------------------------------------------------------------------*/
+/*---------------------------------- INBOX CLASS ----------------------------------*/
+/*---------------------------------------------------------------------------------*/
+
+class Inbox {
+private:
+    vector<string> NotificationList;
+
+    void loadNotifications();
+    void saveNotifications();
+
+    void displayNotifications(int, int);
+    void deleteNotif(int);
+    void clearInbox();
+
+public:
+    void run_Inbox();
+};
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -481,29 +521,32 @@ public:
 /*------------------------ DISPLAY TEXT-STYLE UI FUNCTIONS ------------------------*/
 /*_________________________________________________________________________________*/
 // Function to print a border with a given character
-void border(char c, int length = SCREENWIDTH) {
+void border(char c, int length = SCREENWIDTH)
+{
     for (int i = 0; i < length; i++) cout << c;
     cout << endl;
 }
 
 // Function to display centered lines
-void displayCenteredLine_NoColor(const string &line, int width = SCREENWIDTH) {
+void displayCenteredLine_NoColor(const string &line, int width = SCREENWIDTH)
+{
     int padLen = (width - line.size()) / 2;
     cout << string(padLen, ' ') << line << endl;
 }
 
 // Function to display centered lines with a color
-void displayCenteredLine_Colored(const string &line, const string &color, int width = SCREENWIDTH) {
+void displayCenteredLine_Colored(const string &line, const string &color, int width = SCREENWIDTH)
+{
     int padLen = (width - line.size()) / 2;
     cout << color << string(padLen, ' ') << line << RESET << endl;
 }
 
 // Function to display centered lines with color (no '\n')
-void displayCenteredLine_NoNewLine(const string &line, const string &color, int width = SCREENWIDTH) {
+void displayCenteredLine_NoNewLine(const string &line, const string &color, int width = SCREENWIDTH)
+{
     int padLen = (width - line.size()) / 2;
     cout << color << string(padLen, ' ') << line << RESET;
 }
-
 
 
 // Function to display lines by column
@@ -514,7 +557,7 @@ void displayTxtByColumn(const string &str, const string &color, int width = COLU
     cout << color << " " << str << string(totalSpaces, ' ') << RESET << border;
 }
 
-// Function to display centered lines, 
+// Function to display lines by column, centered
 void displayTxtByColumn_CENTERED(const string &txt, const string &color, int width = COLUMNWIDTH)
 {
     int totalSpaces = width - txt.size() - 1;
@@ -529,14 +572,14 @@ void displayTxtByColumn_CENTERED(const string &txt, const string &color, int wid
     cout << color << " " << string(spaceLen_Left, ' ') << txt << string(spaceLen_Right, ' ') << RESET << border;
 }
 
-// Function to display lines by column
+// Function to display lines by column, without border
 void displayTxtByColumn_NB(const string &str, const string &color, int width = COLUMNWIDTH)
 {
     int totalSpaces = width - str.size() - 1;
     cout << color << " " << str << string(totalSpaces, ' ') << RESET;
 }
 
-// Function to display centered lines, 
+// Function to display centered lines by column, centered and without border
 void displayTxtByColumn_CENTERED_NB(const string &txt, const string &color, int width = COLUMNWIDTH)
 {
     int totalSpaces = width - txt.size() - 1;
@@ -548,7 +591,6 @@ void displayTxtByColumn_CENTERED_NB(const string &txt, const string &color, int 
 
     cout << color << " " << string(spaceLen_Left, ' ') << txt << string(spaceLen_Right, ' ') << RESET;
 }
-
 
 
 // Function to clear the console screen
@@ -571,7 +613,7 @@ void clearScreen() {
 /*_________________________________________________________________________________*/
 /*-------------------------------- EXTRA FUNCTIONS --------------------------------*/
 /*_________________________________________________________________________________*/
-// CLEAR all contents of file
+// Function to clear all contents of the file
 void clearFile(string FILENAME) {
     ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
 
@@ -588,7 +630,7 @@ void clearFile(string FILENAME) {
     outFILE.close();
 }
 
-// check if string is NUMERIC
+// Function to check if string is a positive integer
 bool isNumeric(string str) {
     for (int i = 0; i < str.size(); i++) {
         if ((str[i] < '0') || (str[i] > '9')) {
@@ -599,6 +641,7 @@ bool isNumeric(string str) {
     return true;
 }
 
+// Function to check if string is a positive double value
 bool isDouble(string str) {
     int dot = 0;
     if (str.empty()) return false;
@@ -616,14 +659,13 @@ bool isDouble(string str) {
     return true;
 }
 
-
-//
+// Function to validate date format in MM/DD/YYYY
 bool validateDateFormat(const string &date) {
     regex datePattern(R"(^\d{2}/\d{2}/\d{4}$)");
     return regex_match(date, datePattern);
 }
 
-//
+// Function to validate date if it is present or later
 bool validateDate(const string &date) {
     if (!validateDateFormat(date)) {
         return false;
@@ -649,7 +691,7 @@ bool validateDate(const string &date) {
     return false;
 }
 
-//
+// Function to validate the second date if it is later than or the same date
 bool validateSecondDate(const string &firstDate, const string &secondDate) {
     if (!validateDateFormat(secondDate)) {
         return false;
@@ -671,7 +713,7 @@ bool validateSecondDate(const string &firstDate, const string &secondDate) {
     return false;
 }
 
-//
+// Function to get date today in MM/DD/YYYY format
 string getDate_Today()
 {
     time_t now = time(0);
@@ -709,9 +751,21 @@ bool isDateInRange(const string& dateStr, const string& startStr, const string& 
     return (dateT >= startT && dateT <= endT);
 }
 
+// Function to get current time (Format: HH:MM AM/PM)
+string getCurrentTime() {
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
 
+    ostringstream oss;
+    oss << put_time(ltm, "%I:%M %p");
+    return oss.str();
+}
 
-
+// Function to check if current time matches given time
+bool isTimeNow(const string& targetTime) {
+    string currTime = getCurrentTime();
+    return currTime == targetTime;
+}
 
 
 
@@ -731,18 +785,19 @@ Category :: Category(string catName_parent, int babyCat_Total) :
                 babiesTotal(babyCat_Total) {}
 
 /* CATEGORY CLASS: Constructors */
+//
 string Category :: getParent() const            { return parentName; }
 int Category :: getTotalBaby() const            { return babiesTotal; }
 vector<string> Category :: getBabies() const    { return babyNames; }
 
 /* CATEGORY CLASS: Public MFs */
-void Category :: addBaby(string babyCatName) {
+//
+void Category :: addBaby(string babyCatName)
+{
     babyNames.push_back(babyCatName);
     babiesTotal = babyNames.size();
 }
-
 void Category :: setParent(string newParent)  { parentName = newParent; }
-
 void Category :: setBaby(int index, string newBby) {
     if ((index >= 0) && (index < babyNames.size()))
     babyNames[index] = newBby;
@@ -802,10 +857,6 @@ istream& operator>>(istream& inFILE, Category &categoryHol)
     }
     return inFILE;
 }
-
-
-
-
 
 
 
@@ -907,14 +958,6 @@ istream& operator>>(istream& is, SavingsAndExpenseLim& savingsHol)
 
 
 
-
-
-
-
-
-
-
-
 /* EXPENSE Class (Public): CONSTRUCTOR */
 Expense :: Expense(string DateCreated, string Date,
                    double Amt, string Cat, string bbyCat,
@@ -926,8 +969,6 @@ Expense :: Expense(string DateCreated, string Date,
             babyCategory(bbyCat),
             account(Acc),
             description(Desc) {}
-
-
 
 /* EXPENSE Class MFs(Public): GETTERS */
 string Expense :: getDateCreated() const    { return dateCreated; }
@@ -1047,10 +1088,6 @@ istream& operator>>(istream& is, Expense& expense) {
 
 
 
-
-
-
-
 /* ALLOWANCE class MF(Public): GETTERS */
 string Allowance :: getDateCreated() const  { return dateCreated; }
 string Allowance :: getDate() const         { return date; }
@@ -1150,27 +1187,31 @@ istream& operator>>(istream& is, Allowance& allowance) {
 /*                          BUDGET class(Protected): CALCULATOR                         */
 /*--------------------------------------------------------------------------------------*/
 
-void Budget :: calculateCurrentSavings() {
+void Budget :: calculateCurrentSavings()
+{
     totalSavings = 0.0;
     for (const auto& savings : savingsList)
         totalSavings += savings.get_currentAmt();
 }
 
-void Budget :: calculateTotalGoal_Savings() {
+void Budget :: calculateTotalGoal_Savings()
+{
     totalGoal_Savings = 0.0;
     for (const auto& savings : savingsList) {
         totalGoal_Savings += savings.get_goal();
     }
 }
 
-void Budget :: calculateTotalGoal_ExpenseLim() {
+void Budget :: calculateTotalGoal_ExpenseLim()
+{
     totalGoal_LOE = 0.0;
     for (const auto& LOE : expenseLimitsList) {
         totalGoal_LOE += LOE.get_goal();
     }
 }
 
-void Budget :: calculateTotalAllowance() {
+void Budget :: calculateTotalAllowance()
+{
     totalAllowance = 0;
     for (const auto& allowance : allowancesList)
         totalAllowance += allowance.getAmount();
@@ -1179,7 +1220,8 @@ void Budget :: calculateTotalAllowance() {
         totalAllowance += totalAllowance_Today;
 }
 
-void Budget :: calculateTotalExpenses() {
+void Budget :: calculateTotalExpenses()
+{
     totalExpenses = 0;
     for (const auto& expense : expensesList)
         totalExpenses += expense.getAmount();
@@ -1188,7 +1230,8 @@ void Budget :: calculateTotalExpenses() {
     totalExpenses += totalExpenses_Today;
 }
 
-void Budget :: calculateTotalAllowance_Today() {
+void Budget :: calculateTotalAllowance_Today()
+{
     totalAllowance_Today = 0;
     for (const auto& allowance : allowancesList_Today) {
         if (allowance.getDate() == getDate_Today())
@@ -1198,7 +1241,8 @@ void Budget :: calculateTotalAllowance_Today() {
     }
 }
 
-void Budget :: calculateTotalExpenses_Today() {
+void Budget :: calculateTotalExpenses_Today()
+{
     totalExpenses_Today = 0;
     for (const auto& expense : expensesList_Today) {
         if (expense.getDate() == getDate_Today())
@@ -1209,7 +1253,8 @@ void Budget :: calculateTotalExpenses_Today() {
         
 }
 
-void Budget :: calculateTotalBudget() {
+void Budget :: calculateTotalBudget()
+{
     totalBudget = 0;
     calculateTotalAllowance();
     calculateTotalExpenses();
@@ -1223,17 +1268,13 @@ void Budget :: calculateTotalBudget() {
 
 
 
-
-
-
-
-
 /*--------------------------------------------------------------------------------------------------*/
 /*     BUDGET class MFs(Protected): LOAD & SAVE Functions - Allowance/Expenses/Categories/ETC.      */
 /*--------------------------------------------------------------------------------------------------*/
 
-// LOAD: Expenses list from file
-void Budget :: loadExpenses() {
+// Budget function member to load expenses from file to ExpensesList & ExpensesList_Today
+void Budget :: loadExpenses()
+{
     ifstream inFile(ExpensesFILE, ios::binary);
     if (inFile.is_open()) {
         while (inFile.peek() != EOF) {
@@ -1250,8 +1291,9 @@ void Budget :: loadExpenses() {
     }
 }
 
-// SAVE: Expenses list to file
-void Budget :: saveExpenses() const {
+// Budget function member to save expenses to file
+void Budget :: saveExpenses() const
+{
     ofstream outFile(ExpensesFILE, ios::binary | ios::trunc);
     if (outFile.is_open()) {
         for (const auto& expense : expensesList) {
@@ -1265,7 +1307,7 @@ void Budget :: saveExpenses() const {
     }
 }
 
-// LOAD: Allowances list from file
+// Budget function member to load allowances from file AllowanceList & AllowanceList_Today
 void Budget :: loadAllowances()
 {
     ifstream inFile(AllowancesFILE, ios::binary);
@@ -1284,7 +1326,7 @@ void Budget :: loadAllowances()
     }
 }
 
-// SAVE: Allowances list to file
+// Budget function member to save allowances to file
 void Budget :: saveAllowances() const
 {
     ofstream outFile(AllowancesFILE, ios::binary | ios::trunc);
@@ -1300,7 +1342,7 @@ void Budget :: saveAllowances() const
     }
 }
 
-// LOAD: Savings list from file
+// Budget function member to load savings goals from file to SavingsList
 void Budget :: loadSavings()
 {
     ifstream inFILE(SavingsFILE, ios::binary);
@@ -1315,7 +1357,7 @@ void Budget :: loadSavings()
     }
 }
 
-// SAVE: Savings list to file
+// Budget function member to save savings goals to file
 void Budget :: saveSavings() const
 {
     ofstream outFILE(SavingsFILE, ios::binary | ios::trunc);
@@ -1328,7 +1370,7 @@ void Budget :: saveSavings() const
     }
 }
 
-// LOAD: Expense Limits list from file
+// Budget function member to load expense limit goals from file to ExpenseLimList
 void Budget :: loadExpenseLimits()
 {
     ifstream inFILE(ExpenseLimitFILE, ios::binary);
@@ -1343,7 +1385,7 @@ void Budget :: loadExpenseLimits()
     }
 }
 
-// SAVE: Expense Limit list to file
+// Budget function member to save expense limit goals to file
 void Budget :: saveExpenseLimits() const
 {
     ofstream outFILE(ExpenseLimitFILE, ios::binary | ios::trunc);
@@ -1356,7 +1398,7 @@ void Budget :: saveExpenseLimits() const
     }
 }
 
-// LOAD: Category List from file
+// Budget function member to load categories from file to CategoryList
 void Budget :: loadCategoryList()
 {
     ifstream inFILE(CategoryListFILE, ios::binary);
@@ -1371,7 +1413,7 @@ void Budget :: loadCategoryList()
     }
 }
 
-// SAVE: Category List to file
+// Budget function member to save categories to file
 void Budget :: saveCategoryList() const
 {
     ofstream outFILE(CategoryListFILE, ios::binary | ios::trunc);
@@ -1384,7 +1426,7 @@ void Budget :: saveCategoryList() const
     }
 }
 
-// LOAD: Account List from file
+// Budget function member to load accounts from file to AccountList
 void Budget :: loadAccountList()
 {
     size_t size;
@@ -1402,7 +1444,7 @@ void Budget :: loadAccountList()
     }
 }
 
-// SAVE: Account List to file
+// Budget function member to save accounts to file
 void Budget :: saveAccountList() const
 {
     size_t size;
@@ -1423,6 +1465,8 @@ void Budget :: saveAccountList() const
 
 
 
+
+
 /*--------------------------------------------------------------------------------------*/
 /*                          BUDGET class(Public): CONSTRUCTOR                           */
 /*--------------------------------------------------------------------------------------*/
@@ -1434,10 +1478,11 @@ Budget :: Budget() :
 
 
 
+
 /*--------------------------------------------------------------------------------------*/
 /*                        BUDGET class MFs(Public): DISPLAY LISTS                       */
 /*--------------------------------------------------------------------------------------*/
-
+// Budget function to display allowances created at present day
 void Budget :: displayAllowancesList_today(int page = 1)
 {
     int i;
@@ -1447,8 +1492,8 @@ void Budget :: displayAllowancesList_today(int page = 1)
     cout << string(3, ' ') << border;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
     displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH + 2);
-    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH);
+    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH+2);
     displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
 
     int AllowanceSize = allowancesList_Today.size();
@@ -1513,6 +1558,7 @@ void Budget :: displayAllowancesList_today(int page = 1)
     }
 }
 
+// Budget function to display expenses created at present day
 void Budget :: displayExpensesList_today(int page = 1)
 {
     int i;
@@ -1596,6 +1642,7 @@ void Budget :: displayExpensesList_today(int page = 1)
     }
 }
 
+// Budget function to display savings goals
 void Budget :: displaySavingsList()
 {
     int i = 1;
@@ -1608,7 +1655,7 @@ void Budget :: displaySavingsList()
     displayTxtByColumn_CENTERED("DATE (Start-Due)", BOLDWHITE, 25);
     displayTxtByColumn_CENTERED("SAVINGS GOAL", BOLDWHITE, COLUMNWIDTH+2);
     displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
-    displayTxtByColumn_CENTERED("CURRENT SAVINGS", BOLDWHITE, COLUMNWIDTH*2);
+    displayTxtByColumn_CENTERED("STATUS", BOLDWHITE, COLUMNWIDTH*2);
 
     // Display: Savings data
     for(const auto& savingsData : savingsList)
@@ -1625,7 +1672,10 @@ void Budget :: displaySavingsList()
         displayTxtByColumn(savingsData.get_startDate() + " - " + savingsData.get_dueDate(), WHITE, 25);
         displayTxtByColumn( "P " + amt_str1, WHITE, COLUMNWIDTH+2);
         displayTxtByColumn(savingsData.get_desc(), WHITE, 60);
-        displayTxtByColumn( "P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
+        if (getDate_Today() == savingsData.get_dueDate()) {
+            displayTxtByColumn( "COMPLETED!", MAGENTA, COLUMNWIDTH*2);
+        }
+        else displayTxtByColumn( "P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
     }
 
     // Display: Dummy data
@@ -1641,6 +1691,7 @@ void Budget :: displaySavingsList()
     }
 }
 
+// Budget function to display expense limit goals
 void Budget :: displayExpenseLimitList()
 {
     int i = 1;
@@ -1653,7 +1704,7 @@ void Budget :: displayExpenseLimitList()
     displayTxtByColumn_CENTERED("DATE (Start-Due)", BOLDWHITE, 25);
     displayTxtByColumn_CENTERED("EXPENSE GOAL", BOLDWHITE, COLUMNWIDTH+2);
     displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
-    displayTxtByColumn_CENTERED("CURRENT EXPENSES", BOLDWHITE, COLUMNWIDTH*2);
+    displayTxtByColumn_CENTERED("STATUS", BOLDWHITE, COLUMNWIDTH*2);
 
     // Display: All expense limit data
     for(const auto& expenseLimData : expenseLimitsList)
@@ -1670,7 +1721,11 @@ void Budget :: displayExpenseLimitList()
         displayTxtByColumn(expenseLimData.get_startDate() + " - " + expenseLimData.get_dueDate(), WHITE, 25);
         displayTxtByColumn("P " + amt_str1, WHITE, COLUMNWIDTH+2);
         displayTxtByColumn(expenseLimData.get_desc(), WHITE, 60);
-        displayTxtByColumn("P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
+
+        if (getDate_Today() == expenseLimData.get_dueDate()) {
+            displayTxtByColumn_CENTERED("COMPLETED!", MAGENTA, COLUMNWIDTH*2);
+        }
+        else displayTxtByColumn("P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
     }
 
     // Display: Dummy data
@@ -1686,7 +1741,9 @@ void Budget :: displayExpenseLimitList()
     }
 }
 
-void Budget :: displayCategoryList_parent() {
+// Budget function to display categories
+void Budget :: displayCategoryList_parent()
+{
     char border = 179;
     vector<string> ParentCategories;
     
@@ -1707,8 +1764,9 @@ void Budget :: displayCategoryList_parent() {
     }
 }
 
-// just directly input user's input. No need to -1
-void Budget :: displayCategoryList_bbys(int index_Parent) {
+// Budget function to display subcategories of a category (index_Parent must be +1)
+void Budget :: displayCategoryList_bbys(int index_Parent)
+{
     if ((index_Parent <= 0) || (index_Parent > CategoryList.size())) return;
 
     char border = 179;
@@ -1726,7 +1784,9 @@ void Budget :: displayCategoryList_bbys(int index_Parent) {
     }
 }
 
-void Budget :: displayAccountList() {
+// Budget function to display accounts
+void Budget :: displayAccountList()
+{
     char border = 179;
     vector<string> Accounts;
     
@@ -1753,59 +1813,61 @@ void Budget :: displayAccountList() {
 
 
 
-
-
-
-
-
-
-
-
 /*------------------------------------------------------------------------*/
 /*      BUDGET class MFs(Public): SETTERS, ADDERS, REMOVERS, EDITORS      */
 /*------------------------------------------------------------------------*/
 
-void Budget :: setTotalBudget(double budget) {
+void Budget :: setTotalBudget(double budget)
+{
     totalBudget = budget;
 }
 
-void Budget :: addExpense(const Expense& expense) {
+
+void Budget :: addExpense(const Expense& expense)
+{
     expensesList_Today.push_back(expense);
 }
 
-void Budget :: addAllowance(const Allowance& allowance) {
+void Budget :: addAllowance(const Allowance& allowance)
+{
     allowancesList_Today.push_back(allowance);
 }
 
-void Budget :: addExpenseLim(const SavingsAndExpenseLim& expenseLim) {
+void Budget :: addExpenseLim(const SavingsAndExpenseLim& expenseLim)
+{
     if (expenseLimitsList.size() == 4)
         throw runtime_error(">> WARNING: There can only be 4 Expense Limits to set at max.");
 
     expenseLimitsList.push_back(expenseLim);
 }
 
-void Budget :: addSavings(const SavingsAndExpenseLim& savings) {
+void Budget :: addSavings(const SavingsAndExpenseLim& savings)
+{
     if (savingsList.size() == 4)
         throw runtime_error(">> WARNING: There can only be 4 Savings to set at max.");
     
     savingsList.push_back(savings);
 }
 
-void Budget :: addCategory(const Category& categoryHol) {
+void Budget :: addCategory(const Category& categoryHol)
+{
     if (CategoryList.size() == 10)
         throw runtime_error(">> WARNING: There can only be 10 Categories at max.");
 
     CategoryList.push_back(categoryHol);
 }
 
-void Budget :: addAccount(const string& acc) {
+void Budget :: addAccount(const string& acc)
+{
     if (AccountList.size() == 10)
         throw runtime_error(">> WARNING: There can only be 10 Accounts at max.");
 
     AccountList.push_back(acc);
 }
 
-void Budget :: removeAllowance(int index) {
+
+void Budget :: removeAllowance(int index)
+{
     if ((index >= 0) && (index < allowancesList_Today.size())) {
         allowancesList_Today.erase(allowancesList_Today.begin() + index);
         calculateTotalBudget();
@@ -1815,7 +1877,8 @@ void Budget :: removeAllowance(int index) {
     }
 }
 
-void Budget :: removeExpense(int index) {
+void Budget :: removeExpense(int index)
+{
     if ((index >= 0) && (index < expensesList_Today.size())) {
         expensesList_Today.erase(expensesList_Today.begin() + index);
         calculateTotalBudget();
@@ -1825,7 +1888,8 @@ void Budget :: removeExpense(int index) {
     }
 }
 
-void Budget :: removeExpenseLimit(int index) {
+void Budget :: removeExpenseLimit(int index)
+{
     if ((index >= 0) && (index < expenseLimitsList.size())) {
         expenseLimitsList.erase(expenseLimitsList.begin() + index);
         calculateTotalBudget();
@@ -1835,7 +1899,8 @@ void Budget :: removeExpenseLimit(int index) {
     }
 }
 
-void Budget :: removeSavings(int index) {
+void Budget :: removeSavings(int index)
+{
     if ((index >= 0) && (index < savingsList.size())) {
         savingsList.erase(savingsList.begin() + index);
         calculateTotalBudget();
@@ -1844,6 +1909,7 @@ void Budget :: removeSavings(int index) {
         throw runtime_error(">> WARNING: Invalid savings goal index.");
     }
 }
+
 
 void Budget :: updateExpenseDateRange(const string& startDate, const string& dueDate, int index)
 {
@@ -1895,9 +1961,14 @@ void Budget :: updateSavingsDateRange(const string& startDate, const string& due
 
 
 
+
+
+
+
 /* -------------------------------------------------------------------------- */ 
 /*                          UPDATE: UPDATE MAIN MENU                          */ 
 /* -------------------------------------------------------------------------- */ 
+
 void Budget :: displayUpdateMenu() {
     clearScreen();
 
@@ -1931,20 +2002,12 @@ void Budget :: displayUpdateMenu() {
 
 
 
-
-
-
-
-
-
-
-
-
 /* ------------------------------------------------------------------------- */ 
 /*                        UPDATE: LIMIT OF EXPENSES                          */ 
 /* ------------------------------------------------------------------------- */
 
-void Budget :: displayMenu_UpdateLE() {
+void Budget :: displayMenu_UpdateLE()
+{
         clearScreen();
         
         // Display: UPDATE(Limit Of Expenses) title
@@ -1964,8 +2027,8 @@ void Budget :: displayMenu_UpdateLE() {
         border(196);
 }
 
-
-void Budget :: run_UpdateLimitExpenses(bool& newNotif) {
+void Budget :: run_UpdateLimitExpenses(bool& newNotif)
+{
     string input;
     while (true) {
         displayMenu_UpdateLE();
@@ -1991,11 +2054,8 @@ void Budget :: run_UpdateLimitExpenses(bool& newNotif) {
     }
 }
 
-
-
-
-
-void Budget :: run_LE_SetNewGoal() {
+void Budget :: run_LE_SetNewGoal()
+{
     int inputflow = 1;
     string input_SNG;
     double input_db;
@@ -2157,10 +2217,8 @@ void Budget :: run_LE_SetNewGoal() {
     }
 }
 
-
-
-
-void Budget :: run_LE_DeleteGoal() {
+void Budget :: run_LE_DeleteGoal()
+{
     string input_str;
     int input_int;
     
@@ -2200,10 +2258,8 @@ void Budget :: run_LE_DeleteGoal() {
     }
 }
 
-
-
-
-void Budget :: run_LE_EditGoal() {
+void Budget :: run_LE_EditGoal()
+{
     string input_str;
     int input_int;
 
@@ -2450,23 +2506,12 @@ void Budget :: run_LE_EditGoal() {
 
 
 
+/*---------------------------------------------------------------------------*/
+/*                             UPDATE: SAVINGS                               */
+/*---------------------------------------------------------------------------*/
 
-
-
-
-
-
-
-
-
-
-
-
-/*-----------------------------------------------------------------------------------------*/
-/*                                   UPDATE: SAVINGS                                       */
-/*-----------------------------------------------------------------------------------------*/
-
-void Budget :: displayMenu_UpdateSavings() {
+void Budget :: displayMenu_UpdateSavings()
+{
     clearScreen();
 
     // Display: UPDATE(Savings) title
@@ -2484,7 +2529,8 @@ void Budget :: displayMenu_UpdateSavings() {
     border(196);
 }
 
-void Budget :: run_UpdateSavings(bool& newNotif) {
+void Budget :: run_UpdateSavings(bool& newNotif)
+{
     string input;
 
     while (true) {
@@ -2515,8 +2561,8 @@ void Budget :: run_UpdateSavings(bool& newNotif) {
     }
 }
 
-// SAVINGS: Set New Goal
-void Budget :: run_S_SetNewGoal() {
+void Budget :: run_S_SetNewGoal()
+{
     int inputflow = 1;
     string input_SNG;
     double input_db;
@@ -2683,10 +2729,8 @@ void Budget :: run_S_SetNewGoal() {
     }
 }
 
-
-
-
-void Budget :: run_S_EditGoal() {
+void Budget :: run_S_EditGoal()
+{
 string input_str;
     int input_int;
 
@@ -2927,10 +2971,8 @@ string input_str;
     }
 }
 
-
-
-
-void Budget :: run_S_DeleteGoal() {
+void Budget :: run_S_DeleteGoal()
+{
     string input_str;
     int input_int;
     
@@ -2970,8 +3012,8 @@ void Budget :: run_S_DeleteGoal() {
     }
 }
 
-// SAVINGS: Set Aside Savings
-void Budget :: run_SetAsideSavings() {
+void Budget :: run_SetAsideSavings()
+{
     string input_str;
     int input_int;
     
@@ -3058,15 +3100,11 @@ void Budget :: run_SetAsideSavings() {
 
 
 
-
-
-
-
-
 /*-----------------------------------------------------------------------------------------*/
 /*             UPDATE: ALLOWANCE/EXPENSE [Add Accounts, Category, Subcategory]             */
 /*-----------------------------------------------------------------------------------------*/
-void Budget :: run_AddAccount(string TITLE) {
+void Budget :: run_AddAccount(string TITLE)
+{
     string input_str, confirm;
     int inputFlow = 1;
 
@@ -3129,9 +3167,8 @@ void Budget :: run_AddAccount(string TITLE) {
     }
 }
 
-
-
-void Budget :: run_AddCategory(string TITLE) {
+void Budget :: run_AddCategory(string TITLE)
+{
     string input_str, confirm;
     Category cat("", 0);
     int inputFlow = 1;
@@ -3196,9 +3233,8 @@ void Budget :: run_AddCategory(string TITLE) {
     }
 }
 
-
-
-void Budget :: run_AddSubcategory(int index, string TITLE) {
+void Budget :: run_AddSubcategory(int index, string TITLE)
+{
     if ((index <= 0) || (index > CategoryList.size())) return;
 
     string input_str, confirm;
@@ -3270,18 +3306,12 @@ void Budget :: run_AddSubcategory(int index, string TITLE) {
 
 
 
-
-
-
-
-
-
-
 /*-----------------------------------------------------------------------------------------*/
 /*                                   UPDATE: EXPENSES                                      */
 /*-----------------------------------------------------------------------------------------*/
 
-void Budget :: displayMenu_UpdateExpense(int page = 1) {
+void Budget :: displayMenu_UpdateExpense(int page = 1)
+{
     clearScreen();
     
     // Display: UPDATE(Expense) Title
@@ -3303,9 +3333,8 @@ void Budget :: displayMenu_UpdateExpense(int page = 1) {
     border(196);
 }
 
-
-
-void Budget :: run_UpdateExpense(bool& newNotif) {
+void Budget :: run_UpdateExpense(bool& newNotif)
+{
     int page = 1;
     int maxPages = expensesList_Today.size() / 5;
     if ((expensesList_Today.size() % 5) != 0) maxPages++;
@@ -3342,9 +3371,8 @@ void Budget :: run_UpdateExpense(bool& newNotif) {
     }
 }
 
-
-
-void Budget :: run_AddExpenses() {
+void Budget :: run_AddExpenses()
+{
     string input_str;
     int input_int, index;
     int inputFlow = 1;
@@ -3416,7 +3444,7 @@ void Budget :: run_AddExpenses() {
                 displayCenteredLine_NoNewLine(">> Enter DATE: ", CYAN);
                 getline(cin , input_str);
 
-                if (validateDate(input_str)) {
+                if (validateDateFormat(input_str)) {
                     newExpense.setDate(input_str);
                     inputFlow++;
                 }
@@ -3431,10 +3459,20 @@ void Budget :: run_AddExpenses() {
                 if ((isDouble(input_str)) && (input_str.size() > 0)) {
                     amt = stod(input_str);
 
-                    if ((amt > 0) && (amt <= totalBudget)) {
-                        newExpense.setAmount(amt);
-                        inputFlow++;
+                    if (totalBudget > 0) {
+                        if ((amt > 0) && (amt <= totalBudget))
+                        {
+                            newExpense.setAmount(amt);
+                            inputFlow++;
+                        }
                     }
+                    else {
+                        if ((amt > 0) && (amt <= totalSavings))
+                        {
+                            // take away from savings
+                        }
+                    }
+                    
                 }
                 else if ((input_str == "R") || (input_str == "r")) return;
                 break;
@@ -3522,9 +3560,8 @@ void Budget :: run_AddExpenses() {
     }
 }
 
-
-
-void Budget :: run_DeleteExpenses() {
+void Budget :: run_DeleteExpenses()
+{
     int page = 1;
     int maxPages = expensesList_Today.size() / 5;
     if ((expensesList_Today.size() % 5) != 0) maxPages++;
@@ -3575,9 +3612,8 @@ void Budget :: run_DeleteExpenses() {
     }
 }
 
-
-
-void Budget :: run_EditExpenses() {
+void Budget :: run_EditExpenses()
+{
     int page = 1;
     int maxPages = expensesList_Today.size() / 5;
     if ((expensesList_Today.size() % 5) != 0) maxPages++;
@@ -3958,11 +3994,53 @@ void Budget :: run_EditExpenses() {
 
 
 
-/*-----------------------------------------------------------*/
-/*                UPDATE: LOAD AND SAVE DATA                 */
-/*-----------------------------------------------------------*/
+/*--------------------------------------------------------------------------*/
+/*                UPDATE: EXPENSE LIMIT AND SAVINGS TRACKER                 */
+/*--------------------------------------------------------------------------*/
+// Budget function member to track all savings goal and send notification
+bool Budget :: track_SavingsGoal() {
+    Notification notifHandler;
+    bool savingsDue = false;
+    int iter = 1;
 
-void Budget :: loadData() {
+    for (auto& savings : savingsList)
+    {
+        if (getDate_Today() == savings.get_dueDate()) {
+            // Create notification that says t
+            if ((savings.get_currentAmt() > 0) && (savings.get_currentAmt() < savings.get_goal())) {
+                totalAllowance += savings.get_currentAmt();
+                savings.set_currentAmt(0.0);
+                savingsDue = true;
+            }
+            else if (savings.get_currentAmt() == 0) {
+
+            }
+            totalAllowance += savings.get_currentAmt();
+            savings.set_currentAmt(0.0);
+            savingsDue = true;
+        }
+
+        iter++;
+    }
+
+    return savingsDue;
+}
+
+// Budget function to remove savings goal the after due date
+
+
+
+
+
+
+
+
+/*---------------------------------------------------------------------------*/
+/*                        UPDATE: LOAD AND SAVE DATA                         */
+/*---------------------------------------------------------------------------*/
+// Budget function member to load all necessary data
+void Budget :: loadData()
+{
     loadAllowances();
     loadExpenses();
     loadExpenseLimits();
@@ -3975,7 +4053,9 @@ void Budget :: loadData() {
     calculateTotalBudget();
 }
 
-void Budget :: saveState() {
+// Budget function member to save latest state of data to file
+void Budget :: saveState()
+{
     saveAllowances();
     saveExpenses();
     saveExpenseLimits();
@@ -3998,20 +4078,9 @@ void Budget :: saveState() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-/*-----------------------------------------------------------*/
-/*                UPDATE: RUN UPDATE FUNCTION                */
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+/*                        UPDATE: RUN UPDATE FUNCTION                        */
+/*---------------------------------------------------------------------------*/
 
 void Budget :: run_BBUpdate(bool& newNotif) {
     loadData();
@@ -4043,15 +4112,560 @@ void Budget :: run_BBUpdate(bool& newNotif) {
             else {
                 cout << "Invalid option, please try again.\n";
             }
-        } catch (const exception& e) {
+        }
+        catch (const exception& e) {
             cerr << "Error: " << e.what() << endl;
         }
     }
 }
 
-int main() {
-    bool newNotif = false;
-    Budget budget;
 
-    budget.run_BBUpdate(newNotif);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+// READ Notifications from file
+void Inbox :: loadNotifications()
+{
+    size_t size;
+    string notif;
+
+    ifstream inFILE(InboxFILE, ios::binary);
+    if (inFILE.is_open())
+    {
+        while (inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
+        {
+            notif.resize(size);
+            inFILE.read(&notif[0], size);
+            NotificationList.push_back(notif);
+        }
+
+        inFILE.close();
+    }
+}
+
+// WRITE Notifications to file
+void Inbox :: saveNotifications()
+{
+    if (NotificationList.size() == 0) return;
+
+    size_t size;
+    ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
+    if (outFILE.is_open())
+    {
+        for (const auto& notifs : NotificationList)
+        {
+            size = notifs.size();
+            outFILE.write(reinterpret_cast<const char*>(&size), sizeof(size));
+            outFILE.write(notifs.c_str(), size);
+        }
+
+        outFILE.close();
+    }
+}
+
+// DISPLAY notifications by page
+void Inbox :: displayNotifications(int page = 1, int msgPerPage = 4)
+{
+    int maxPages = NotificationList.size() / msgPerPage;
+    if ((NotificationList.size() % msgPerPage) != 0) maxPages++;
+
+    if (page > maxPages) page = maxPages;
+    else if (page < 0) page = 1;
+
+    if (NotificationList.size() > 0)
+    {
+        int total_Notifs = NotificationList.size();
+        int total_Pages = NotificationList.size() / msgPerPage;
+
+        if ((total_Notifs % msgPerPage) != 0) total_Pages++;
+        if (page < 1) page = 1;
+
+        int msgIndex = (page - 1) * msgPerPage;
+        int msg_LastIndex = min(msgIndex + msgPerPage, total_Notifs);
+
+        for (int i = msgIndex; i < msg_LastIndex; i++) {
+            cout << BOLDWHITE << "[" << (i + 1) << "]: " << RESET << NotificationList[i] << endl;
+        }
+
+        cout << "\n\n";
+        displayCenteredLine_Colored(to_string(page) + " out of " + to_string(total_Pages) + " pages ", GRAY);
+        border(196);
+        return;
+    }
+    else {
+        // Notify User that INBOX is empty
+        displayCenteredLine_Colored("Your inbox do be looking desolate here...", YELLOW);
+        cout << "\n";
+        displayCenteredLine_Colored("Chile, anyways.", YELLOW);
+        displayCenteredLine_Colored("Be on your merry way and UPDATE your tracker XD", YELLOW);
+        
+        cout << "\n\n\n\n\n\n";
+        border(196);
+        return;
+    }
+}
+
+// DELETE notification by index
+void Inbox :: deleteNotif(int index)
+{
+    if ((index > 0) && (index <= NotificationList.size()))
+    NotificationList.erase(NotificationList.begin() + index - 1);
+}
+
+// CLEAR inbox file and Notification list
+void Inbox :: clearInbox()
+{
+    clearFile(InboxFILE);
+    NotificationList.clear();
+}
+
+// RUN INBOX FEATURE
+void Inbox :: run_Inbox()
+{
+    string choice_Str;
+    int choice_Int;
+    string input_Str;
+    int input_Int;
+
+    loadNotifications();
+
+    int page = 1;
+    int maxPages = NotificationList.size()/4;
+    if ((NotificationList.size() % 4) != 0) maxPages++;
+
+    while (true) {        
+        // Display: INBOX MENU
+        do {
+            clearScreen();
+
+            // Display: INBOX TITLE
+            border(205);
+            displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+            border(205);
+
+            // Display: Notifications
+            displayNotifications(page);
+
+            // Display: Options
+            displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+            cout << "\n";
+            displayCenteredLine_NoColor("[ 1 ]  Previous Page       [ 3 ]  DELETE");
+            displayCenteredLine_NoColor("[ 2 ]  Next Page           [ 4 ]  CLEAR ");
+            displayCenteredLine_NoColor("             [ R ]  Return              ");
+            cout << "\n";
+            displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
+
+            // Ask for input
+            getline(cin, choice_Str);
+
+            if ((choice_Str == "R") || (choice_Str == "r")) {
+                saveNotifications();
+                NotificationList.clear();
+                return;
+            }
+        } while ((choice_Str != "1") && (choice_Str != "2") && (choice_Str != "3") && (choice_Str != "4"));
+        
+        choice_Int = stoi(choice_Str);
+
+        switch (choice_Int) {
+            case 1:
+                // Display: Previous page
+                if (page > 1) page--;
+                break;
+
+            case 2:
+                // Display: Next Page
+                if (page < maxPages) page++;
+                break;
+            
+            case 3:
+                if (NotificationList.size() == 0) break;
+
+                // Run DELETE FEATURE
+                while (true) {
+                    clearScreen();
+
+                    // Display: INBOX TITLE
+                    border(205);
+                    displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                    border(205);
+
+                    // Display: Notifications
+                    displayNotifications(page);
+
+                    // Display: Options
+                    displayCenteredLine_Colored("OPTIONS: DELETE", BOLDWHITE);
+                    cout << "\n";
+                    displayCenteredLine_NoColor(">> Enter a number of the message you want to delete.");
+                    displayCenteredLine_NoColor(">> Enter 'R' to go back.                            ");
+                    cout << "\n";
+                    displayCenteredLine_NoNewLine(">> Enter valid input: ", CYAN);
+
+                    // Get input from user
+                    getline(cin, input_Str);
+
+                    // Return to INBOX Menu
+                    if ((input_Str == "R") || (input_Str == "r")) break;
+
+                    // Perform DELETE
+                    else if (isNumeric(input_Str) && (input_Str.size() != 0))
+                    {
+                        input_Int = stoi(input_Str);
+
+                        if ((input_Int > 0) && (input_Int <= NotificationList.size()))
+                        {
+                            // Perform: DELETE Notification
+                            deleteNotif(input_Int);
+                            clearScreen();
+
+                            // Display: INBOX TITLE
+                            border(205);
+                            displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                            border(205);
+
+                            // Display: Notifications
+                            displayNotifications(page);
+
+                            // Notify user, Notification successfully deleted
+                            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                            cout << "\n";
+                            displayCenteredLine_Colored(">> Message deleted SUCCESSFULLY!", YELLOW);
+                            displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue... ", YELLOW);
+                            getchar();
+                        }
+
+                        else {
+                            clearScreen();
+
+                            // Display: INBOX TITLE
+                            border(205);
+                            displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                            border(205);
+
+                            // Display: Notifications
+                            displayNotifications(page);
+
+                            // Notify user, Notification successfully deleted
+                            displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                            cout << "\n";
+                            displayCenteredLine_Colored(">> Message not found...         ", YELLOW);
+                            displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue... ", YELLOW);
+
+                            getchar();
+                        }
+                    }
+                }
+                break;
+
+            case 4:
+                if (NotificationList.size() == 0) break;
+                while (true)
+                {
+                    clearScreen();
+
+                    // Display: INBOX TITLE
+                    border(205);
+                    displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                    border(205);
+
+                    // Display: Notifications
+                    displayNotifications(page);
+
+                    // Display: Options
+                    displayCenteredLine_Colored("OPTIONS: CLEAR", BOLDWHITE);
+                    cout << "\n";
+                    displayCenteredLine_Colored(">> Do you want to CLEAR your inbox?", YELLOW);
+                    cout << "\n\n";
+                    displayCenteredLine_NoColor("[ Y ]  YES        ");
+                    displayCenteredLine_NoColor("[ N ]  NO. Return ");
+                    cout << "\n";
+                    displayCenteredLine_NoNewLine(">> Enter valid input: ", CYAN);
+
+                    // Get input from user
+                    getline(cin, input_Str);
+
+                    // Return to INBOX Menu
+                    if ((input_Str == "N") || (input_Str == "n")) break;
+
+                    //
+                    else if ((input_Str == "Y") || (input_Str == "y")) {
+                        // Perform CLEAR
+                        clearInbox();
+                        clearScreen();
+
+                        // Display: INBOX TITLE
+                        border(205);
+                        displayCenteredLine_Colored("BITBUDGET: INBOX", BOLDGREEN);
+                        border(205);
+
+                        // Display: Notifications
+                        displayNotifications(page);
+
+                        // Notify user, Notification successfully deleted
+                        displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Inbox cleared SUCCESSFULLY!  ", YELLOW);
+                        displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue... ", YELLOW);
+                        getchar();
+                        break;
+                    }
+
+                }
+                break;
+
+            default:
+                break;
+
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+// Notification function member that creates a custom notification, is stored unto file, and returns bool value
+bool Notification:: createNotification(int mode, string customNotif)
+{
+    string current_Time = __TIME__;
+
+    // Create new notification based on mode
+    string NewNotif = BOLDWHITE + getDate_Today() + "; " + current_Time + RESET + "\n";
+    switch (mode) {
+        case 1:
+            NewNotif += reminder;
+            break;
+        case 2:
+            NewNotif += ExpenseLimReport_Neg;
+            break;
+        case 3:
+            NewNotif += savingsReport;
+            break;            
+        case 4:
+            NewNotif += ExpenseLimReport_Pos;
+            break;
+        case 5:
+            NewNotif += loginNotif;
+            break;
+        
+        case 6:
+            NewNotif += customNotif;
+            break;
+
+        default:
+            break;
+    }
+
+
+    // Write new notification in Inbox.bin file
+    ofstream outFILE(InboxFILE, ios::binary | ios::app);
+    if (outFILE.is_open()) {
+        size_t notifSize = NewNotif.size();
+        outFILE.write(reinterpret_cast<char*>(&notifSize), sizeof(notifSize));
+        outFILE.write(NewNotif.c_str(), notifSize);
+
+        //Closing file
+        outFILE.close();
+        return true;
+    }
+
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+// BitBudget function to print BitBudget main menu
+void print_BitBudgetMM(bool& alert_Notif, bool& alert_LogIn)
+{
+    string presentDate = __DATE__;
+
+    /* ------- TITLE + Present Date ------- */
+    // Display TITLE + Present Date
+    border(205);
+    displayCenteredLine_Colored("BITBUDGET: EXPENSE TRACKER", BOLDGREEN);
+    border(205);
+    cout << BOLDDARKGREEN << "Today is: " << presentDate << RESET << endl;
+    border(196);
+
+
+    /* -------- NOTIFICATION AREA --------- */
+    // Greet the user if newly logged in
+    if (alert_LogIn) {
+        cout << YELLOW << ">> " << BOLDYELLOW << "WELCOME! " << RESET << YELLOW << "Nice to have you here! (UwU)\n" << RESET << endl;
+        alert_LogIn = false;
+    }
+    else {
+        cout << YELLOW << ">> Great day today, isn't it?\n" << RESET << endl;
+    }
+    
+    // Alert new user in Main Menu for new notification
+    if (alert_Notif) {
+        cout << YELLOW << ">> A " << BOLDYELLOW << "NEW NOTIFICATION" << RESET << YELLOW << " just got in to your " << BOLDYELLOW << "INBOX! "<< RESET << YELLOW << "Why not check it out? <(OvO)>\n" << RESET << endl;
+        alert_Notif = false;
+    }
+    else {
+        cout << YELLOW << ">> There is no new notification at the moment. (OwO)\n" << RESET << endl;
+    }
+    border(196);
+
+    // Display short explanation about the features
+    displayCenteredLine_Colored("ABOUT", BOLDWHITE);
+    cout << BOLDWHITE << ">> UPDATE" << RESET << endl;
+    cout << "\t- You can document your transactions." << endl;
+    cout << "\t- Set LIMIT to your EXPENSES." << endl;
+    cout << "\t- Set SAVINGS GOAL.\n" << endl;
+
+    cout << BOLDWHITE << ">> INBOX" << RESET << endl;
+    cout << "\t- Check out new messages BITBUDGET has in store for you\n\n" << endl;
+
+    cout << BOLDWHITE << ">> DATA & HISTORY" << RESET << endl;
+    cout << "\t- You can look through your old transactions." << endl;
+    cout << "\t- You can take a look at your progress\n" << endl;
+
+    border(205);
+    displayCenteredLine_Colored("OPTIONS\n", BOLDWHITE);
+    displayCenteredLine_Colored("[ 1 ]  UPDATE         [ 3 ]  DATA & HISTORY", WHITE);
+    displayCenteredLine_Colored("[ 2 ]  INBOX          [ E ]  EXIT         \n\n", WHITE);
+    displayCenteredLine_NoNewLine(">> Enter choice:  ", CYAN);
+}
+
+// BitBudget function to print menu for when user wishes to quit the program
+void print_QuitMenu()
+{
+        clearScreen();
+
+        // Print program TITLE
+        border(205);
+        displayCenteredLine_Colored("BITBUDGET: EXPENSE TRACKER", BOLDGREEN);
+        border(205);
+
+        // Ask user to CONFIRM
+        displayCenteredLine_Colored(">> Are you sure you wanna leave? (T-T)", YELLOW);
+        cout << "\n\n";
+
+        // Print OPTIONS and PROMPT user to choose option
+        border(45);
+        displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+        displayCenteredLine_NoColor("[ Y ]  YES             [ N ]  CANCEL");
+        displayCenteredLine_NoNewLine(">> Enter choice:  ", CYAN);
+}
+
+
+
+
+
+
+
+
+
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+int main() {
+    Notification MM_NotifsHandler;
+    Inbox inboxHandler;
+    Budget budgetHandler;
+
+    bool alert_NewNotif = true;
+    bool alert_NewLogIn = MM_NotifsHandler.createNotification(5, "");
+
+    string choice_Str;
+    string quitConfirmation;
+
+    int choice_Int;
+
+
+    while (true)
+    {
+        /* Display main menu and ask user which feature to run */
+        do {
+            clearScreen();
+
+            // DISPLAY Main Menu
+            print_BitBudgetMM(alert_NewNotif, alert_NewLogIn);
+            getline(cin, choice_Str);
+
+            // User chooses to EXIT PROGRAM
+            if ((choice_Str == "E") || (choice_Str == "e"))
+            {
+                // Print Quit Menu and ask User for confirmation
+                do {
+                    clearScreen();
+
+                    // ASK User for confirmation
+                    print_QuitMenu();
+                    getline(cin, quitConfirmation);
+                } while ((quitConfirmation != "Y") && (quitConfirmation != "y") && (quitConfirmation != "N") && (quitConfirmation != "n"));
+
+                // END program if User confirms to quit
+                if ((quitConfirmation == "Y") || (quitConfirmation == "y")) {
+                    return 1;
+                }
+            }
+        } while ((choice_Str != "1") && (choice_Str != "2") && (choice_Str != "3"));
+
+
+        // Convert choice_Str to Int
+        choice_Int = stoi(choice_Str);
+
+        
+        // Run chosen feature
+        switch (choice_Int) {
+            case 1:
+                /* UPDATE FEATURE */
+                budgetHandler.run_BBUpdate(alert_NewNotif);
+                break;
+            
+            case 2:
+                /* INBOX FEATURE */
+                inboxHandler.run_Inbox();
+                break;
+            
+            case 3:
+                /* DATA & HISTORY FEATURE */
+                break;
+            
+            default:
+                break;
+        }
+    }
+
+    return 0;
 }
