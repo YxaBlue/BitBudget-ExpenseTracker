@@ -384,10 +384,9 @@ protected:
     // UPDATE: EXPENSES [Features]
     void displayMenu_UpdateExpense(int);
     void run_AddExpenses(); // working~
-    void run_DeleteExpenses();
+    void run_DeleteExpenses(); 
     void run_EditExpenses(); // working~
-    void perform_EditExpense(int, int); 
-    bool track_ExpensesLimit(); // working~
+    void track_ExpensesLimit(bool&); // working~
 
     // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
     void run_AddAccount(string);
@@ -3416,7 +3415,7 @@ void Budget :: run_AddExpenses() {
                 displayCenteredLine_NoNewLine(">> Enter DATE: ", CYAN);
                 getline(cin , input_str);
 
-                if (validateDate(input_str)) {
+                if (validateDateFormat(input_str)) {
                     newExpense.setDate(input_str);
                     inputFlow++;
                 }
@@ -3431,10 +3430,20 @@ void Budget :: run_AddExpenses() {
                 if ((isDouble(input_str)) && (input_str.size() > 0)) {
                     amt = stod(input_str);
 
-                    if ((amt > 0) && (amt <= totalBudget)) {
-                        newExpense.setAmount(amt);
-                        inputFlow++;
+                    if (totalBudget > 0) {
+                        if ((amt > 0) && (amt <= totalBudget))
+                        {
+                            newExpense.setAmount(amt);
+                            inputFlow++;
+                        }
                     }
+                    else {
+                        if ((amt > 0) && (amt <= totalSavings))
+                        {
+                            // take away from savings
+                        }
+                    }
+                    
                 }
                 else if ((input_str == "R") || (input_str == "r")) return;
                 break;
@@ -3958,6 +3967,35 @@ void Budget :: run_EditExpenses() {
 
 
 
+
+
+
+
+
+
+/*--------------------------------------------------------------------------*/
+/*                UPDATE: EXPENSE LIMIT AND SAVINGS TRACKER                 */
+/*--------------------------------------------------------------------------*/
+
+bool Budget :: track_SavingsGoal() {
+    for (const auto& savings : savingsList)
+    {
+        
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*-----------------------------------------------------------*/
 /*                UPDATE: LOAD AND SAVE DATA                 */
 /*-----------------------------------------------------------*/
@@ -4043,7 +4081,8 @@ void Budget :: run_BBUpdate(bool& newNotif) {
             else {
                 cout << "Invalid option, please try again.\n";
             }
-        } catch (const exception& e) {
+        }
+        catch (const exception& e) {
             cerr << "Error: " << e.what() << endl;
         }
     }
