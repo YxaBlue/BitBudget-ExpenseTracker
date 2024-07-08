@@ -55,7 +55,6 @@ using namespace std;
 const string ExpensesFILE = "EXPENSEHistory.bin";
 const string AllowancesFILE = "ALLOWANCEHistory.bin";
 
-const string UserStatusFILE = "UserSTATUS.bin";
 const string ExpenseLimitFILE = "ExpenseLimits.bin";
 const string SavingsFILE = "Savings.bin";
 
@@ -101,12 +100,16 @@ bool validateDate(const string &);
 bool validateSecondDate(const string &, const string &);
 
 string getDate_Today();
-tm parseDate(const string&);
-bool isDateInRange(const string&, const string&, const string&);
+string getDate(int);
 string getCurrentTime();
-bool isTimeNow(const string&);
+
+tm parseDate(const string&);
 tm stringToTime(const string*);
+
+bool isDateInRange(const string&, const string&, const string&);
+bool isTimeNow(const string&);
 bool isCurrentTimeInRange(const string&, const string&);
+
 
 
 /* BITBUDGET FUNCTIONS */
@@ -352,13 +355,13 @@ protected:
 
 
 
-    // UPDATE: LIMIT OF EXPENSES [Features] ~DONE, need to deal with notifications
+    // UPDATE: LIMIT OF EXPENSES [Features]
     void displayMenu_UpdateLE();
     void run_LE_SetNewGoal();
     void run_LE_EditGoal();
     void run_LE_DeleteGoal();
 
-    // UPDATE: SAVINGS [Features] ~DONE, need to deal with notifications
+    // UPDATE: SAVINGS [Features]
     void displayMenu_UpdateSavings();
     void run_S_SetNewGoal();
     void run_S_EditGoal();
@@ -367,14 +370,13 @@ protected:
 
     // UPDATE: ALLOWANCE [Features]
     void run_AddAllowance(); // working~
-    void run_DeleteAllowance(); // working~
     void run_EditAllowance(); // working~
 
     // UPDATE: EXPENSES [Features]
     void displayMenu_UpdateExpense(int);
-    void run_AddExpenses(); // working~
+    void run_AddExpenses();
     void run_DeleteExpenses(); 
-    void run_EditExpenses(); // working~
+    void run_EditExpenses();
 
     // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
     void run_AddAccount(string);
@@ -415,10 +417,10 @@ protected:
     void displayUpdateMenu();
 
     // UPDATE: ALL MAIN FEATURES TO RUN IN MAIN FUNCTION
-    void run_UpdateLimitExpenses(bool&); // DONE, need to work on how to add up the expenses.
-    void run_UpdateSavings(bool&); // DONE, need to work on the notification part
-    void run_UpdateAllowance(); // working
-    void run_UpdateExpense(bool&); // working~
+    void run_UpdateLimitExpenses();
+    void run_UpdateSavings();
+    void run_UpdateAllowance();
+    void run_UpdateExpense();
 
 
 
@@ -433,17 +435,15 @@ public:
     void calculateTotalBudget();
     void setTotalBudget(double);
 
-    // NOTIFIERS
-    void notifyDue_Savings(); // working~
-    void notifyDue_ExpenseGoal(); // working~
-
-
     // UPDATE: Run UPDATE FEATURE
-    void run_BBUpdate(bool&, bool&);
+    void run_BBUpdate();
 
     // Savings and Expense limit TRACKER
-    void track_SavingsGoal(bool&); // working~
-    void track_ExpensesLimit(bool&); // working~
+    void trackExpenses();
+    void trackDue_SavingsGoal(bool&);
+    void trackDue_ExpensesLimit(bool&);
+    void autoDelete_SavingsGoal();
+    void autoDelete_ELGoal();
 
     // LOAD/SAVE ALL DATA
     void loadData();
@@ -553,7 +553,6 @@ void displayCenteredLine_NoNewLine(const string &line, const string &color, int 
     cout << color << string(padLen, ' ') << line << RESET;
 }
 
-
 // Function to display lines by column
 void displayTxtByColumn(const string &str, const string &color, int width = COLUMNWIDTH)
 {
@@ -597,7 +596,6 @@ void displayTxtByColumn_CENTERED_NB(const string &txt, const string &color, int 
     cout << color << " " << string(spaceLen_Left, ' ') << txt << string(spaceLen_Right, ' ') << RESET;
 }
 
-
 // Function to clear the console screen
 void clearScreen()
 {
@@ -620,7 +618,8 @@ void clearScreen()
 /*-------------------------------- EXTRA FUNCTIONS --------------------------------*/
 /*_________________________________________________________________________________*/
 // Function to clear all contents of the file
-void clearFile(string FILENAME) {
+void clearFile(string FILENAME)
+{
     ofstream outFILE(InboxFILE, ios::binary | ios::trunc);
 
     if (!outFILE.is_open()) {
@@ -637,7 +636,8 @@ void clearFile(string FILENAME) {
 }
 
 // Function to check if string is a positive integer
-bool isNumeric(string str) {
+bool isNumeric(string str)
+{
     for (int i = 0; i < str.size(); i++) {
         if ((str[i] < '0') || (str[i] > '9')) {
             return false;
@@ -648,7 +648,8 @@ bool isNumeric(string str) {
 }
 
 // Function to check if string is a positive double value
-bool isDouble(string str) {
+bool isDouble(string str)
+{
     int dot = 0;
     if (str.empty()) return false;
 
@@ -672,7 +673,8 @@ bool validateDateFormat(const string &date) {
 }
 
 // Function to validate date if it is present or later
-bool validateDate(const string &date) {
+bool validateDate(const string &date)
+{
     if (!validateDateFormat(date)) {
         return false;
     }
@@ -736,6 +738,21 @@ string getDate_Today()
     string dateToday = month + "/" + day + "/" + year;
 
     return dateToday; 
+}
+
+// Function to get date from inputted date to days from start
+string getDate_FromDateInput(string startDate, int daysFromStart)
+{
+    tm start = parseDate(startDate);
+    time_t start_time = mktime(&start);
+
+    start_time += daysFromStart * 24 * 60 * 60;
+    tm *newTime = localtime(&start_time);
+
+    ostringstream oss;
+    oss << put_time(newTime, "%m/%d/%Y");
+
+    return oss.str();
 }
 
 // Function to parse date in MM/DD/YYYY format. Returns tm class
@@ -1317,7 +1334,6 @@ void Budget :: calculateTotalBudget()
 /*--------------------------------------------------------------------------------------------------*/
 /*     BUDGET class MFs(Protected): LOAD & SAVE Functions - Allowance/Expenses/Categories/ETC.      */
 /*--------------------------------------------------------------------------------------------------*/
-
 // Budget function member to load expenses from file to ExpensesList & ExpensesList_Today
 void Budget :: loadExpenses()
 {
@@ -1516,7 +1532,6 @@ void Budget :: saveAccountList() const
 /*--------------------------------------------------------------------------------------*/
 /*                          BUDGET class(Public): CONSTRUCTOR                           */
 /*--------------------------------------------------------------------------------------*/
-// 
 Budget :: Budget() :
             totalBudget(0.0),
             totalSavings(0.0) {}
@@ -1724,17 +1739,19 @@ void Budget :: displaySavingsList()
         string amt_str1 = stream1.str();
         string amt_str2 = stream2.str();
 
+        string dayAfterDue = getDate_FromDateInput(savingsData.get_dueDate(), 1);
+        string dateToday = getDate_Today();
+
         cout << "\n" << string(3, ' ') << border;
         displayTxtByColumn_CENTERED(to_string(i++), WHITE, 7);
         displayTxtByColumn(savingsData.get_startDate() + " - " + savingsData.get_dueDate(), WHITE, 25);
         displayTxtByColumn( "P " + amt_str1, WHITE, COLUMNWIDTH+2);
         displayTxtByColumn(savingsData.get_desc(), WHITE, 60);
 
-        string due = savingsData.get_dueDate();
-        string dateToday = getDate_Today();
-        if (dateToday != due) displayTxtByColumn( "P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
-        else displayTxtByColumn_CENTERED( "COMPLETED!", MAGENTA, COLUMNWIDTH*2);
-
+        if (dateToday == dayAfterDue)
+            displayTxtByColumn_CENTERED( "COMPLETED!", MAGENTA, COLUMNWIDTH*2);
+        else
+            displayTxtByColumn( "P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
     }
 
     // Display: Dummy data
@@ -1775,16 +1792,19 @@ void Budget :: displayExpenseLimitList()
         string amt_str1 = stream1.str();
         string amt_str2 = stream2.str();
 
+        string dateToday = getDate_Today();
+        string dayAfterDue = getDate_FromDateInput(expenseLimData.get_dueDate(), 1);
+
         cout << "\n" << string(3, ' ') << border;
         displayTxtByColumn_CENTERED(to_string(i++), WHITE, 7);
         displayTxtByColumn(expenseLimData.get_startDate() + " - " + expenseLimData.get_dueDate(), WHITE, 25);
         displayTxtByColumn("P " + amt_str1, WHITE, COLUMNWIDTH+2);
         displayTxtByColumn(expenseLimData.get_desc(), WHITE, 60);
 
-        if (getDate_Today() == expenseLimData.get_dueDate()) {
+        if (dateToday == dayAfterDue)
             displayTxtByColumn_CENTERED("COMPLETED!", MAGENTA, COLUMNWIDTH*2);
-        }
-        else displayTxtByColumn("P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
+        else
+            displayTxtByColumn("P " + amt_str2 + "  /  " + "P " + amt_str1, MAGENTA, COLUMNWIDTH*2);
     }
 
     // Display: Dummy data
@@ -1837,8 +1857,8 @@ void Budget :: displayCategoryList_bbys(int index_Parent)
     // Display BbyCategories by 2 columns
     for (int i = 0; i < BbyCategories.size() / 2; i++) {
         cout << string(50, ' ') << border;
-        displayTxtByColumn("[ " + to_string(i+1) + " ] " + BbyCategories[i], WHITE, 25);
-        displayTxtByColumn("[ " + to_string(i+6) + " ] " + BbyCategories[i + 5], WHITE, 25);
+        displayTxtByColumn_NB("[ " + to_string(i+1) + " ] " + BbyCategories[i], WHITE, 25);
+        displayTxtByColumn_NB("[ " + to_string(i+6) + " ] " + BbyCategories[i + 5], WHITE, 25);
         cout << "\n";
     }
 }
@@ -1860,8 +1880,8 @@ void Budget :: displayAccountList()
     // Display ParentCategories by 2 columns
     for (int i = 0; i < Accounts.size() / 2; i++) {
         cout << string(50, ' ') << border;
-        displayTxtByColumn("[ " + to_string(i+1) + " ] " + Accounts[i], WHITE, 25);
-        displayTxtByColumn("[ " + to_string(i+6) + " ] " + Accounts[i + 5], WHITE, 25);
+        displayTxtByColumn_NB("[ " + to_string(i+1) + " ] " + Accounts[i], WHITE, 25);
+        displayTxtByColumn_NB("[ " + to_string(i+6) + " ] " + Accounts[i + 5], WHITE, 25);
         cout << "\n";
     }
 }
@@ -1880,7 +1900,6 @@ void Budget :: setTotalBudget(double budget)
 {
     totalBudget = budget;
 }
-
 
 void Budget :: addExpense(const Expense& expense)
 {
@@ -1923,7 +1942,6 @@ void Budget :: addAccount(const string& acc)
 
     AccountList.push_back(acc);
 }
-
 
 void Budget :: removeAllowance(int index)
 {
@@ -1968,7 +1986,6 @@ void Budget :: removeSavings(int index)
         throw runtime_error(">> WARNING: Invalid savings goal index.");
     }
 }
-
 
 void Budget :: updateExpenseDateRange(const string& startDate, const string& dueDate, int index)
 {
@@ -2219,21 +2236,12 @@ void Budget :: run_AddSubcategory(int index, string TITLE)
 
 
 
-
-
-
-
-
-
-
-
-
-
 /* -------------------------------------------------------------------------- */ 
 /*                          UPDATE: UPDATE MAIN MENU                          */ 
 /* -------------------------------------------------------------------------- */ 
-
-void Budget :: displayUpdateMenu() {
+// Budget function member to display main menu of UPDATE feature
+void Budget :: displayUpdateMenu()
+{
     clearScreen();
 
     // Display: UPDATE title
@@ -2269,7 +2277,7 @@ void Budget :: displayUpdateMenu() {
 /* ------------------------------------------------------------------------- */ 
 /*                        UPDATE: LIMIT OF EXPENSES                          */ 
 /* ------------------------------------------------------------------------- */
-
+// Budget function member to display Update LIMIT OF EXPENSES feature's main menu
 void Budget :: displayMenu_UpdateLE()
 {
         clearScreen();
@@ -2291,9 +2299,12 @@ void Budget :: displayMenu_UpdateLE()
         border(196);
 }
 
-void Budget :: run_UpdateLimitExpenses(bool& newNotif)
+// Budget function member to run Update LIMIT OF EXPENSES main menu
+void Budget :: run_UpdateLimitExpenses()
 {
+    trackExpenses();
     string input;
+
     while (true) {
         displayMenu_UpdateLE();
 
@@ -2318,6 +2329,7 @@ void Budget :: run_UpdateLimitExpenses(bool& newNotif)
     }
 }
 
+// Budget function member to run Update LIMIT OF EXPENSES special feature: Set new goal (4 maximum goals)
 void Budget :: run_LE_SetNewGoal()
 {
     int inputflow = 1;
@@ -2481,6 +2493,7 @@ void Budget :: run_LE_SetNewGoal()
     }
 }
 
+// Budget function member to run Update LIMIT OF EXPENSES special feature: Delete goal and return savings back to allowance
 void Budget :: run_LE_DeleteGoal()
 {
     string input_str;
@@ -2522,6 +2535,7 @@ void Budget :: run_LE_DeleteGoal()
     }
 }
 
+// Budget function member to run Update LIMIT OF EXPENSES special feature: Edit details of the goal (restricted when past due date)
 void Budget :: run_LE_EditGoal()
 {
     string input_str;
@@ -2773,7 +2787,7 @@ void Budget :: run_LE_EditGoal()
 /*---------------------------------------------------------------------------*/
 /*                             UPDATE: SAVINGS                               */
 /*---------------------------------------------------------------------------*/
-
+// Budget function member to display Update SAVINGS main menu
 void Budget :: displayMenu_UpdateSavings()
 {
     clearScreen();
@@ -2793,7 +2807,8 @@ void Budget :: displayMenu_UpdateSavings()
     border(196);
 }
 
-void Budget :: run_UpdateSavings(bool& newNotif)
+// Budget function member to run Update SAVINGS feature
+void Budget :: run_UpdateSavings()
 {
     string input;
 
@@ -2825,6 +2840,7 @@ void Budget :: run_UpdateSavings(bool& newNotif)
     }
 }
 
+// Budget function member to run Update SAVINGS special feature: Set New Goal (4 maximum goals)
 void Budget :: run_S_SetNewGoal()
 {
     int inputflow = 1;
@@ -2993,9 +3009,10 @@ void Budget :: run_S_SetNewGoal()
     }
 }
 
+// Budget function member to run Update SAVINGS special feature: Edit details of the goal (restricted when past due date)
 void Budget :: run_S_EditGoal()
 {
-string input_str;
+    string input_str;
     int input_int;
 
     while (true)
@@ -3017,6 +3034,7 @@ string input_str;
 
             if ((input_int > 0) && (input_int <= savingsList.size()))
             {
+                SavingsAndExpenseLim goal = savingsList[input_int - 1];
                 while (true) {
                     displayMenu_UpdateSavings();
 
@@ -3235,6 +3253,7 @@ string input_str;
     }
 }
 
+// Budget function member to run Update SAVINGS special feature: Delete Goal and returns savings back to allowance
 void Budget :: run_S_DeleteGoal()
 {
     string input_str;
@@ -3276,6 +3295,7 @@ void Budget :: run_S_DeleteGoal()
     }
 }
 
+// Budget function member to run Update SAVINGS special feature: Set aside savings by taking away allowance
 void Budget :: run_SetAsideSavings()
 {
     string input_str;
@@ -3368,7 +3388,7 @@ void Budget :: run_SetAsideSavings()
 /*------------------------------------------------------------------------------------------*/
 /*                                   UPDATE: ALLOWANCE                                      */
 /*------------------------------------------------------------------------------------------*/
-// Budget function to run Update feature: ALLOWANCE [Lacking: Edit Allowance]
+// Budget function member to run Update ALLOWANCE feature
 void Budget::run_UpdateAllowance()
 {
     string input;
@@ -3385,8 +3405,8 @@ void Budget::run_UpdateAllowance()
         border(205);
 
         // Display: Total Allowance
-        cout << BOLDWHITE << "  >> Total Allowance:    P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
         cout << BOLDWHITE << "  >> Total Budget:       P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
+        cout << BOLDWHITE << "  >> Total Savings:      P " << fixed << setprecision(2) << totalSavings << "\n" << RESET << endl;
         border(196);
         cout << BOLDWHITE << "  >> Allowance List (Created Today):\n" << RESET << endl;
         displayAllowancesList_today(page);
@@ -3394,9 +3414,10 @@ void Budget::run_UpdateAllowance()
 
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
-        displayCenteredLine_NoColor("[ 1 ] Previous Page       [ 4 ] EDIT ALLOWANCE   ");
-        displayCenteredLine_NoColor("[ 2 ] Next Page           [ 5 ] DELETE ALLOWANCE ");
-        displayCenteredLine_NoColor("[ 3 ] ADD NEW ALLOWANCE   [ R ] Return           ");
+        displayCenteredLine_NoColor("[ 1 ] Previous Page       [ 3 ] ADD NEW ALLOWANCE");
+        displayCenteredLine_NoColor("[ 2 ] Next Page           [ 4 ] EDIT ALLOWANCE   ");
+        cout << "\n";
+        displayCenteredLine_NoColor("[ R ] Return");
         cout << "\n";
 
         // Ask user for input
@@ -3410,13 +3431,14 @@ void Budget::run_UpdateAllowance()
             if (page < maxPages) page++;
         }
         else if (input == "3")          run_AddAllowance();
-        //else if (input == "4")          run_EditAllowance();
-        else if (input == "5")          run_DeleteAllowance();
+        else if (input == "4")          run_EditAllowance();
         else if ((input == "R") || (input == "r")) return;
     }
 }
 
-void Budget::run_AddAllowance() {
+// Budget function member to run Update ALLOWANCE special feature: Add Allowance
+void Budget::run_AddAllowance()
+{
     string input_str;
     int input_int;
     double input_db;
@@ -3437,7 +3459,7 @@ void Budget::run_AddAllowance() {
         border(205);
 
         // Display: New Allowance details
-        if (inputflow == 3) {
+        if (inputflow == 4) {
             // Display Account List
             cout << BOLDWHITE << "  >> ACCOUNT LIST: " << RESET << endl;
             displayAccountList();
@@ -3483,7 +3505,7 @@ void Budget::run_AddAllowance() {
                 displayCenteredLine_NoNewLine(">> Enter AMOUNT: ", CYAN);
                 getline(cin, input_str);
 
-                if (isDouble(input_str) && !input_str.empty()) {
+                if ((isDouble(input_str)) && (!input_str.empty())) {
                     input_db = stod(input_str);
 
                     if (input_db > 0) {
@@ -3509,8 +3531,29 @@ void Budget::run_AddAllowance() {
 
 
 
+            case 3: // Input: Confirm allowance
+                displayCenteredLine_NoNewLine(">> Enter AMOUNT: ", CYAN);
+                cout << fixed << setprecision(2) << newAllowance << RESET << endl;
+                border(196);
+                displayCenteredLine_Colored  (">> Is this amount final? This cannot be changed if confirmed...", YELLOW);
+                displayCenteredLine_NoNewLine(">> Enter (Y) to confirm, (ENTER) if else: ", CYAN);
+                getline(cin, input_str);
 
-            case 3: // Input: Account
+                if ((input_str == "Y") || (input_str == "y")) {
+                    // Proceed to input account
+                    inputflow++;
+                }
+                else {
+                    // Go back to input new amount
+                    inputflow--;
+                    newAllowance = 0;
+                }
+                break;
+
+
+
+
+            case 4: // Input: Account
                 displayCenteredLine_NoNewLine(">> Enter ACCOUNT(index num): ", CYAN);
                 getline(cin , input_str);
                 
@@ -3522,14 +3565,14 @@ void Budget::run_AddAllowance() {
                     }
                 }
 
-                else if ((input_str == "A") || (input_str == "a")) run_AddAccount("UPDATE: EXPENSES (ADD)");
+                else if ((input_str == "A") || (input_str == "a")) run_AddAccount("UPDATE: ALLOWANCE (ADD NEW ALLOWANCE)");
                 else if ((input_str == "R") || (input_str == "r")) return;
                 break;
 
 
 
 
-            case 4: // Input: Description
+            case 5: // Input: Description
                 cout << CYAN << "\t>> Enter DESCRIPTION (max 50 chars): " << RESET;
                 getline(cin, input_str);
 
@@ -3564,67 +3607,278 @@ void Budget::run_AddAllowance() {
     }
 }
 
-void Budget::run_DeleteAllowance()
+/* 
+    Budget function member to run UPDATE ALLOWANCE special feature: Edit Allowance data.
+    Can only edit: Date, Account, and Description of Allowances created at present day
+*/
+void Budget::run_EditAllowance()
 {
+    int page = 1;
+    int maxPages = expensesList_Today.size() / 5;
+    if ((expensesList_Today.size() % 5) != 0) maxPages++;
+
     string input_str;
     int input_int;
-    int page = 1;
-    int maxPages = allowancesList_Today.size() / 5;
-    if ((allowancesList_Today.size() / 5) != 0) maxPages++;
+    int inputFlow = 1;
 
+
+    /* EDIT ALLOWANCE: Get Index of Allowance to edit (Menu 1) */
     while (true) {
         clearScreen();
         // Display: UPDATE(Allowance) title
         border(205);
-        displayCenteredLine_Colored("UPDATE: ALLOWANCE (DELETE ALLOWANCE)", BLUE);
+        displayCenteredLine_Colored("UPDATE: ALLOWANCE (EDIT)", BLUE);
         border(205);
 
         // Display: Total Allowance
-        cout << BOLDWHITE << "  >> Total Allowance:    P " << fixed << setprecision(2) << totalAllowance << "\n" << RESET << endl;
-        cout << BOLDWHITE << "  >> Total Budget:       P " << fixed << setprecision(2) << totalBudget << "\n" << RESET << endl;
-        border(196);
         cout << BOLDWHITE << "  >> Allowance List (Created Today):\n" << RESET << endl;
         displayAllowancesList_today(page);
-        cout << "\n";
         border(196);
 
-        displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+        // Display: Options
+        displayCenteredLine_Colored("OPTIONS (EDIT)", BOLDWHITE);
         cout << "\n";
-        displayCenteredLine_NoColor("[ P ] Previous Page       [ N ] Next Page");
+        displayCenteredLine_NoColor("[P] Previous Page                 [N] Next Page");
         cout << "\n";
-        displayCenteredLine_NoColor(">> Enter index number to DELETE");
-        displayCenteredLine_NoColor(">> Enter 'R' to return          ");
+        displayCenteredLine_NoColor(">> Enter index number of Allowance data to edit");
         cout << "\n";
-        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+
 
         // Ask user for input
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
         getline(cin, input_str);
 
-        if ((input_str == "P") || (input_str == "p"))           if(page > 1) page--;
-        else if ((input_str == "N") || (input_str == "n"))      if(page < maxPages) page--;
-        else if (input_str == "R" || input_str == "r")          return;
-        else if (isNumeric(input_str) && !input_str.empty()) {
+
+        // Display previous page
+        if ((input_str == "P") || (input_str == "p")) {
+            if (page > 1) page--;
+        }
+
+        // Display next page
+        else if ((input_str == "N") || (input_str == "n")) {
+            if (page < maxPages) page++;
+        }
+
+        // End function
+        else if ((input_str == "R") || (input_str == "r")) {
+            return;
+        }
+
+        // If input is valid, break and proceed to next menu
+        else if ((isNumeric(input_str)) && (input_str.size() > 0))
+        {
+            input_int = stoi(input_str);
+            if ((input_int > 0) && (input_int <= allowancesList_Today.size())) break;
+        }
+    }
+
+    // Get expense and make reference
+    Allowance& allowance = allowancesList_Today[input_int - 1];
+
+
+
+
+    /* EDIT ALLOWANCE: Ask user what data to edit(Menu 2) */
+    while (true)
+    {
+        clearScreen();
+
+        // Display: UPDATE(Allowance) title
+        border(205);
+        displayCenteredLine_Colored("UPDATE: ALLOWANCE (EDIT)", BLUE);
+        border(205);
+
+        // Display: Total Allowance
+        cout << BOLDWHITE << "  >> Allowance List (Created Today):\n" << RESET << endl;
+        displayAllowancesList_today(page);
+        border(196);
+
+        // Display: Options to edit
+        displayCenteredLine_Colored("OPTIONS (EDIT)", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_NoColor("[ 1 ] DATE                      [ 3 ] DESCRIPTION");
+        displayCenteredLine_NoColor("[ 2 ] ACCOUNT                   [ R ] RETURN     ");
+        cout << "\n";
+
+
+        // Get input from user
+        displayCenteredLine_NoNewLine(">> Enter choice: ", CYAN);
+        getline(cin, input_str);
+
+
+        // End function if input is (R/r)
+        if ((input_str == "R") || ((input_str == "r"))) {
+            return;
+        }
+        
+        else if ((isNumeric(input_str)) && (input_str.size() > 0))
+        {
             input_int = stoi(input_str);
 
-            if (input_int > 0 && input_int <= allowancesList.size()) {
-                removeAllowance(input_int-1);
-                calculateTotalBudget();
+            // Edit if input is numeric and is in between range of choices
+            if ((input_int >= 1) && (input_int <= 3)) break;
+        }
+    }
 
-                border(196);
-                displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-                displayCenteredLine_Colored(">> Allowance deleted successfully!", YELLOW);
-                displayCenteredLine_NoNewLine(">> Press enter to continue...     ", WHITE);
-                getchar();
-                return;
+
+
+
+    /* EDIT ALLOWANCE: EDITING MENU (Menu 3) */
+    switch (input_int)
+    {
+        case 1: /* EDIT MENU: DATE */
+        while (true) {
+            clearScreen();
+
+            // Display: UPDATE(Expense) Title
+            border(205);
+            displayCenteredLine_Colored("UPDATE: ALLOWANCE (EDIT DATE)", BLUE);
+            border(205);
+
+            // Display: Expense Details to be edited
+            cout << BOLDWHITE << "  >> EDITING DATE: " << RESET << endl;
+            cout << string(5, ' ') << "* DATE:             " << YELLOW << allowance.getDate() << RESET << endl;
+            cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << allowance.getAmount() << RESET << endl;
+            cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << allowance.getAccount() << RESET << endl;
+            cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << allowance.getDescription() << RESET << endl;
+            border(196);
+
+            switch (inputFlow) {
+                case 1: // Get New Date
+                    displayCenteredLine_NoNewLine(">> Enter NEW DATE: ", CYAN);
+                    getline(cin, input_str);
+
+                    if ((input_str == "R") || (input_str == "r")) {
+                        return;
+                    }
+                    else if (validateDateFormat(input_str)) {
+                        allowance.setDate(input_str);
+                        inputFlow++;
+                    }
+                    break;
+
+                default: // Display: Notice that date edited successfully
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Allowance Date edited successfully!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...       ", WHITE);
+                    getchar();
+                    return;
+                    break;
             }
         }
-        else {
+        break;
+
+
+        case 2: /* EDIT MENU: ACCOUNT */
+        while (true) {
+            clearScreen();
+
+            // Display: UPDATE(Allowance) Title
+            border(205);
+            displayCenteredLine_Colored("UPDATE: ALLOWANCE (EDIT ACCOUNT)", BLUE);
+            border(205);
+
+            // Display: Expense Details to be edited
+            cout << BOLDWHITE << "  >> EDITING DATE: " << RESET << endl;
+            cout << string(5, ' ') << "* DATE:             " << GREEN << allowance.getDate() << RESET << endl;
+            cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << allowance.getAmount() << RESET << endl;
+            cout << string(5, ' ') << "* ACCOUNT:          " << YELLOW << allowance.getAccount() << RESET << endl;
+            cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << allowance.getDescription() << RESET << endl;
             border(196);
-            displayCenteredLine_Colored("WARNING", BOLDYELLOW);
-            displayCenteredLine_Colored(">> Please enter a valid input.", YELLOW);
-            displayCenteredLine_NoNewLine(">> Press enter to continue... ", WHITE);
-            getchar();
+
+            // Display: Account List
+            cout << BOLDWHITE << "  >> ACCOUNT LIST: " << RESET << endl;
+            displayAccountList();
+            cout << "\n";
+            displayCenteredLine_NoColor("[ A ] ADD New Account");
+            cout << "\n";
+            border(196);
+            
+            switch (inputFlow)
+            {
+                case 1: // Get New Account
+                    displayCenteredLine_NoNewLine(">> Enter NEW ACCOUNT: ", CYAN);
+                    getline(cin, input_str);
+
+                    if ((input_str == "R") || (input_str == "r")) {
+                        return;
+                    }
+
+                    else if ((input_str =="A") || (input_str == "a")) {
+                        run_AddAccount("UPDATE: ALLOWANCE (EDIT ACCOUNT)");
+                    }
+
+                    else if ((isNumeric(input_str)) && (input_str.size() > 0)) {
+                        input_int = stoi(input_str);
+
+                        // Set Account if input is valid
+                        if ((input_int > 0) && (input_int <= AccountList.size())) {
+                            string acc = AccountList[input_int-1];
+                            allowance.setAccount(acc);
+                            inputFlow++;
+                        }
+                    }
+                    break;
+
+                default: // Display: Notice that Allowance account edited successfully
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored(">> Allowance Account edited successfully!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...          ", WHITE);
+                    getchar();
+                    return;
+                    break;
+            }
         }
+        break;
+
+
+        case 3: /* EDIT MENU: DESCRIPTION */
+        while (true) {
+            clearScreen();
+
+            // Display: UPDATE(Allowance) Title
+            border(205);
+            displayCenteredLine_Colored("UPDATE: ALLOWANCE (EDIT DESCRIPTION)", BLUE);
+            border(205);
+
+            // Display: Expense Details to be edited
+            cout << BOLDWHITE << "  >> EDITING DATE: " << RESET << endl;
+            cout << string(5, ' ') << "* DATE:             " << YELLOW << allowance.getDate() << RESET << endl;
+            cout << string(5, ' ') << "* AMOUNT:           " << GREEN << "P " << fixed << setprecision(2) << allowance.getAmount() << RESET << endl;
+            cout << string(5, ' ') << "* ACCOUNT:          " << GREEN << allowance.getAccount() << RESET << endl;
+            cout << string(5, ' ') << "* DESCRIPTION:      " << GREEN << allowance.getDescription() << RESET << endl;
+            border(196);
+
+            switch (inputFlow)
+            {
+                case 1: // Get New Description
+                    displayCenteredLine_NoNewLine(">> Enter NEW DESCRIPTION: ", CYAN);
+                    getline(cin, input_str);
+
+                    if ((input_str == "R") || (input_str == "r")) return;
+
+                    else if ((input_str =="A") || (input_str == "a")) run_AddAccount("UPDATE: EXPENSES (EDIT)");
+
+                    else if (input_str.size() <= 50) {
+                        allowance.setDescription(input_str);
+                        inputFlow++;
+                    }
+                    break;
+
+                default: // Display: Notice that Allowance account edited successfully
+                    displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
+                    displayCenteredLine_Colored  (">> Allowance Description edited successfully!", YELLOW);
+                    displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...              ", WHITE);
+                    getchar();
+                    return;
+                    break;
+            }
+        }
+        break;
+
+
+        default: // Do Nothing Lol
+            break;
     }
 }
 
@@ -3638,7 +3892,7 @@ void Budget::run_DeleteAllowance()
 /*-----------------------------------------------------------------------------------------*/
 /*                                   UPDATE: EXPENSES                                      */
 /*-----------------------------------------------------------------------------------------*/
-
+// Budget function member to display EXPENSES main menu
 void Budget :: displayMenu_UpdateExpense(int page = 1)
 {
     clearScreen();
@@ -3660,8 +3914,8 @@ void Budget :: displayMenu_UpdateExpense(int page = 1)
     border(196);
 }
 
-// Budget function to run Update feature: 
-void Budget :: run_UpdateExpense(bool& newNotif)
+// Budget function member to run Update EXPENSES feature
+void Budget :: run_UpdateExpense()
 {
     int page = 1;
     int maxPages = expensesList_Today.size() / 5;
@@ -3699,6 +3953,7 @@ void Budget :: run_UpdateExpense(bool& newNotif)
     }
 }
 
+// Budget function member to run Update EXPENSES special feature: Add Expenses
 void Budget :: run_AddExpenses()
 {
     string input_str;
@@ -3973,6 +4228,7 @@ void Budget :: run_AddExpenses()
     }
 }
 
+// Budget function member to run Update EXPENSES special feature: Delete Expenses created at present day
 void Budget :: run_DeleteExpenses()
 {
     int page = 1;
@@ -4026,6 +4282,7 @@ void Budget :: run_DeleteExpenses()
     }
 }
 
+// Budget function member to run Update EXPENSES special feature: Edit Expense data created at present day
 void Budget :: run_EditExpenses()
 {
     int page = 1;
@@ -4542,46 +4799,121 @@ void Budget :: run_EditExpenses()
 
 
 /*--------------------------------------------------------------------------*/
-/*                UPDATE: EXPENSE LIMIT AND SAVINGS TRACKER                 */
+/*          UPDATE: EXPENSE LIMIT AND SAVINGS TRACKER AND NOTIFIER          */
 /*--------------------------------------------------------------------------*/
-// Budget function member to track all savings goal when due and send notification
-void Budget :: track_SavingsGoal(bool& newNotif)
+//Budget function member to track expenses and update the expense limit goal of the amount spent
+void Budget :: trackExpenses()
 {
-    Notification notifHandler;
-    int iter = 1;
+    double amt;
+    string date;
 
-    for (auto& savings : savingsList)
-    {
-        if (getDate_Today() == savings.get_dueDate()) {
-            notifHandler.createNotif_SavingsGoal(savings, iter);
-            savings.set_currentAmt(0.0); // return amount to budget
-            newNotif = true;
+    for (auto& goal : expenseLimitsList) {
+        amt = 0;
+
+        // Iterate over all expenses created today
+        for (auto& expense : expensesList_Today) {
+            if (isDateInRange(expense.getDate(), goal.get_startDate(), goal.get_dueDate()))
+            {
+                amt += expense.getAmount();
+            }
         }
-        iter++;
+
+        // Iterate over all other expenses
+        for (auto& expense : expensesList) {
+            if (isDateInRange(expense.getDate(), goal.get_startDate(), goal.get_dueDate()))
+            {
+                amt += expense.getAmount();
+            }
+        }
+
+        goal.set_currentAmt(amt);
     }
 }
 
-// Budget function member to track all expense limit goal when due and send notification
-void Budget :: track_ExpensesLimit(bool& newNotif)
+// Budget function member to track all savings goal when its already due by the previous day and send notification
+void Budget :: trackDue_SavingsGoal(bool& newNotif)
+{
+    Notification notifHandler;
+    int index = 0;
+
+    for (auto& goal : savingsList)
+    {
+        string afterDueDate = getDate_FromDateInput(goal.get_dueDate(), 1);
+
+        if (getDate_Today() == afterDueDate) {
+            notifHandler.createNotif_SavingsGoal(goal, index+1);
+            removeSavings(index);
+            newNotif = true;
+            index--;
+        }
+        index++;
+    }
+}
+
+// Budget function member to track all expense limit goal when its already due by the previous day and send notification
+void Budget :: trackDue_ExpensesLimit(bool& newNotif)
 {
     Notification notifHandler;
     int iter = 1;
 
     for (auto& expenseLim : expenseLimitsList)
     {
-        if (getDate_Today() == expenseLim.get_dueDate()) {
+        string afterDueDate = getDate_FromDateInput(expenseLim.get_dueDate(), 1);
+
+        if (getDate_Today() == afterDueDate) {
             notifHandler.createNotif_ExpenseLim(expenseLim, iter);
             expenseLim.set_currentAmt(0.0);
             newNotif = true;
         }
         iter++;
     }
-
 }
 
+// Budget function to remove savings goal the at least 1 day after due date if not removed
+void Budget :: autoDelete_SavingsGoal()
+{
+    Notification notifHandler;
+    int index = 1;
 
-// Budget function to remove savings goal the after due date
+    auto goal = savingsList.begin();
+    while (goal != savingsList.end())
+    {
+        string goal_DueDelete = getDate_FromDateInput(goal->get_dueDate(), 1);
 
+        // Delete goal if date today is not within start date and date after due
+        if (!isDateInRange(getDate_Today(), goal->get_startDate(), goal->get_dueDate())) {
+            notifHandler.createNotif_SavingsGoal(*goal, index);
+            goal = savingsList.erase(goal);
+        }
+        else {
+            ++goal;
+        }
+        ++index;
+    }
+}
+
+// Budget function to remove expense limit goal at least 2 days after due date if not removed
+void Budget :: autoDelete_ELGoal()
+{
+    Notification notifHandler;
+    int index = 1;
+
+    auto goal = expenseLimitsList.begin();
+    while (goal != expenseLimitsList.end())
+    {
+        string goal_DueDelete = getDate_FromDateInput(goal->get_dueDate(), 1);
+
+        // Delete goal if date today is not within start date and date after due
+        if (!isDateInRange(getDate_Today(), goal->get_startDate(), goal_DueDelete)) {
+            notifHandler.createNotif_ExpenseLim(*goal, index);
+            goal = expenseLimitsList.erase(goal);
+        }
+        else {
+            ++goal;
+        }
+        ++index;
+    }
+}
 
 
 
@@ -4635,9 +4967,12 @@ void Budget :: saveState()
 /*---------------------------------------------------------------------------*/
 /*                        UPDATE: RUN UPDATE FUNCTION                        */
 /*---------------------------------------------------------------------------*/
-void Budget :: run_BBUpdate(bool& newNotif, bool& SandEL_trackerNotif) {
+// Budget function member to run the entire UPDATE feature
+void Budget :: run_BBUpdate()
+{
     string input;
     while (true) {
+        trackExpenses();
         calculateTotalBudget();
         displayUpdateMenu();
         getline(cin, input);
@@ -4648,16 +4983,16 @@ void Budget :: run_BBUpdate(bool& newNotif, bool& SandEL_trackerNotif) {
 
         try {
             if (input == "1") {
-                run_UpdateLimitExpenses(newNotif);
+                run_UpdateLimitExpenses();
             }
             else if (input == "2") {
-                run_UpdateSavings(newNotif);
+                run_UpdateSavings();
             }
             else if (input == "3") {
                 run_UpdateAllowance();
             }
             else if (input == "4") {
-                run_UpdateExpense(newNotif);
+                run_UpdateExpense();
             }
             else {
                 cout << "Invalid option, please try again.\n";
@@ -5063,7 +5398,7 @@ void Notification :: createNotif_SavingsGoal(SavingsAndExpenseLim& savings, int 
     
     if (currentAmt == goal) {
         notifTxt = "(>v<)/ Savings Goal #" + to_string(iter) + " has reached its goal! GOOD JOB! KEEP AT IT!\n";
-        notifTxt += "The amount saved up will be added back to your budget, and the goal will be deleted by tomorrow.";
+        notifTxt += "The amount saved up will be added back to your budget, and the goal is now deleted";
     } else if (currentAmt > 0 && currentAmt < goal) {
         stringstream stream1;
         stream1 << fixed << setprecision(2) << currentAmt;
@@ -5071,10 +5406,10 @@ void Notification :: createNotif_SavingsGoal(SavingsAndExpenseLim& savings, int 
 
         notifTxt = "(OwO) Savings Goal #" + to_string(iter) + " did not reach the goal, but you saved up " + BOLDGREEN + "P " + amt + RESET + "\n";
         notifTxt += "That's okay! You still did great! Better budget next time! XD\n";
-        notifTxt += "The amount saved up will be added back to your budget, and the goal will be deleted by tomorrow.";
+        notifTxt += "The amount saved up will be added back to your budget, and the goal is now deleted.";
     } else if (currentAmt == 0) {
         notifTxt = "(T^T) Savings Goal #" + to_string(iter) + " is already due, and you didn't save anything...\n";
-        notifTxt += "That's okay! But better budget well next time! XD. The goal will be deleted by tomorrow.";
+        notifTxt += "That's okay! But better budget well next time! XD. The goal is now deleted.";
     }
 
     createNotification(6, notifTxt);
@@ -5235,13 +5570,24 @@ int main() {
 
     while (true)
     {
-        if (isTimeNow("10:00 PM") && (SandEL_trackerNotif == false)) {
-            budgetHandler.track_SavingsGoal(alert_NewLogIn);
-            budgetHandler.track_ExpensesLimit(alert_NewLogIn);
-            SandEL_trackerNotif = true;
+        // Notification Creators: Savings and Expenses Limit 
+        if ((isCurrentTimeInRange("12:00 PM", "11:59 PM"))) {
+            budgetHandler.trackDue_SavingsGoal(alert_NewNotif);
+            budgetHandler.trackDue_ExpensesLimit(alert_NewNotif);
         }
 
-        /* Display main menu and ask user which feature to run */
+        // Notification Creators: Reminders(Can be done when online and user happens to be in Main Menu at exactly 10 AM/PM)
+        if ((getCurrentTime() == "10:00 AM") || (getCurrentTime() == "10:00 PM")) {
+            MM_NotifsHandler.createNotification(1, "");
+        }
+
+        // AUTO GOAL-DELETERS: deletes goals that are long past due date
+        budgetHandler.autoDelete_ELGoal();
+        budgetHandler.autoDelete_SavingsGoal();
+        
+
+
+        /* ----- Display main menu and ask user which feature to run ------ */
         do {
             // DISPLAY Main Menu
             clearScreen();
@@ -5266,7 +5612,6 @@ int main() {
                     return 1;
                 }
             }
-
         } while ((choice_Str != "1") && (choice_Str != "2") && (choice_Str != "3"));
 
 
@@ -5277,7 +5622,7 @@ int main() {
         switch (choice_Int) {
             case 1:
                 /* UPDATE FEATURE */
-                budgetHandler.run_BBUpdate(alert_NewNotif, SandEL_trackerNotif);
+                budgetHandler.run_BBUpdate();
                 break;
             
             case 2:
@@ -5287,6 +5632,7 @@ int main() {
             
             case 3:
                 /* DATA & HISTORY FEATURE */
+                // emty lol
                 break;
             
             default:

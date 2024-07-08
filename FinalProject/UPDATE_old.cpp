@@ -386,7 +386,7 @@ protected:
     void run_AddExpenses(); // working~
     void run_DeleteExpenses(); 
     void run_EditExpenses(); // working~
-    void track_ExpensesLimit(bool&); // working~
+    void trackDue_ExpensesLimit(bool&); // working~
 
     // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
     void run_AddAccount(string);
