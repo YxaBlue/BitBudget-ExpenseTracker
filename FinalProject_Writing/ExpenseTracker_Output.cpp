@@ -4314,7 +4314,7 @@ void Budget :: run_AddExpenses()
                 // add function to track expense limit
 
                 displayCenteredLine_Colored("NOTICE", BOLDYELLOW);
-                displayCenteredLine_Colored(">> New Expense added successfully!                      ", YELLOW);
+                displayCenteredLine_Colored(">> New Expense added successfully!", YELLOW);
                 if (takenSavings) displayCenteredLine_Colored(">> Savings has been taken to make up the lacking budget.", YELLOW);
                 displayCenteredLine_NoNewLine(">> Press 'ENTER' to continue...   ", WHITE);
                 getchar();
@@ -5497,19 +5497,19 @@ void Notification :: createNotif_SavingsGoal(SavingsAndExpenseLim& savings, int 
     double goal = savings.get_goal();
     
     if (currentAmt == goal) {
-        notifTxt = "(>v<)/ Savings Goal #" + to_string(iter) + " has reached its goal! GOOD JOB! KEEP AT IT!\n";
-        notifTxt += "The amount saved up will be added back to your budget, and the goal is now deleted";
+        notifTxt = "\t(>v<)/ Savings Goal #" + to_string(iter) + " has reached its goal! GOOD JOB! KEEP AT IT!\n";
+        notifTxt += "\tThe amount saved up will be added back to your budget, and the goal will be deleted automatically.";
     } else if (currentAmt > 0 && currentAmt < goal) {
         stringstream stream1;
         stream1 << fixed << setprecision(2) << currentAmt;
         string amt = stream1.str();
 
-        notifTxt = "(OwO) Savings Goal #" + to_string(iter) + " did not reach the goal, but you saved up " + BOLDGREEN + "P " + amt + RESET + "\n";
-        notifTxt += "That's okay! You still did great! Better budget next time! XD\n";
-        notifTxt += "The amount saved up will be added back to your budget, and the goal is now deleted.";
+        notifTxt = "\t(OwO) Savings Goal #" + to_string(iter) + " did not reach the goal, but you saved up " + BOLDGREEN + "P " + amt + RESET + "\n";
+        notifTxt += "\tThat's okay! You still did great! Better budget next time! XD\n";
+        notifTxt += "\tThe amount saved up will be added back to your budget, and the goal will be deleted automatically.";
     } else if (currentAmt == 0) {
-        notifTxt = "(T^T) Savings Goal #" + to_string(iter) + " is already due, and you didn't save anything...\n";
-        notifTxt += "That's okay! But better budget well next time! XD. The goal is now deleted.";
+        notifTxt = "\t(T^T) Savings Goal #" + to_string(iter) + " is already due, and you didn't save anything...\n";
+        notifTxt += "\tThat's okay! But better budget well next time! XD. The goal will be deleted automatically.";
     }
 
     createNotification(6, notifTxt);
@@ -5527,8 +5527,8 @@ void Notification :: createNotif_ExpenseLim(SavingsAndExpenseLim& expenseLim, in
         stream1 << fixed << setprecision(2) << currentAmt;
         string amt = stream1.str();
 
-        notifTxt = "(T^T) Expense Limit Goal #" + to_string(iter) + " has exceeded its limit!\n" + "You spent " + BOLDGREEN + "P " + amt + RESET + " ... That's okay!\n";
-        notifTxt += "Better budget next time! The goal will be deleted by tomorrow, 10: PM.";
+        notifTxt = "\t(T^T) Expense Limit Goal #" + to_string(iter) + " has exceeded its limit!\n" + "You spent " + BOLDGREEN + "P " + amt + RESET + " ... That's okay!\n";
+        notifTxt += "\tBetter budget next time! The goal will be deleted automatically.";
     }
 
     else if ((currentAmt > 0) && (currentAmt <= goal)) {
@@ -5536,13 +5536,13 @@ void Notification :: createNotif_ExpenseLim(SavingsAndExpenseLim& expenseLim, in
         stream1 << fixed << setprecision(2) << currentAmt;
         string amt = stream1.str();
 
-        notifTxt = "(OwO) In Expense Limit Goal #" + to_string(iter) + " you spent up to " + BOLDGREEN + "P " + amt + RESET + "\n";
-        notifTxt += "WOAH! You did great! Better budget again next time! XD. The goal will be deleted by tomorrow, 10:00 PM.";
+        notifTxt = "\t(OwO) In Expense Limit Goal #" + to_string(iter) + " you spent up to " + BOLDGREEN + "P " + amt + RESET + "\n";
+        notifTxt += "\tWOAH! You did great! Better budget again next time! XD. The goal will be deleted automatically.";
     }
 
     else if (currentAmt == 0) {
-        notifTxt = "(O-O)! Expense Limit Goal #" + to_string(iter) + " is already due, and you didn't spend anything?! AMAZING!!!\n";
-        notifTxt += "How thrifty! Keep that up! The goal will be deleted by tomorrow, 10:00 PM.";
+        notifTxt = "\t(O-O)! Expense Limit Goal #" + to_string(iter) + " is already due, and you didn't spend anything?! AMAZING!!!\n";
+        notifTxt += "\tHow thrifty! Keep that up! The goal will be deleted automatically.";
     }
 
     createNotification(6, notifTxt);

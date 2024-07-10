@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -113,13 +114,42 @@ bool isCurrentTimeInRange(const string&, const string&);
 
 
 
+// NEW FUNCTIONS TO ADD TO MAIN FILE
+string convertToComparableDate(const string&);
+string makePercentBar(double, int);
 
 
 
+// Helper function to convert MM/DD/YYYY to YYYYMMDD for easy comparison
+string convertToComparableDate(const string& date)
+{
+    string month = date.substr(0, 2);
+    string day = date.substr(3, 2);
+    string year = date.substr(6, 4);
+    return year + month + day;
+}
 
+// Function to create a percent bar
+string makePercentBar(double percentage, int barWidth = 50)
+{
+    // Clamp the percentage between 0 and 100
+    if (percentage < 0) percentage = 0;
+    if (percentage > 100) percentage = 100;
 
+    // Create bar
+    int filledWidth = static_cast<int>(barWidth * (percentage / 100.0f));
+    string bar(barWidth, '-');
+    for(int i = 0; i < filledWidth; ++i) bar[i] = '#';
 
+    // Convert double to string, displaying 2 decimal places
+    stringstream ss;
+    ss << fixed << setprecision(0) << percentage;
 
+    // Create string
+    string percentBar = "[" + bar + "]    " + ss.str() + "%";
+
+    return percentBar;
+}
 
 
 
@@ -350,28 +380,39 @@ protected:
     void loadAccountList();
 
 
+    // LIST SORTER
+    void sortExpensesByDate_Ascending(vector<Expense>&);
+    void sortExpensesByDate_Descending(vector<Expense>&);
+    void sortAllowanceByDate_Ascending(vector<Allowance>&);
+    void sortAllowanceByDate_Descending(vector<Allowance>&);
+    void sortExpensesByCategory(vector<Expense>&);
+
 
 
     // DISPLAY DATA [ALLOWANCES / EXPENSES / CATEGORIES / ETC.]
-    void displayAllowancesData(vector<Allowance>, int);
-    void displayExpensesData(vector<Expense>, int);
+    void displayAllowancesData(vector<Allowance>, int, int);
+    void displayExpensesData(vector<Expense>, int, int);
     void displayCategoryList_parent();
     void displayCategoryList_bbys(int);
     void displayAccountList();
 
 
 
-    // DATA AND HISTORY FEATURE: DATA
-    void run_YesterdayVSToday();
+    // DATA AND HISTORY FEATURE
+    void displayMenu_DataAndHistory();
 
 
 
-    // DATA AND HISTORY FEATURE: DATA
-    void run_AllowanceHistory();
-    void run_ExpenseHistory();
-    void run_FilterByCategory();
-    void run_FilterByDateRange();
-    void run_FilterByDate();
+    // TRANSACTION AND ALLOWANCE HISTORY
+    void runDH_TAHistory();
+
+
+
+    // EXPENSE DATA
+    void displayTitle_ExpenseData();
+    void displayTable_YESTERDAYvsTODAY(vector<Expense>, vector<Expense>, int);
+    void displayTable_RankByCategory();
+    void runDH_ExpenseData();
 
 
 
@@ -386,433 +427,11 @@ public:
     void calculateTotalBudget();
 
     // DATA AND HISTORY: Run DATA AND HISTORY FEATURE
-    void run_DATA();
-    void run_HISTORY();
     void runBB_DataAndHistory();
 
     // LOAD/SAVE ALL DATA
     void loadData();
 };
-
-
-
-
-
-/*-----------------------------------------------------------------------------------------*/
-/*------------------------ DATAandHISTORY CLASS: FUNCTION MEMBERS -------------------------*/
-/*-----------------------------------------------------------------------------------------*/
-
-// DATAandHISTORY constructor
-DATAandHISTORY :: DATAandHISTORY() :
-    totalBudget(0), totalAllowance(0), totalExpenses(0)
-    {}
-
-
-
-
-
-
-
-/*--------------------------------------------*/
-/*    DATAandHISTORY : Load data from file    */
-/*--------------------------------------------*/
-// DATAandHISTORY function member to load all expenses data
-void DATAandHISTORY :: loadExpenses()
-{
-    ifstream inFile(ExpensesFILE, ios::binary);
-    if (inFile.is_open()) {
-        while (inFile.peek() != EOF) {
-            Expense expense("", "", 0, "", "", "", "");
-            inFile >> expense;
-            expensesList.push_back(expense);
-        }
-
-        inFile.close();
-    }
-}
-
-// DATAandHISTORY function member to load all allowances data
-void DATAandHISTORY :: loadAllowances()
-{
-    ifstream inFile(AllowancesFILE, ios::binary);
-    if (inFile.is_open()) {
-        while (inFile.peek() != EOF) {
-            Allowance allowance("", "", 0.0, "", "");
-            inFile >> allowance;
-
-            allowancesList.push_back(allowance);
-        }
-        inFile.close();
-    }
-}
-
-// DATAandHISTORY function member to load all of Category class
-void DATAandHISTORY :: loadCategoryList()
-{
-    ifstream inFILE(CategoryListFILE, ios::binary);
-    if (inFILE.is_open()) {
-        while(inFILE.peek() != EOF)
-        {
-            Category categoryHol("", 0);
-            inFILE >> categoryHol;
-            CategoryList.push_back(categoryHol);
-        }
-        inFILE.close();
-    }
-}
-
-// DATAandHISTORY function member to load of all accounts
-void DATAandHISTORY :: loadAccountList()
-{
-    size_t size;
-    string acc;
-
-    ifstream inFILE(AccountListFILE, ios::binary);
-    if (inFILE.is_open()) {
-        while(inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
-        {
-            acc.resize(size);
-            inFILE.read(&acc[0], size);
-            AccountList.push_back(acc);
-        }
-        inFILE.close();
-    }
-}
-
-// DATAandHISTORY function member to load all necessary data
-void DATAandHISTORY :: loadData()
-{
-    loadExpenses();
-    loadAllowances();
-    loadCategoryList();
-    loadAccountList();
-}
-
-
-
-
-
-
-/*--------------------------------------------*/
-/*        DATAandHISTORY : Calculators        */
-/*--------------------------------------------*/
-// DATAandHISTORY function member to calculate total allowance, expenses, and budget
-void DATAandHISTORY :: calculateTotalBudget()
-{
-    calculateTotalAllowance();
-    calculateTotalExpenses();
-    
-    totalBudget = totalAllowance - totalExpenses;
-}
-
-// DATAandHISTORY function member to calculate overall expenses created
-void DATAandHISTORY :: calculateTotalExpenses()
-{
-    totalExpenses = 0.00;
-    for (const auto& expense : expensesList)
-    {
-        totalExpenses += expense.getAmount();
-    }
-}
-
-// DATAandHISTORY function member to calculate overall allowances created
-void DATAandHISTORY :: calculateTotalAllowance()
-{
-    totalAllowance = 0.00;
-    for (const auto& allowance : allowancesList)
-    {
-        totalAllowance += allowance.getAmount();
-    }    
-}
-
-// DATAandHISTORY function member to calculate and return the total expenses of a given vector
-double DATAandHISTORY :: calculateTotal_GivenExpenses(vector<Expense> expenseData)
-{
-    double totalExpense = 0.00;
-    for (const auto& expense : expenseData)
-    {
-            totalExpense += expense.getAmount();
-    }
-    return totalExpense;
-}
-
-// DATAandHISTORY function member to calculate and return the total allowances of a given vector
-double DATAandHISTORY :: calculateTotal_GivenAllowance(vector<Allowance> allowanceData)
-{
-    double totalExpense = 0.00;
-    for (const auto& allowance : allowanceData)
-    {
-            totalExpense += allowance.getAmount();
-    }
-    return totalExpense;
-}
-
-
-
-
-
-
-/*--------------------------------------------*/
-/*        DATAandHISTORY : Calculators        */
-/*--------------------------------------------*/
-// DATAandHISTORY function member to get allowance data created at given date and return a vector(Allowance class)
-auto DATAandHISTORY :: getAllowanceData_ByDate(string date)
-{
-    vector<Allowance> AllowanceData;
-    for(const auto& allowance : allowancesList)
-    {
-        if (allowance.getDate() == date) {
-            AllowanceData.push_back(allowance);
-        }
-    }
-    return AllowanceData;
-}
-
-// DATAandHISTORY function member to get expense data created by account and return a vector(Allowance class)
-auto DATAandHISTORY :: getAllowanceData_ByAcc(string account)
-{
-    vector<Allowance> AllowanceData;
-    for(const auto& allowance : allowancesList)
-    {
-        if (allowance.getAccount() == account) {
-            AllowanceData.push_back(allowance);
-        }
-    }
-    return AllowanceData;
-}
-
-// DATAandHISTORY function member to get expense data created at given date and return a vector(Expense class)
-auto DATAandHISTORY :: getExpenseData_ByDate(string date)
-{
-    vector<Expense> ExpenseData;
-    for(const auto& expense : expensesList)
-    {
-        if (expense.getDate() == date) {
-            ExpenseData.push_back(expense);
-        }
-    }
-    return ExpenseData;
-}
-
-// DATAandHISTORY function member to get expense data created by account and return a vector(Expense class)
-auto DATAandHISTORY :: getExpenseData_ByAcc(string account)
-{
-    vector<Expense> ExpenseData;
-    for(const auto& expense : expensesList)
-    {
-        if (expense.getAccount() == account) {
-            ExpenseData.push_back(expense);
-        }
-    }
-    return ExpenseData;
-}
-
-// DATAandHISTORY function member to get expense data by category and return a vector(Expense class)
-auto DATAandHISTORY :: getExpenseData_ByCat(string category)
-{
-    vector<Expense> ExpenseData;
-    for(const auto& expense : expensesList)
-    {
-        if (expense.getCategory() == category) {
-            ExpenseData.push_back(expense);
-        }
-    }
-    return ExpenseData;
-}
-
-
-
-
-
-/*--------------------------------------------*/
-/*       DATAandHISTORY : Display Data        */
-/*--------------------------------------------*/
-// DATAandHISTORY function member to display allowance data table by page
-void DATAandHISTORY :: displayAllowancesData(vector<Allowance> allowanceData, int page)
-{
-    int i;
-    char border = 179;
-    int vSize = allowanceData.size();
-
-    // Display: Headers
-    cout << string(10, ' ') << border;
-    displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
-    displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH);
-    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH+2);
-    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH+2);
-    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
-
-
-    // Display: Allowances data per page
-    if (vSize > 0)
-    {
-        int dataPerPage = 10;
-        int maxPages = vSize / dataPerPage;
-        if ((vSize % dataPerPage) != 0) maxPages ++;
-
-        int start = (page - 1) * dataPerPage;
-        int end =  min(start + dataPerPage, vSize);
-        int items = end - start + 1;
-
-        for (; start < end; start++)
-        {
-            Allowance allowance = allowanceData[start];
-
-            // Convert: Amount to string with 2 decimal places
-            double amt_db = allowance.getAmount();
-            stringstream stream;
-            stream << fixed << setprecision(2) << amt_db;
-            string amt_str = stream.str();
-
-            cout << "\n" << string(10, ' ') << border;
-            displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, 7);
-            displayTxtByColumn(allowance.getDate(), WHITE, COLUMNWIDTH);
-            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn(allowance.getAccount(), WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn(allowance.getDescription(), WHITE, 60);
-        }
-
-        // Display remaining empty slots
-        if (items < dataPerPage) {
-            int vacant = dataPerPage - items;
-
-            for (i = 0; i <= vacant; i++) {
-                cout << "\n" << string(10, ' ') << border;
-                displayTxtByColumn_CENTERED(to_string(++start), WHITE, 7);
-                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
-                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
-                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-                displayTxtByColumn("----- ----- -----", WHITE, 60);
-            }
-        }
-
-        cout << "\n\n";
-        displayCenteredLine_Colored("Displaying Page: " + to_string(page) + " out of " + to_string(maxPages), GRAY);
-    }
-    else {
-        // Display: Dummy data
-        for (i = 0; i < 10; i++) {
-            cout << "\n" << string(10, ' ') << border;
-            displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, 7);
-            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
-            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn("----- ----- -----", WHITE, 60);
-        }
-
-        cout << "\n\n";
-        displayCenteredLine_Colored("Displaying Page: 1 out of 1 ", GRAY);
-    }
-}
-
-void DATAandHISTORY :: displayExpensesData(vector<Expense> expenseData, int page)
-{
-    int i;
-    char border = 179;
-    int vSize = expenseData.size();
-
-    // Display: Headers
-    cout << border;
-    displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
-    displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH-2);
-    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH+2);
-    displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH+2);
-    displayTxtByColumn_CENTERED("SUBCATEGORY", BOLDWHITE, COLUMNWIDTH+2);
-    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH+2);
-    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 54);
-
-
-    // Display: Expenses Data by page
-    if (vSize > 0)
-    {
-        int dataPerPage = 5;
-        int maxPages = vSize / dataPerPage;
-
-        if ((vSize % dataPerPage) != 0) maxPages ++;
-        if (page > maxPages) page = maxPages;
-        if (page < 0) page = 1;
-
-        int start = (page - 1) * dataPerPage;
-        int end =  min(start + dataPerPage, vSize);
-        int items = end - start + 1;
-
-        for (; start < end; start++)
-        {
-            Expense expense = expenseData[start];
-
-            // Convert: Amount to string with 2 decimal places
-            double amt_db = expense.getAmount();
-            stringstream stream;
-            stream << fixed << setprecision(2) << amt_db;
-            string amt_str = stream.str();
-
-            cout << "\n" << border;
-            displayTxtByColumn_CENTERED(to_string(start+1), WHITE, 7);
-            displayTxtByColumn(expense.getDate(), WHITE, COLUMNWIDTH-2);
-            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn(expense.getCategory(), WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn(expense.getBabyCategory(), WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn(expense.getAccount(), WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn(expense.getDescription(), WHITE, 54);
-        }
-
-        // Display remaining empty slots
-        if (items < dataPerPage) {
-            int vacant = dataPerPage - items;
-
-            for (i = 0; i <= vacant; i++) {
-                cout << "\n" << border;
-                displayTxtByColumn_CENTERED(to_string(++start), WHITE, 7);
-                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH-2);
-                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
-                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-                displayTxtByColumn("----- ----- -----", WHITE, 54);
-            }
-        }
-        cout << "\n\n";
-        displayCenteredLine_Colored("Displaying Page: " + to_string(page) + " out of " + to_string(maxPages), GRAY);
-    }
-    else {
-        // Display: Dummy data
-        for (i = 0; i < 10; i++) {
-            cout << "\n" << border;
-            displayTxtByColumn_CENTERED(to_string(i+1), WHITE, 7);
-            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH-2);
-            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
-            displayTxtByColumn("----- ----- -----", WHITE, 54);
-        }
-
-        cout << "\n\n";
-        displayCenteredLine_Colored("Displaying Page: 1 out of 1 ", GRAY);
-    }
-}
-
-
-
-
-
-/*----------------------------------------------*/
-/*       DATAandHISTORY FEATURE: HISTORY        */
-/*----------------------------------------------*/
-void DATAandHISTORY :: run_AllowanceHistory()
-{
-    
-}
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1143,23 +762,6 @@ bool isCurrentTimeInRange(const string& startTime, const string& endTime)
 
 
 /* ------------------- JURO'S FUNCTIONS ------------------- */
-
-//
-string getDate_Today()
-{
-    time_t now = time(0);
-    tm *ltm = localtime(&now);
-
-    string year = to_string(1900 + ltm->tm_year);
-    string month = to_string(1 + ltm->tm_mon);
-    string day = to_string(5 + ltm->tm_mday);
-
-    if (month.size() == 1) month = "0" + month;
-
-    string dateToday = month + "/" + day + "/" + year;
-
-    return dateToday; 
-}
 
 string getDate_Yesterday()
 {
@@ -1593,6 +1195,1077 @@ istream& operator>>(istream& is, Allowance& allowance) {
 
 
 
+/*-----------------------------------------------------------------------------------------*/
+/*------------------------ DATAandHISTORY CLASS: FUNCTION MEMBERS -------------------------*/
+/*-----------------------------------------------------------------------------------------*/
+
+// DATAandHISTORY constructor
+DATAandHISTORY :: DATAandHISTORY() :
+    totalBudget(0), totalAllowance(0), totalExpenses(0)
+    {}
+
+
+
+
+
+
+
+/*--------------------------------------------*/
+/*    DATAandHISTORY : Load data from file    */
+/*--------------------------------------------*/
+// DATAandHISTORY function member to load all expenses data
+void DATAandHISTORY :: loadExpenses()
+{
+    ifstream inFile(ExpensesFILE, ios::binary);
+    if (inFile.is_open()) {
+        while (inFile.peek() != EOF) {
+            Expense expense("", "", 0, "", "", "", "");
+            inFile >> expense;
+            expensesList.push_back(expense);
+        }
+        inFile.close();
+    }
+}
+
+// DATAandHISTORY function member to load all allowances data
+void DATAandHISTORY :: loadAllowances()
+{
+    ifstream inFile(AllowancesFILE, ios::binary);
+    if (inFile.is_open()) {
+        while (inFile.peek() != EOF) {
+            Allowance allowance("", "", 0.0, "", "");
+            inFile >> allowance;
+
+            allowancesList.push_back(allowance);
+        }
+        inFile.close();
+    }
+}
+
+// DATAandHISTORY function member to load all of Category class
+void DATAandHISTORY :: loadCategoryList()
+{
+    ifstream inFILE(CategoryListFILE, ios::binary);
+    if (inFILE.is_open()) {
+        while(inFILE.peek() != EOF)
+        {
+            Category categoryHol("", 0);
+            inFILE >> categoryHol;
+            CategoryList.push_back(categoryHol);
+        }
+        inFILE.close();
+    }
+}
+
+// DATAandHISTORY function member to load of all accounts
+void DATAandHISTORY :: loadAccountList()
+{
+    size_t size;
+    string acc;
+
+    ifstream inFILE(AccountListFILE, ios::binary);
+    if (inFILE.is_open()) {
+        while(inFILE.read(reinterpret_cast<char*>(&size), sizeof(size)))
+        {
+            acc.resize(size);
+            inFILE.read(&acc[0], size);
+            AccountList.push_back(acc);
+        }
+        inFILE.close();
+    }
+}
+
+// DATAandHISTORY function member to load all necessary data
+void DATAandHISTORY :: loadData()
+{
+    loadExpenses();
+    loadAllowances();
+    loadCategoryList();
+    loadAccountList();
+
+    calculateTotalBudget();
+}
+
+
+
+
+
+
+/*--------------------------------------------*/
+/*        DATAandHISTORY : Calculators        */
+/*--------------------------------------------*/
+// DATAandHISTORY function member to calculate total allowance, expenses, and budget
+void DATAandHISTORY :: calculateTotalBudget()
+{
+    calculateTotalAllowance();
+    calculateTotalExpenses();
+    
+    totalBudget = totalAllowance - totalExpenses;
+}
+
+// DATAandHISTORY function member to calculate overall expenses created
+void DATAandHISTORY :: calculateTotalExpenses()
+{
+    totalExpenses = 0.00;
+    for (const auto& expense : expensesList)
+    {
+        totalExpenses += expense.getAmount();
+    }
+}
+
+// DATAandHISTORY function member to calculate overall allowances created
+void DATAandHISTORY :: calculateTotalAllowance()
+{
+    totalAllowance = 0.00;
+    for (const auto& allowance : allowancesList)
+    {
+        totalAllowance += allowance.getAmount();
+    }    
+}
+
+// DATAandHISTORY function member to calculate and return the total expenses of a given vector
+double DATAandHISTORY :: calculateTotal_GivenExpenses(vector<Expense> expenseData)
+{
+    double totalExpense = 0.00;
+    for (const auto& expense : expenseData)
+    {
+            totalExpense += expense.getAmount();
+    }
+    return totalExpense;
+}
+
+// DATAandHISTORY function member to calculate and return the total allowances of a given vector
+double DATAandHISTORY :: calculateTotal_GivenAllowance(vector<Allowance> allowanceData)
+{
+    double totalExpense = 0.00;
+    for (const auto& allowance : allowanceData)
+    {
+            totalExpense += allowance.getAmount();
+    }
+    return totalExpense;
+}
+
+
+
+
+
+
+/*--------------------------------------------*/
+/*       DATAandHISTORY : Vector Maker        */
+/*--------------------------------------------*/
+// DATAandHISTORY function member to get allowance data created at given date and return a vector(Allowance class)
+auto DATAandHISTORY :: getAllowanceData_ByDate(string date)
+{
+    vector<Allowance> AllowanceData;
+    for(const auto& allowance : allowancesList)
+    {
+        if (allowance.getDate() == date) {
+            AllowanceData.push_back(allowance);
+        }
+    }
+    return AllowanceData;
+}
+
+// DATAandHISTORY function member to get expense data created by account and return a vector(Allowance class)
+auto DATAandHISTORY :: getAllowanceData_ByAcc(string account)
+{
+    vector<Allowance> AllowanceData;
+    for(const auto& allowance : allowancesList)
+    {
+        if (allowance.getAccount() == account) {
+            AllowanceData.push_back(allowance);
+        }
+    }
+    return AllowanceData;
+}
+
+// DATAandHISTORY function member to get expense data created at given date and return a vector(Expense class)
+auto DATAandHISTORY :: getExpenseData_ByDate(string date)
+{
+    vector<Expense> ExpenseData;
+    for(const auto& expense : expensesList)
+    {
+        if (expense.getDate() == date) {
+            ExpenseData.push_back(expense);
+        }
+    }
+    return ExpenseData;
+}
+
+// DATAandHISTORY function member to get expense data created by account and return a vector(Expense class)
+auto DATAandHISTORY :: getExpenseData_ByAcc(string account)
+{
+    vector<Expense> ExpenseData;
+    for(const auto& expense : expensesList)
+    {
+        if (expense.getAccount() == account) {
+            ExpenseData.push_back(expense);
+        }
+    }
+    return ExpenseData;
+}
+
+// DATAandHISTORY function member to get expense data by category and return a vector(Expense class)
+auto DATAandHISTORY :: getExpenseData_ByCat(string category)
+{
+    vector<Expense> ExpenseData;
+    for(const auto& expense : expensesList)
+    {
+        if (expense.getCategory() == category) {
+            ExpenseData.push_back(expense);
+        }
+    }
+    return ExpenseData;
+}
+
+
+
+
+
+/*--------------------------------------------*/
+/*         DATAandHISTORY : Sort Data         */
+/*--------------------------------------------*/
+// DATAandHISTORY function member to sort vector by date, ascending order
+void DATAandHISTORY :: sortExpensesByDate_Ascending(vector<Expense>& expenseData)
+{
+    sort(expenseData.begin(), expenseData.end(), [](const Expense& a, const Expense& b) {
+        return convertToComparableDate(a.getDate()) < convertToComparableDate(b.getDate());
+    });
+}
+
+// DATAandHISTORY function member to sort vector by date, descending order
+void DATAandHISTORY :: sortExpensesByDate_Descending(vector<Expense>& expenseData)
+{
+    sort(expenseData.begin(), expenseData.end(), [](const Expense& a, const Expense& b) {
+        return convertToComparableDate(a.getDate()) > convertToComparableDate(b.getDate());
+    });
+}
+
+void DATAandHISTORY :: sortAllowanceByDate_Ascending(vector<Allowance>& allowanceData)
+{
+    sort(allowanceData.begin(), allowanceData.end(), [](const Allowance& a, const Allowance& b) {
+        return convertToComparableDate(a.getDate()) < convertToComparableDate(b.getDate());
+    });
+}
+
+void DATAandHISTORY :: sortAllowanceByDate_Descending(vector<Allowance>& allowanceData)
+{
+    sort(allowanceData.begin(), allowanceData.end(), [](const Allowance& a, const Allowance& b) {
+        return convertToComparableDate(a.getDate()) > convertToComparableDate(b.getDate());
+    });
+}
+
+void DATAandHISTORY :: sortExpensesByCategory(vector<Expense>& expenseData)
+{
+
+}
+
+
+
+
+
+
+/*--------------------------------------------*/
+/*       DATAandHISTORY : Display Data        */
+/*--------------------------------------------*/
+// DATAandHISTORY function member to display allowance data table by page
+void DATAandHISTORY :: displayAllowancesData(vector<Allowance> allowanceData, int page = 1, int dataPerPage = 5)
+{
+    int i;
+    char border = 179;
+    int vSize = allowanceData.size();
+
+    // Display: Headers
+    cout << string(10, ' ') << border;
+    displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
+    displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH);
+    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 60);
+
+
+    // Display: Allowances data per page
+    if (vSize > 0)
+    {
+        int maxPages = vSize / dataPerPage;
+
+        if ((vSize % dataPerPage) != 0) maxPages++;
+        if (page > maxPages) page = maxPages;
+        if (page < 1) page = 1;
+
+        int start = (page - 1) * dataPerPage;
+        int end =  min(start + dataPerPage, vSize);
+        int items = end - start;
+
+        for (; start < end; start++)
+        {
+            Allowance allowance = allowanceData[start];
+
+            // Convert: Amount to string with 2 decimal places
+            double amt_db = allowance.getAmount();
+            stringstream stream;
+            stream << fixed << setprecision(2) << amt_db;
+            string amt_str = stream.str();
+
+            cout << "\n" << string(10, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(start + 1), WHITE, 7);
+            displayTxtByColumn(allowance.getDate(), WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(allowance.getAccount(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(allowance.getDescription(), WHITE, 60);
+        }
+
+        // Display remaining empty slots
+        if (items < dataPerPage) {
+            int vacant = dataPerPage - items;
+
+            for (i = 0; i < vacant; i++) {
+                cout << "\n" << string(10, ' ') << border;
+                displayTxtByColumn_CENTERED(to_string(start+1), WHITE, 7);
+                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
+                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("----- ----- -----", WHITE, 60);
+                start++;
+            }
+        }
+
+        cout << "\n\n";
+        displayCenteredLine_Colored("Displaying Page: " + to_string(page) + " out of " + to_string(maxPages), GRAY);
+    }
+    else {
+        // Display: Dummy data
+        for (i = 0; i < dataPerPage; i++) {
+            cout << "\n" << string(10, ' ') << border;
+            displayTxtByColumn_CENTERED(to_string(i + 1), WHITE, 7);
+            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("----- ----- -----", WHITE, 60);
+        }
+
+        cout << "\n\n";
+        displayCenteredLine_Colored("Displaying Page: 1 out of 1", GRAY);
+    }
+}
+
+void DATAandHISTORY :: displayExpensesData(vector<Expense> expenseData, int page = 1, int dataPerPage = 5)
+{
+    int i;
+    char border = 179;
+    int vSize = expenseData.size();
+
+    // Display: Headers
+    cout << border;
+    displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
+    displayTxtByColumn_CENTERED("DATE", BOLDWHITE, COLUMNWIDTH-2);
+    displayTxtByColumn_CENTERED("AMOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("SUBCATEGORY", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("ACCOUNT", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("DESCRIPTION", BOLDWHITE, 54);
+
+
+    // Display: Expenses Data by page
+    if (vSize > 0)
+    {
+        int maxPages = vSize / dataPerPage;
+
+        if ((vSize % dataPerPage) != 0) maxPages++;
+        if (page > maxPages) page = maxPages;
+        if (page < 1) page = 1;
+
+        int start = (page - 1) * dataPerPage;
+        int end =  min(start + dataPerPage, vSize);
+        int items = end - start;
+
+        for (; start < end; start++)
+        {
+            Expense expense = expenseData[start];
+
+            // Convert: Amount to string with 2 decimal places
+            double amt_db = expense.getAmount();
+            stringstream stream;
+            stream << fixed << setprecision(2) << amt_db;
+            string amt_str = stream.str();
+
+            cout << "\n" << border;
+            displayTxtByColumn_CENTERED(to_string(start+1), WHITE, 7);
+            displayTxtByColumn(expense.getDate(), WHITE, COLUMNWIDTH-2);
+            displayTxtByColumn("P " + amt_str, WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getCategory(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getBabyCategory(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getAccount(), WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn(expense.getDescription(), WHITE, 54);
+        }
+
+        // Display remaining empty slots
+        if (items < dataPerPage) {
+            int vacant = dataPerPage - items;
+
+            for (i = 0; i < vacant; i++) {
+                cout << "\n" << border;
+                displayTxtByColumn_CENTERED(to_string(start+1), WHITE, 7);
+                displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH-2);
+                displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+                displayTxtByColumn("----- ----- -----", WHITE, 54);
+                start++;
+            }
+        }
+        cout << "\n\n";
+        displayCenteredLine_Colored("Displaying Page: " + to_string(page) + " out of " + to_string(maxPages), GRAY);
+    }
+    else {
+        // Display: Dummy data
+        for (i = 0; i < dataPerPage; i++) {
+            cout << "\n" << border;
+            displayTxtByColumn_CENTERED(to_string(i+1), WHITE, 7);
+            displayTxtByColumn("--/--/----", WHITE, COLUMNWIDTH-2);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("-----", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("----- ----- -----", WHITE, 54);
+        }
+
+        cout << "\n\n";
+        displayCenteredLine_Colored("Displaying Page: 1 out of 1 ", GRAY);
+    }
+}
+
+
+
+
+
+
+/*---------------------------------------------------*/
+/*       DATAandHISTORY FEATURE: EXPENSE DATA        */
+/*---------------------------------------------------*/
+
+// DATAandHISTORY function member to display
+void DATAandHISTORY :: displayTitle_ExpenseData()
+{
+    clearScreen();
+
+    border(205);
+    displayCenteredLine_Colored("DATA & HISTORY: EXPENSE DATA", BLUE);
+    border(205);
+}
+
+void DATAandHISTORY :: displayTable_YESTERDAYvsTODAY(vector<Expense> expensesData_Today, vector<Expense> expensesData_Yesterday, int page = 1)
+{
+    // Get date TODAY and YESTERDAY
+    string dateYesterday = getDate_FromDateInput(getDate_Today(), -1);
+    string dateToday = getDate_Today();
+
+    // Calculate total expenses TODAY and YESTERDAY
+    double totalExp_Yesterday = calculateTotal_GivenExpenses(expensesData_Yesterday);
+    double totalExp_Today = calculateTotal_GivenExpenses(expensesData_Today);
+    stringstream expYesterday, expToday;
+    expYesterday << fixed << setprecision(2) << totalExp_Yesterday;
+    expToday << fixed << setprecision(2) << totalExp_Today;
+
+
+
+    // Display: EXPENSE DATA TODAY
+    displayCenteredLine_Colored("EXPENSES TODAY: " + dateToday, BOLDWHITE);
+    cout << "\n";
+    displayExpensesData(expensesData_Today, page);
+    cout << "\n";
+    border('-');
+
+    // Display: EXPENSE DATA YESTERDAY
+    displayCenteredLine_Colored("EXPENSES YESTERDAY: " + dateYesterday, BOLDWHITE);
+    cout << "\n";
+    displayExpensesData(expensesData_Yesterday, page);
+    cout << "\n";
+    border(196);
+
+
+
+    // Display: TOTAL EXPENSES EACH DAY
+    if (totalExp_Today > totalExp_Yesterday) {
+        cout << BOLDWHITE << ">> Total Expenses(TODAY):         " << RESET << GREEN << "P " << expToday.str() << RESET << endl;
+        cout << BOLDWHITE << ">> Total Expenses(YESTERDAY):     " << RESET << RED   << "P " << expYesterday.str() << RESET << endl;
+    }
+    else if (totalExp_Today < totalExp_Yesterday) {
+        cout << BOLDWHITE << ">> Total Expenses(TODAY):         " << RESET << RED   << "P " << expToday.str() << RESET << endl;
+        cout << BOLDWHITE << ">> Total Expenses(YESTERDAY):     " << RESET << GREEN << "P " << expYesterday.str() << RESET << endl;
+    }
+    else {
+        cout << BOLDWHITE << ">> Total Expenses(TODAY):         " << RESET << GREEN << "P " << expToday.str() << RESET << endl;
+        cout << BOLDWHITE << ">> Total Expenses(YESTERDAY):     " << RESET << GREEN << "P " << expYesterday.str() << RESET << endl;
+    }
+    border(196);
+}
+
+void DATAandHISTORY :: displayTable_RankByCategory()
+{
+    int iter = 1;
+    char c = 179;
+
+    // Display Headers
+    cout << string(28, ' ') << c;
+    displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
+    displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("PERCENTAGE", BOLDWHITE, 70);
+    cout << "\n";
+
+
+    for (const auto& category : CategoryList)
+    {
+        string catName = category.getParent();
+        double totalAmt = 0;
+
+        // Get total percentage of expenses in each category
+        for (const auto& expenses : expensesList)
+        {
+            if (expenses.getCategory() == catName)
+            totalAmt += expenses.getAmount();
+        }
+        double rate = (totalAmt / totalExpenses) * 100;
+
+        // Display data by table
+        string percentBar = makePercentBar(rate);
+        cout << string(28, ' ') << c;
+        displayTxtByColumn_CENTERED(to_string(iter), WHITE, 7);
+        displayTxtByColumn_CENTERED(catName, WHITE, COLUMNWIDTH+2);
+        displayTxtByColumn_CENTERED(percentBar, WHITE, 70);
+        cout << "\n";
+        iter++;
+    }
+
+    if (CategoryList.size() < 10) {
+        int vacant = 10 - CategoryList.size();
+
+        for (int i = 0; i < vacant; i++) {
+            cout << string(28, ' ') << c;
+            displayTxtByColumn_CENTERED(to_string(iter), WHITE, 7);
+            displayTxtByColumn_CENTERED("----------", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn_CENTERED(makePercentBar(0), WHITE, 70);
+            cout << "\n";
+            iter++;
+        }
+    }
+    cout << "\n";
+    border(196);
+}
+
+void DATAandHISTORY :: runDH_ExpenseData()
+{
+    // USER INPUTS
+    string optionDisplay = "1";
+    string choice;
+    
+
+    // Expense Vectors (Today & Yesterday)
+    string dateToday = getDate_Today();
+    string dateYesterday = getDate_FromDateInput(dateToday, -1);
+    auto expData_Today = getExpenseData_ByDate(dateToday);
+    auto expData_Yesterday = getExpenseData_ByDate(dateYesterday);
+
+
+    // For displaying expense data
+    int page = 1;
+    int dataPerPage = 10;
+    int expDataSize_1 = expData_Today.size();
+    int expDataSize_2 = expData_Yesterday.size();
+
+    int maxPages1 = expDataSize_1 / dataPerPage;
+    int maxPages2 = expDataSize_2 / dataPerPage;
+    int maxPages_Highest;
+    if ((expDataSize_1 % dataPerPage) != 0) maxPages1++;
+    if ((expDataSize_2 % dataPerPage) != 0) maxPages2++;
+
+    if (maxPages1 > maxPages2) maxPages_Highest = maxPages1;
+    else maxPages_Highest = maxPages2;
+
+
+    while (true) {
+        displayTitle_ExpenseData();
+
+        // DISPLAY PT. 1 of the MENU FOR YESTERDAY VS TODAY
+        if (optionDisplay == "1") {
+            // Display: YESTERDAY vs TODAY Table
+            displayCenteredLine_Colored("YESTERDAY vs TODAY", BOLDYELLOW);
+            border('-');
+            displayTable_YESTERDAYvsTODAY(expData_Today, expData_Yesterday, page);
+
+
+            // Display: Expense DATA Options
+            displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+            cout << "\n";
+            displayCenteredLine_Colored("[ 1 ] YESTERDAY vs TODAY               [ P ] Previous Page", WHITE);
+            displayCenteredLine_Colored("[ 2 ] RANK EXPENSES by CATEGORY        [ N ] Next Page    ", WHITE);
+        }
+
+        // DISPLAY PT. 1 of the MENU FOR RANK BY CATEGORY
+        else if (optionDisplay == "2") {
+            // Display: RANK BY CATEGORY Feature
+            displayCenteredLine_Colored("RANK BY CATEGORY", BOLDYELLOW);
+            border('-');
+            cout << "\n";
+            displayTable_RankByCategory();
+
+            // Display: Expense DATA Options
+            displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+            cout << "\n";
+            displayCenteredLine_Colored("[ 1 ] YESTERDAY vs TODAY", WHITE);
+            displayCenteredLine_Colored("[ 2 ] RANK by CATEGORY  ", WHITE);
+        }
+
+        // DISPLAY PT. 2 of the MENU FOR EXPENSE DATA
+        cout << "\n";
+        displayCenteredLine_Colored("[ R ] RETURN", WHITE);
+        cout << "\n";
+        border(205);
+
+
+        // GET USER INPUT
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+        getline(cin, choice);
+
+
+        // Display: chosen option by user
+        if ((choice == "R") || (choice == "r")) {
+            return; // End function
+        }
+
+        else if (choice == "1") {
+            if (optionDisplay != "1")
+                optionDisplay = choice; // DISPLAY: YESTERDAY vs TODAY table
+        }
+
+        else if (choice == "2") {
+            if (optionDisplay != "2")
+                optionDisplay = choice; // DISPLAY: RANK EXPENSES by CATEGORY
+        }
+
+        else if ((choice == "P") || (choice == "p")) {
+            if ((optionDisplay == "1") && (page > 1)) page--;
+            
+        }
+
+        else if ((choice == "N") || (choice == "n")) {
+            if ((optionDisplay == "1") && (page < maxPages_Highest)) page++;
+        }
+    }
+}
+
+
+
+
+
+/*------------------------------------------------------------------------*/
+/*       DATAandHISTORY FEATURE: TRANSACTION AND ALLOWANCE HISTORY        */
+/*------------------------------------------------------------------------*/
+
+void DATAandHISTORY :: runDH_TAHistory()
+{
+    // USER INPUTS
+    string optionDisplay = "E";
+    string choice, input;
+    int filterDisplay = 6;
+    int choice_int;
+
+
+    // For displaying expense & allowance data
+    int page = 1;
+    int dataPerPage = 10;
+    int expDataSize = expensesList.size();
+    int allowanceDataSize = allowancesList.size();
+
+    int maxPages1 = expDataSize / dataPerPage;
+    int maxPages2 = allowanceDataSize / dataPerPage;
+    int maxPages_Highest;
+    if ((expDataSize % dataPerPage) != 0) maxPages1++;
+    if ((allowanceDataSize % dataPerPage) != 0) maxPages2++;
+
+    if (maxPages1 > maxPages2) maxPages_Highest = maxPages1;
+    else maxPages_Highest = maxPages2;
+
+    // For displaying filtered expense & allowance data
+    vector<Allowance> filteredAllowances;
+    vector<Expense> filteredExpenses;
+    string filter;
+
+
+    while (true) {
+        displayTitle_ExpenseData();
+
+        // DISPLAY: Allowance History
+        if ((optionDisplay == "A") || (optionDisplay == "a")) {
+            // If OPTION is SHOW ALL
+            if (filterDisplay == 6)
+            {
+                displayCenteredLine_Colored("ALLOWANCE HISTORY", BOLDWHITE);
+                cout << "\n";
+                border(196);
+                displayAllowancesData(allowancesList, page, 10);
+                border(196);
+            }
+
+            // IF OPTION IS FILTERED
+            else {
+                displayCenteredLine_Colored("FILTERED ALLOWANCE HISTORY: " + filter, BOLDWHITE);
+                cout << "\n";
+                border(196);
+                displayAllowancesData(filteredAllowances, page, 10);
+                border(196);
+            }
+            
+        }
+
+        // DISPLAY: Expense History
+        else if ((optionDisplay == "E") || (optionDisplay == "e")) {
+            // If OPTION is SHOW ALL
+            if (filterDisplay == 6)
+            {
+                displayCenteredLine_Colored("TRANSACTION HISTORY", BOLDWHITE);
+                cout << "\n";
+                border(196);
+                displayExpensesData(expensesList, page, 10);
+                border(196);
+            }
+
+            // IF OPTION IS FILTERED
+            else {
+                displayCenteredLine_Colored("FILTERED TRANSACTION HISTORY: " + filter, BOLDWHITE);
+                cout << "\n";
+                border(196);
+                displayExpensesData(filteredExpenses, page, 10);
+                border(196);
+            }
+            
+        }
+        
+
+        
+        // Display: Expense DATA Options
+        displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+        cout << "\n";
+        displayCenteredLine_Colored("[ A ] ALLOWANCE HISTORY            [ E ] EXPENSE HISTORY", WHITE);
+        displayCenteredLine_Colored("[ P ] Previous Page                [ N ] Next Page      ", WHITE);
+        cout << "\n";
+        displayCenteredLine_Colored("[ 1 ] Sort by DATE (Ascending)     [ 4 ] Filter by DATE      ", WHITE);
+        displayCenteredLine_Colored("[ 2 ] Sort by DATE (Descending)    [ 5 ] Filter by DATE RANGE", WHITE);
+        displayCenteredLine_Colored("[ 3 ] Filter by CATEGORY           [ 6 ] Show ALL            ", WHITE);
+        cout << "\n";
+        displayCenteredLine_Colored("[ R ] RETURN", WHITE);
+        cout << "\n";
+        border(205);
+
+
+        // GET USER INPUT
+        displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+        getline(cin, choice);
+
+
+
+        // End Function
+        if ((choice == "R") || (choice == "r")) {
+            return; // End function
+        }
+
+        // Display Allowance
+        else if ((choice == "A") || (choice == "a")) {
+            if ((optionDisplay != "A") || (optionDisplay != "a"))
+                page = 1;
+
+            optionDisplay = choice;
+            filterDisplay = 6; // Show All Data
+        }
+
+        // Display Expenses
+        else if ((choice == "E") || (choice == "e")) {
+            if ((optionDisplay != "E") || (optionDisplay != "e"))
+                page = 1;
+
+            optionDisplay = choice;
+            filterDisplay = 6; // Show All Data
+        }
+
+        // Display Previous page
+        else if ((choice == "P") || (choice == "p")) {
+            if (page > 1) page--;
+        }
+
+        // Display Next page
+        else if ((choice == "N") || (choice == "n")) {
+            if ((optionDisplay == "A") || (optionDisplay == "a")) {
+                if (page < maxPages2) page++;
+                else page = maxPages2;
+            }
+            else if ((optionDisplay == "E") || (optionDisplay == "e")) {
+                if (page < maxPages1) page++;
+                else page = maxPages1;
+            }
+        }
+
+        // Sorting
+        else if ((isNumeric(choice)) && (!choice.empty())) {
+            choice_int = stoi(choice);
+
+            switch (choice_int)
+            {
+                case 1: // SORT BY DATE (ASCENDING)
+                    if (filterDisplay == 6) {
+                        sortExpensesByDate_Ascending(expensesList);
+                        sortAllowanceByDate_Ascending(allowancesList);
+                    }
+                    else {
+                        sortExpensesByDate_Ascending(filteredExpenses);
+                        sortAllowanceByDate_Ascending(filteredAllowances);
+                    }
+                    break;
+
+
+
+                case 2: // SORT BY DATE (DESCENDING)
+                    if (filterDisplay == 6) {
+                        sortExpensesByDate_Descending(expensesList);
+                        sortAllowanceByDate_Descending(allowancesList);
+                    }
+                    else {
+                        sortExpensesByDate_Descending(filteredExpenses);
+                        sortAllowanceByDate_Descending(filteredAllowances);
+                    }
+                    break;
+
+
+
+                case 3: // FILTER BY CATEGORY
+                    // border(196);
+                    // if ((optionDisplay == "E") || (optionDisplay == "e")) {
+                    //     filterDisplay = 3;
+                    // }
+                    break;
+                
+
+
+                case 4: // FILTER BY DATE
+                    border(196);
+                    displayCenteredLine_NoNewLine(">> Enter DATE (MM/DD/YYYY): ", CYAN);
+                    getline(cin, input);
+
+                    // Stop filtering data if input invalid
+                    if (!validateDateFormat(input)) {
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Enter valid date format: MM/DD/YYYY", YELLOW);
+                        getchar();
+                        break;
+                    }
+
+                    // If Filtering expenses
+                    if ((optionDisplay == "E") || (optionDisplay == "e")) {
+                        // Empty vector
+                        filteredExpenses.clear();
+
+                        // Get filtered vector
+                        vector<Expense> expenses_TempList = getExpenseData_ByDate(input);
+
+                        // Copy elements from temporary vector
+                        filteredExpenses.insert(filteredExpenses.end(), expenses_TempList.begin(), expenses_TempList.end());
+
+                        // Display filtered data
+                        filterDisplay = 4;
+                        filter = input;
+                    }
+
+                    // If Filtering allowances
+                    else if ((optionDisplay == "A") || (optionDisplay == "a")) {
+                        // Empty vector
+                        filteredAllowances.clear();
+
+                        // Get filtered vector
+                        vector<Allowance> allowances_TempList = getAllowanceData_ByDate(input);
+
+                        // Copy elements from temporary vector
+                        filteredAllowances.insert(filteredAllowances.end(), allowances_TempList.begin(), allowances_TempList.end());
+
+                        // Display filtered data
+                        filterDisplay = 4;
+                        filter = input;
+                    }
+                    break;
+                
+
+
+                case 5: // FILTER BY DATE RANGE
+                    border(196);
+                    displayCenteredLine_NoNewLine(">> Enter FIRST DATE (MM/DD/YYYY): ", CYAN);
+                    getline(cin, input);
+
+                    // Stop filtering data if input invalid
+                    if (!validateDateFormat(input)) {
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.", YELLOW);
+                        getchar();
+                        break;
+                    }
+
+                    border(196);
+                    displayCenteredLine_NoNewLine(">> Enter SECOND DATE (MM/DD/YYYY): ", CYAN);
+                    getline(cin, choice);
+
+                    // Stop filtering data if input invalid
+                    if (!validateSecondDate(input, choice)) {
+                        displayCenteredLine_Colored("WARNING", BOLDYELLOW);
+                        displayCenteredLine_Colored(">> Please enter valid input.", YELLOW);
+                        getchar();
+                        break;
+                    }
+
+                    // If Filtering expenses
+                    if ((optionDisplay == "E") || (optionDisplay == "e")) {
+                        // Empty vector
+                        filteredExpenses.clear();
+
+                        // Filter and insert to vector
+                        string date = input;
+                        while (isDateInRange(date, input, choice))
+                        {
+                            for (const auto& expense : expensesList)
+                            {
+                                if (expense.getDate() == date)
+                                filteredExpenses.push_back(expense);
+                            }
+                            date = getDate_FromDateInput(date, 1); // Increment date
+                        }
+
+                        
+                        // Display filtered data
+                        filterDisplay = 5;
+                        filter = choice + " - " + input;
+                    }
+
+                    // If Filtering allowances
+                    else if ((optionDisplay == "A") || (optionDisplay == "a")) {
+                        // Empty vector
+                        filteredAllowances.clear();
+
+                        // Filter and insert to vector
+                        string date = input;
+                        while (isDateInRange(date, input, choice))
+                        {
+                            for (const auto& allowance : allowancesList)
+                            {
+                                if (allowance.getDate() == date)
+                                filteredAllowances.push_back(allowance);
+                            }
+                            date = getDate_FromDateInput(date, 1); // Increment date
+                        }
+
+                        
+                        // Display filtered data
+                        filterDisplay = 5;
+                        filter = choice + " - " + input;
+                    }
+                    break;
+
+
+
+                case 6:
+                    filterDisplay = 6;
+                    break;
+
+
+
+                default:
+                    break;
+            }
+        }
+
+    }
+}
+
+
+
+
+
+
+
+/*----------------------------------------------*/
+/*            DATAandHISTORY FEATURE            */
+/*----------------------------------------------*/
+
+void DATAandHISTORY :: displayMenu_DataAndHistory()
+{
+    clearScreen();
+
+    border(205); 
+    displayCenteredLine_Colored("DATA & HISTORY", BLUE);
+    border(205);
+
+    cout << BOLDWHITE << "    >> EXPENSES DATA" << RESET << endl;
+    cout <<              "          - Displays basic data of your expenses!\n" << endl;
+    cout <<              "          - You can compare your expenses TODAY and YESTERDAY!" << endl;
+    cout <<              "        See how and where you spend your money!\n\n" << endl;
+
+    cout << BOLDWHITE << "    >> TRANSACTION ans ALLOWANCE HISTORY" << RESET << endl;
+    cout <<              "          - Displays all the transactions created and allowances made!\n" << endl;
+    cout <<              "          - You can take a look a your transaction and allowance history," << endl;
+    cout <<              "        view them by sorting either by Category or by Date!\n" << endl;
+
+
+    border(196);
+    displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
+    cout << "\n";
+    displayCenteredLine_Colored("[ 1 ] EXPENSES DATA                    ", WHITE);
+    displayCenteredLine_Colored("[ 2 ] TRANSACTION and ALLOWANCE HISTORY", WHITE);
+    cout << "\n";
+    displayCenteredLine_Colored("[ R ] RETURN", WHITE);
+    cout << "\n";
+    border(205);
+    displayCenteredLine_NoNewLine(">> Enter number: ", CYAN);
+}
+
+void DATAandHISTORY :: runBB_DataAndHistory()
+{
+    string option;
+    loadData();
+
+    while(true) {
+        // Display: DATA and HISTORY menu
+        displayMenu_DataAndHistory();
+
+        getline(cin, option);
+
+        if ((option == "R") || (option == "r")) {
+            return;
+        }
+        else if ((isNumeric(option)) && (!option.empty())) {
+            int option_int = stoi(option);
+
+            switch (option_int)
+            {
+                case 1: // RUN EXPENSES DATA
+                    runDH_ExpenseData();
+                    break;
+
+                case 2: // RUN TRANSACTION and ALLOWANCE HISTORY
+                    runDH_TAHistory();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1616,5 +2289,7 @@ istream& operator>>(istream& is, Allowance& allowance) {
 
 int main() {
 
+    DATAandHISTORY DH_Handler;
+    DH_Handler.runBB_DataAndHistory();
     return 0;
 }
