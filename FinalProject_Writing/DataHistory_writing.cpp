@@ -1708,9 +1708,10 @@ void DATAandHISTORY :: displayTable_RankByCategory()
     char c = 179;
 
     // Display Headers
-    cout << string(28, ' ') << c;
+    cout << string(19, ' ') << c;
     displayTxtByColumn_CENTERED("INDEX", BOLDWHITE, 7);
     displayTxtByColumn_CENTERED("CATEGORY", BOLDWHITE, COLUMNWIDTH+2);
+    displayTxtByColumn_CENTERED("TOTAL COST", BOLDWHITE, COLUMNWIDTH+2);
     displayTxtByColumn_CENTERED("PERCENTAGE", BOLDWHITE, 70);
     cout << "\n";
 
@@ -1727,24 +1728,29 @@ void DATAandHISTORY :: displayTable_RankByCategory()
             totalAmt += expenses.getAmount();
         }
         double rate = (totalAmt / totalExpenses) * 100;
+        stringstream ss;
+        ss << fixed << setprecision(2) << totalAmt;
 
         // Display data by table
         string percentBar = makePercentBar(rate);
-        cout << string(28, ' ') << c;
+        cout << string(19, ' ') << c;
         displayTxtByColumn_CENTERED(to_string(iter), WHITE, 7);
-        displayTxtByColumn_CENTERED(catName, WHITE, COLUMNWIDTH+2);
+        displayTxtByColumn(catName, WHITE, COLUMNWIDTH+2);
+        displayTxtByColumn("P " + ss.str(), WHITE, COLUMNWIDTH+2);
         displayTxtByColumn_CENTERED(percentBar, WHITE, 70);
         cout << "\n";
         iter++;
     }
 
+    // Display vacant slots
     if (CategoryList.size() < 10) {
         int vacant = 10 - CategoryList.size();
 
         for (int i = 0; i < vacant; i++) {
-            cout << string(28, ' ') << c;
+            cout << string(19, ' ') << c;
             displayTxtByColumn_CENTERED(to_string(iter), WHITE, 7);
-            displayTxtByColumn_CENTERED("----------", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("----------", WHITE, COLUMNWIDTH+2);
+            displayTxtByColumn("P 0.00", WHITE, COLUMNWIDTH+2);
             displayTxtByColumn_CENTERED(makePercentBar(0), WHITE, 70);
             cout << "\n";
             iter++;
