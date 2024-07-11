@@ -348,9 +348,6 @@ private:
     vector<Expense> expensesList;
     vector<Allowance> allowancesList;
 
-    vector<SavingsAndExpenseLim> savingsList;
-    vector<SavingsAndExpenseLim> expenseLimitsList;
-
     vector<Category> CategoryList;
     vector<string> AccountList;
 
@@ -385,15 +382,12 @@ protected:
     void sortExpensesByDate_Descending(vector<Expense>&);
     void sortAllowanceByDate_Ascending(vector<Allowance>&);
     void sortAllowanceByDate_Descending(vector<Allowance>&);
-    void sortExpensesByCategory(vector<Expense>&);
-
 
 
     // DISPLAY DATA [ALLOWANCES / EXPENSES / CATEGORIES / ETC.]
     void displayAllowancesData(vector<Allowance>, int, int);
     void displayExpensesData(vector<Expense>, int, int);
     void displayCategoryList_parent();
-    void displayCategoryList_bbys(int);
     void displayAccountList();
 
 
@@ -403,18 +397,17 @@ protected:
 
 
 
-    // TRANSACTION AND ALLOWANCE HISTORY
+    // TRANSACTION HISTORY FEATURE
+    string run_GetAccount();
+    string run_GetCategory();
     void runDH_TAHistory();
 
 
-
-    // EXPENSE DATA
-    void displayTitle_ExpenseData();
+    // EXPENSE DATA FEATURE
+    void displayTitle_DataAndHistory(string);
     void displayTable_YESTERDAYvsTODAY(vector<Expense>, vector<Expense>, int);
     void displayTable_RankByCategory();
     void runDH_ExpenseData();
-
-
 
 
 
@@ -1207,9 +1200,6 @@ DATAandHISTORY :: DATAandHISTORY() :
 
 
 
-
-
-
 /*--------------------------------------------*/
 /*    DATAandHISTORY : Load data from file    */
 /*--------------------------------------------*/
@@ -1289,8 +1279,6 @@ void DATAandHISTORY :: loadData()
 
 
 
-
-
 /*--------------------------------------------*/
 /*        DATAandHISTORY : Calculators        */
 /*--------------------------------------------*/
@@ -1344,7 +1332,6 @@ double DATAandHISTORY :: calculateTotal_GivenAllowance(vector<Allowance> allowan
     }
     return totalExpense;
 }
-
 
 
 
@@ -1425,7 +1412,7 @@ auto DATAandHISTORY :: getExpenseData_ByCat(string category)
 /*--------------------------------------------*/
 /*         DATAandHISTORY : Sort Data         */
 /*--------------------------------------------*/
-// DATAandHISTORY function member to sort vector by date, ascending order
+// DATAandHISTORY function member to sort expense list by date, ascending order
 void DATAandHISTORY :: sortExpensesByDate_Ascending(vector<Expense>& expenseData)
 {
     sort(expenseData.begin(), expenseData.end(), [](const Expense& a, const Expense& b) {
@@ -1433,7 +1420,7 @@ void DATAandHISTORY :: sortExpensesByDate_Ascending(vector<Expense>& expenseData
     });
 }
 
-// DATAandHISTORY function member to sort vector by date, descending order
+// DATAandHISTORY function member to sort expense vector by date, descending order
 void DATAandHISTORY :: sortExpensesByDate_Descending(vector<Expense>& expenseData)
 {
     sort(expenseData.begin(), expenseData.end(), [](const Expense& a, const Expense& b) {
@@ -1441,6 +1428,7 @@ void DATAandHISTORY :: sortExpensesByDate_Descending(vector<Expense>& expenseDat
     });
 }
 
+// DATAandHISTORY function member to sort allowance vector by date, ascending order
 void DATAandHISTORY :: sortAllowanceByDate_Ascending(vector<Allowance>& allowanceData)
 {
     sort(allowanceData.begin(), allowanceData.end(), [](const Allowance& a, const Allowance& b) {
@@ -1448,16 +1436,12 @@ void DATAandHISTORY :: sortAllowanceByDate_Ascending(vector<Allowance>& allowanc
     });
 }
 
+// DATAandHISTORY function member to sort allowance vector by date, descending order
 void DATAandHISTORY :: sortAllowanceByDate_Descending(vector<Allowance>& allowanceData)
 {
     sort(allowanceData.begin(), allowanceData.end(), [](const Allowance& a, const Allowance& b) {
         return convertToComparableDate(a.getDate()) > convertToComparableDate(b.getDate());
     });
-}
-
-void DATAandHISTORY :: sortExpensesByCategory(vector<Expense>& expenseData)
-{
-
 }
 
 
@@ -1549,6 +1533,7 @@ void DATAandHISTORY :: displayAllowancesData(vector<Allowance> allowanceData, in
     }
 }
 
+// DATAandHISTORY function member to display expense data table by page
 void DATAandHISTORY :: displayExpensesData(vector<Expense> expenseData, int page = 1, int dataPerPage = 5)
 {
     int i;
@@ -1636,7 +1621,51 @@ void DATAandHISTORY :: displayExpensesData(vector<Expense> expenseData, int page
     }
 }
 
+// DATAandHISTORY function member to display a list of accounts
+void DATAandHISTORY :: displayAccountList()
+{
+    char border = 179;
+    vector<string> Accounts;
+    
+    // Load all parent categories
+    for (const auto& acc : AccountList) {
+        Accounts.push_back(acc);
+    }
 
+    // Fill in vacant slots
+    while (Accounts.size() <= 10) Accounts.push_back("----------");
+
+    // Display ParentCategories by 2 columns
+    for (int i = 0; i < Accounts.size() / 2; i++) {
+        cout << string(50, ' ') << border;
+        displayTxtByColumn_NB("[ " + to_string(i+1) + " ] " + Accounts[i], WHITE, 25);
+        displayTxtByColumn_NB("[ " + to_string(i+6) + " ] " + Accounts[i + 5], WHITE, 25);
+        cout << "\n";
+    }
+}
+
+// DATAandHISTORY function member to display a list of Category Parent
+void DATAandHISTORY :: displayCategoryList_parent()
+{
+    char border = 179;
+    vector<string> ParentCategories;
+    
+    // Load all parent categories
+    for (const auto& catHol : CategoryList) {
+        ParentCategories.push_back(catHol.getParent());
+    }
+
+    // Fill in vacant slots
+    while (ParentCategories.size() <= 10) ParentCategories.push_back("----------");
+
+    // Display ParentCategories by 2 columns
+    for (int i = 0; i < ParentCategories.size() / 2; i++) {
+        cout << string(50, ' ') << border;
+        displayTxtByColumn("[ " + to_string(i+1) + " ] " + ParentCategories[i], WHITE, 25);
+        displayTxtByColumn("[ " + to_string(i+6) + " ] " + ParentCategories[i + 5], WHITE, 25);
+        cout << "\n";
+    }
+}
 
 
 
@@ -1645,16 +1674,17 @@ void DATAandHISTORY :: displayExpensesData(vector<Expense> expenseData, int page
 /*       DATAandHISTORY FEATURE: EXPENSE DATA        */
 /*---------------------------------------------------*/
 
-// DATAandHISTORY function member to display
-void DATAandHISTORY :: displayTitle_ExpenseData()
+// DATAandHISTORY function member to display title + custom subtitle of DATA and HISTORY
+void DATAandHISTORY :: displayTitle_DataAndHistory(string subTitle = "")
 {
     clearScreen();
 
     border(205);
-    displayCenteredLine_Colored("DATA & HISTORY: EXPENSE DATA", BLUE);
+    displayCenteredLine_Colored("DATA & HISTORY" + subTitle, BLUE);
     border(205);
 }
 
+// DATAandHISTORY function member to display table for Expense Data today and yesterday
 void DATAandHISTORY :: displayTable_YESTERDAYvsTODAY(vector<Expense> expensesData_Today, vector<Expense> expensesData_Yesterday, int page = 1)
 {
     // Get date TODAY and YESTERDAY
@@ -1702,6 +1732,7 @@ void DATAandHISTORY :: displayTable_YESTERDAYvsTODAY(vector<Expense> expensesDat
     border(196);
 }
 
+// DATAandHISTORY function member to display a list of categories and percentage of total expenses each category
 void DATAandHISTORY :: displayTable_RankByCategory()
 {
     int iter = 1;
@@ -1760,6 +1791,7 @@ void DATAandHISTORY :: displayTable_RankByCategory()
     border(196);
 }
 
+// DATAandHISTORY function member to run Expense Data Feature
 void DATAandHISTORY :: runDH_ExpenseData()
 {
     // USER INPUTS
@@ -1791,7 +1823,7 @@ void DATAandHISTORY :: runDH_ExpenseData()
 
 
     while (true) {
-        displayTitle_ExpenseData();
+        displayTitle_DataAndHistory(": EXPENSE DATA");
 
         // DISPLAY PT. 1 of the MENU FOR YESTERDAY VS TODAY
         if (optionDisplay == "1") {
@@ -1868,7 +1900,71 @@ void DATAandHISTORY :: runDH_ExpenseData()
 /*------------------------------------------------------------------------*/
 /*       DATAandHISTORY FEATURE: TRANSACTION AND ALLOWANCE HISTORY        */
 /*------------------------------------------------------------------------*/
+// DATAandHISTORY function member to run Filter By Category option, exclusive to Expense Class only
+string DATAandHISTORY :: run_GetCategory()
+{
+    string input;
 
+    while (true)
+    {
+        // Display Menu to get category
+        displayTitle_DataAndHistory(": TRANSACTION HISTORY");
+        displayCenteredLine_Colored("CATEGORY LIST", YELLOW);
+        displayCategoryList_parent();
+        border('-');
+        cout << "   >> Enter the index number of the Category you wish to pick." << endl;
+        border(196);
+
+        // Get user input
+        displayCenteredLine_NoNewLine(">> Enter NUMBER: ", CYAN);
+        getline(cin, input);
+
+        if ((input == "R") || (input == "r")) {
+            return "";
+        }
+        else if ((isNumeric(input)) && (!input.empty())) {
+            int input_int = stoi(input);
+            if ((input_int > 0) && (input_int <= CategoryList.size())) {
+                // Return Category Parent name
+                return CategoryList[input_int-1].getParent();
+            }
+        }
+    }
+}
+
+// DATAandHISTORY function member to run Filter by Account option. This feature is scratched due to lack of time
+string DATAandHISTORY :: run_GetAccount()
+{
+    string input;
+
+    while (true)
+    {
+        // Display Menu to get category
+        displayTitle_DataAndHistory(": TRANSACTION HISTORY");
+        displayCenteredLine_Colored("ACCOUNT LIST", YELLOW);
+        displayAccountList();
+        border('-');
+        cout << "   >> Enter the index number of the Account you wish to pick." << endl;
+        border(196);
+
+        // Get user input
+        displayCenteredLine_NoNewLine(">> Enter NUMBER: ", CYAN);
+        getline(cin, input);
+
+        if ((input == "R") || (input == "r")) {
+            return "";
+        }
+        else if ((isNumeric(input)) && (!input.empty())) {
+            int input_int = stoi(input);
+            if ((input_int > 0) && (input_int <= AccountList.size())) {
+                // Return Account name
+                return AccountList[input_int-1];
+            }
+        }
+    }
+}
+
+// DATAandHISTORY function member to run Transaction History Feature
 void DATAandHISTORY :: runDH_TAHistory()
 {
     // USER INPUTS
@@ -1900,7 +1996,7 @@ void DATAandHISTORY :: runDH_TAHistory()
 
 
     while (true) {
-        displayTitle_ExpenseData();
+        displayTitle_DataAndHistory(": TRANSACTION HISTORY");
 
         // DISPLAY: Allowance History
         if ((optionDisplay == "A") || (optionDisplay == "a")) {
@@ -1953,8 +2049,8 @@ void DATAandHISTORY :: runDH_TAHistory()
         // Display: Expense DATA Options
         displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
         cout << "\n";
-        displayCenteredLine_Colored("[ A ] ALLOWANCE HISTORY            [ E ] EXPENSE HISTORY", WHITE);
-        displayCenteredLine_Colored("[ P ] Previous Page                [ N ] Next Page      ", WHITE);
+        displayCenteredLine_Colored("[ A ] ALLOWANCE HISTORY            [ E ] EXPENSE HISTORY     ", WHITE);
+        displayCenteredLine_Colored("[ P ] Previous Page                [ N ] Next Page           ", WHITE);
         cout << "\n";
         displayCenteredLine_Colored("[ 1 ] Sort by DATE (Ascending)     [ 4 ] Filter by DATE      ", WHITE);
         displayCenteredLine_Colored("[ 2 ] Sort by DATE (Descending)    [ 5 ] Filter by DATE RANGE", WHITE);
@@ -2044,10 +2140,25 @@ void DATAandHISTORY :: runDH_TAHistory()
 
 
                 case 3: // FILTER BY CATEGORY
-                    // border(196);
-                    // if ((optionDisplay == "E") || (optionDisplay == "e")) {
-                    //     filterDisplay = 3;
-                    // }
+                    if ((optionDisplay == "E") || (optionDisplay == "e")) {
+                        input = run_GetCategory();
+
+                        // If Filtering expenses
+                        if (!input.empty()) {
+                            // Empty vector
+                            filteredExpenses.clear();
+
+                            // Get filtered vector
+                            vector<Expense> expenses_TempList = getExpenseData_ByCat(input);
+
+                            // Copy elements from temporary vector
+                            filteredExpenses.insert(filteredExpenses.end(), expenses_TempList.begin(), expenses_TempList.end());
+
+                            // Display filtered data
+                            filterDisplay = 3;
+                            filter = input;
+                        }
+                    }
                     break;
                 
 
@@ -2193,7 +2304,6 @@ void DATAandHISTORY :: runDH_TAHistory()
 
 
 
-
 /*----------------------------------------------*/
 /*            DATAandHISTORY FEATURE            */
 /*----------------------------------------------*/
@@ -2220,8 +2330,8 @@ void DATAandHISTORY :: displayMenu_DataAndHistory()
     border(196);
     displayCenteredLine_Colored("OPTIONS", BOLDWHITE);
     cout << "\n";
-    displayCenteredLine_Colored("[ 1 ] EXPENSES DATA                    ", WHITE);
-    displayCenteredLine_Colored("[ 2 ] TRANSACTION and ALLOWANCE HISTORY", WHITE);
+    displayCenteredLine_Colored("[ 1 ] EXPENSES DATA      ", WHITE);
+    displayCenteredLine_Colored("[ 2 ] TRANSACTION HISTORY", WHITE);
     cout << "\n";
     displayCenteredLine_Colored("[ R ] RETURN", WHITE);
     cout << "\n";
