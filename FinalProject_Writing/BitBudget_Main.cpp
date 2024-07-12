@@ -75,7 +75,7 @@ const string InboxFILE = "Inbox.bin";
 /*_________________________________________________________________________________*/
 
 /* DISPLAY FUNCTIONS */
-//
+
 void border(char, int);
 void displayCenteredLine_NoColor(const string&, int);
 void displayCenteredLine_Colored(const string&, const string&, int);
@@ -343,38 +343,6 @@ protected:
     void saveAccountList() const;
 
 
-
-
-    // UPDATE: LIMIT OF EXPENSES [Features]
-    void displayMenu_UpdateLE();
-    void run_LE_SetNewGoal();
-    void run_LE_EditGoal();
-    void run_LE_DeleteGoal();
-
-    // UPDATE: SAVINGS [Features]
-    void displayMenu_UpdateSavings();
-    void run_S_SetNewGoal();
-    void run_S_EditGoal();
-    void run_S_DeleteGoal();
-    void run_SetAsideSavings();
-
-    // UPDATE: ALLOWANCE [Features]
-    void run_AddAllowance(); // working~
-    void run_EditAllowance(); // working~
-
-    // UPDATE: EXPENSES [Features]
-    void displayMenu_UpdateExpense(int);
-    void run_AddExpenses();
-    void run_DeleteExpenses(); 
-    void run_EditExpenses();
-
-    // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
-    void run_AddAccount(string);
-    void run_AddCategory(string);
-    void run_AddSubcategory(int, string);
-
-
-
     // CLASS ADDERS
     void addExpense(const Expense&);
     void addAllowance(const Allowance&);
@@ -394,8 +362,6 @@ protected:
     void updateSavingsDateRange(const string&, const string&, int);
 
 
-
-
     // DISPLAY DATA [ALLOWANCES / EXPENSES / CATEGORIES / ETC.]
     void displayAllowancesList_today(int);
     void displayExpensesList_today(int);
@@ -406,13 +372,41 @@ protected:
     void displayAccountList();
     void displayUpdateMenu();
 
-    // UPDATE: ALL MAIN FEATURES TO RUN IN MAIN FUNCTION
+
+    // UPDATE: LIMIT OF EXPENSES [Features]
+    void displayMenu_UpdateLE();
+    void run_LE_SetNewGoal();
+    void run_LE_EditGoal();
+    void run_LE_DeleteGoal();
+
+    // UPDATE: SAVINGS [Features]
+    void displayMenu_UpdateSavings();
+    void run_S_SetNewGoal();
+    void run_S_EditGoal();
+    void run_S_DeleteGoal();
+    void run_SetAsideSavings();
+
+    // UPDATE: ALLOWANCE [Features]
+    void run_AddAllowance();
+    void run_EditAllowance();
+
+    // UPDATE: EXPENSES [Features]
+    void displayMenu_UpdateExpense(int);
+    void run_AddExpenses();
+    void run_DeleteExpenses(); 
+    void run_EditExpenses();
+
+    // UPDATE: ALLOWANCE/EXPENSE [Menu to add Accounts, Category, Subcategory]
+    void run_AddAccount(string);
+    void run_AddCategory(string);
+    void run_AddSubcategory(int, string);
+
+
+    // UPDATE: ALL MAIN FEATURES OF UPDATE TO RUN IN MAIN FUNCTION
     void run_UpdateLimitExpenses();
     void run_UpdateSavings();
     void run_UpdateAllowance();
     void run_UpdateExpense();
-
-
 
 
 
@@ -1639,7 +1633,7 @@ Budget :: Budget() :
 
 
 /*--------------------------------------------------------------------------------------*/
-/*                        BUDGET class MFs(Public): DISPLAY LISTS                       */
+/*                        BUDGET class MFs(Protected): DISPLAY LISTS                    */
 /*--------------------------------------------------------------------------------------*/
 // Budget function to display allowances created at present day
 void Budget :: displayAllowancesList_today(int page = 1)
@@ -1993,7 +1987,7 @@ void Budget :: displayAccountList()
 
 
 /*------------------------------------------------------------------------*/
-/*      BUDGET class MFs(Public): SETTERS, ADDERS, REMOVERS, EDITORS      */
+/*    BUDGET class MFs(Protected): SETTERS, ADDERS, REMOVERS, EDITORS     */
 /*------------------------------------------------------------------------*/
 
 void Budget :: setTotalBudget(double budget)
@@ -2128,9 +2122,9 @@ void Budget :: updateSavingsDateRange(const string& startDate, const string& due
 
 
 
-/*-----------------------------------------------------------------------------------------*/
-/*             UPDATE: ALLOWANCE/EXPENSE [Add Accounts, Category, Subcategory]             */
-/*-----------------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------------------------------*/
+/*    BUDGET class MFs(Protected): UPDATE ALLOWANCE/EXPENSE [Add Accounts, Category, Subcategory]      */
+/*-----------------------------------------------------------------------------------------------------*/
 
 void Budget :: run_AddAccount(string TITLE)
 {
@@ -2150,6 +2144,7 @@ void Budget :: run_AddAccount(string TITLE)
         cout << "\n";
         border(196);
 
+        // Warn and restrict user from adding new account
         if (AccountList.size() >= 10) {
             displayCenteredLine_Colored("WARNING", BOLDYELLOW);
             displayCenteredLine_Colored(">> You can create up to 10 Accounts!", YELLOW);
@@ -2935,7 +2930,7 @@ void Budget :: displayMenu_UpdateSavings()
 
     // Display: UPDATE(Savings) title
     border(205);
-    displayCenteredLine_Colored("UPDATE: SAVINGS (EDIT GOAL)", BLUE);
+    displayCenteredLine_Colored("UPDATE: SAVINGS", BLUE);
     border(205);
 
     // Display: List of SAVINGS schedules
