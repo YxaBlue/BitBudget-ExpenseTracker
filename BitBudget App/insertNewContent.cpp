@@ -1441,8 +1441,12 @@ int main() {
     Budget budgetHandler;
     budgetHandler.loadData();
 
-    SavingsAndExpenseLim savings1("07/05/2024", "07/09/2024", 100, 60, "testing");
+    SavingsAndExpenseLim savings1("07/05/2024", "07/15/2024", 100, 100, "Savings for milktea");
+    SavingsAndExpenseLim expense1("07/10/2024", "07/15/2024", 1500, 50, "Saving for groceries");
+    Allowance allowance1("", "07/14/2024", 500, "Cash", "From papa na allowance");
     budgetHandler.addSavings(savings1);
+    budgetHandler.addExpenseLim(expense1);
+    budgetHandler.addAllowance(allowance1);
     cout << "done" << endl;
 
 
